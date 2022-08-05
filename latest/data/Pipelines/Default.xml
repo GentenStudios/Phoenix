@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<Pipeline type="Graphics" topology="Triangle">
+	<VertexBindings>
+		<Binding binding="0" stride="8" rate="INPUT_RATE_VERTEX" />
+		<Binding binding="1" stride="8" rate="INPUT_RATE_VERTEX" />
+	</VertexBindings>
+
+	<VertexInputAttributes>
+		<Attribute location="0" binding="0" format="R32G32_SFLOAT" offset="0" />
+		<Attribute location="1" binding="1" format="R32G32_SFLOAT" offset="0" />
+	</VertexInputAttributes>
+
+	<Descriptors>
+		<Descriptor name="CameraResourceTableLayout" />
+		<Descriptor name="SamplerResourceTableLayout" />
+	</Descriptors>
+
+	<Stages>
+		<Stage entrypoint="main" stage="Vertex" path="data/Shaders/Diffuse/vert.spv"/>
+		<Stage entrypoint="main" stage="Fragment" path="data/Shaders/Diffuse/frag.spv"/>
+	</Stages>
+</Pipeline>
