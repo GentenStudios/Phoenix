@@ -1,8 +1,7 @@
-#include "resourcemanager.hpp"
-#include <rendertechnique.hpp>
-#include <renderpass.hpp>
-
-#include <device.hpp>
+#include <ResourceManager/resourcemanager.hpp>
+#include <ResourceManager/rendertechnique.hpp>
+#include <Renderer/renderpass.hpp>
+#include <Renderer/device.hpp>
 
 #include <pugixml.hpp>
 

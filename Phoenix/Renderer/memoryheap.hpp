@@ -1,10 +1,9 @@
 #pragma once
 
-#include <vulkan.hpp>
+#include <Renderer/vulkan.hpp>
+#include <Renderer/memoryallocator.hpp>
 
 #include <memory>
-
-#include "memoryallocator.hpp"
 
 class RenderDevice;
 class DeviceMemory;

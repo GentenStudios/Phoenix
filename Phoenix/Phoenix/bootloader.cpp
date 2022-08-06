@@ -1,22 +1,19 @@
+#include <Windowing/window.hpp>
+#include <Phoenix/phoenix.hpp>
 
-#pragma warning(disable : C46812)
-
-#include <window.hpp>
-#include <phoenix.hpp>
-
-#include <device.hpp>
-#include <renderpass.hpp>
-#include <resourcetable.hpp>
-#include <resourcetablelayout.hpp>
-#include <pipeline.hpp>
-#include <pipelinelayout.hpp>
-#include <buffer.hpp>
-#include <devicememory.hpp>
-#include <staticmesh.hpp>
-#include <texture.hpp>
-#include <framebufferattachment.hpp>
-#include <rendertarget.hpp>
-#include <rendertechnique.hpp>
+#include <Renderer/device.hpp>
+#include <Renderer/renderpass.hpp>
+#include <Renderer/resourcetable.hpp>
+#include <Renderer/resourcetablelayout.hpp>
+#include <Renderer/pipeline.hpp>
+#include <Renderer/pipelinelayout.hpp>
+#include <Renderer/buffer.hpp>
+#include <Renderer/devicememory.hpp>
+#include <Renderer/staticmesh.hpp>
+#include <Renderer/texture.hpp>
+#include <Renderer/framebufferattachment.hpp>
+#include <Renderer/rendertarget.hpp>
+#include <ResourceManager/rendertechnique.hpp>
 
 #include <lodepng.h>
 

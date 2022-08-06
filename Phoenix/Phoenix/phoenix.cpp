@@ -1,12 +1,12 @@
-#include <phoenix.hpp>
+#include <Phoenix/phoenix.hpp>
 
-#include <device.hpp>
-#include <window.hpp>
-#include <resourcemanager.hpp>
-#include <rendertarget.hpp>
-#include <renderpass.hpp>
-#include <texture.hpp>
-#include <globalresources.hpp>
+#include <Renderer/device.hpp>
+#include <Windowing/window.hpp>
+#include <ResourceManager/resourcemanager.hpp>
+#include <Renderer/rendertarget.hpp>
+#include <Renderer/renderpass.hpp>
+#include <Renderer/texture.hpp>
+#include <ResourceManager/globalresources.hpp>
 
 Phoenix* Phoenix::mInstance = nullptr;
 

@@ -3,7 +3,7 @@
 #include <memory>
 #include <map>
 
-#include <globals.hpp>
+#include <Globals/globals.hpp>
 
 class Camera
 {

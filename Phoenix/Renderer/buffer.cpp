@@ -1,8 +1,8 @@
 
-#include "buffer.hpp"
-#include "device.hpp"
-#include "devicememory.hpp"
-#include "memoryheap.hpp"
+#include <Renderer/buffer.hpp>
+#include <Renderer/device.hpp>
+#include <Renderer/devicememory.hpp>
+#include <Renderer/memoryheap.hpp>
 
 #include <assert.h>
 #include <string.h>

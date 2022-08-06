@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan.hpp>
+#include <Renderer/vulkan.hpp>
 
 #include <memory>
 #include <vector>
@@ -14,7 +14,7 @@
 #include <SDL_syswm.h>
 #include <SDL_vulkan.h>
 
-#include <globals.hpp>
+#include <Globals/globals.hpp>
 
 class Window;
 class RenderDevice;

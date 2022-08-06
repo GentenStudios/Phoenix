@@ -1,6 +1,5 @@
-
-#include "devicememory.hpp"
-#include "device.hpp"
+#include <Renderer/devicememory.hpp>
+#include <Renderer/device.hpp>
 
 DeviceMemory::DeviceMemory( RenderDevice* device, uint32_t size, uint32_t memoryProperties ) : mDevice( device ), mSize( size )
 {

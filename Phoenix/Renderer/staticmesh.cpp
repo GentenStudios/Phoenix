@@ -1,8 +1,8 @@
-#include "staticmesh.hpp"
-#include "device.hpp"
-#include "devicememory.hpp"
-#include "buffer.hpp"
-#include "memoryheap.hpp"
+#include <Renderer/staticmesh.hpp>
+#include <Renderer/device.hpp>
+#include <Renderer/devicememory.hpp>
+#include <Renderer/buffer.hpp>
+#include <Renderer/memoryheap.hpp>
 
 
 

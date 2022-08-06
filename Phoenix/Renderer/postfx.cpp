@@ -1,11 +1,11 @@
-#include "postfx.hpp"
+#include <Renderer/postfx.hpp>
 
-#include "device.hpp"
-#include "pipelinelayout.hpp"
-#include "pipeline.hpp"
-#include "resourcetablelayout.hpp"
-#include "staticmesh.hpp"
-#include "rendertarget.hpp"
+#include <Renderer/device.hpp>
+#include <Renderer/pipelinelayout.hpp>
+#include <Renderer/pipeline.hpp>
+#include <Renderer/resourcetablelayout.hpp>
+#include <Renderer/staticmesh.hpp>
+#include <Renderer/rendertarget.hpp>
 
 PostFX::PostFX( RenderDevice* device ) : mDevice( device )
 {

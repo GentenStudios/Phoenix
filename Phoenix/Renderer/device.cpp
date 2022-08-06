@@ -1,9 +1,9 @@
-#include "device.hpp"
-#include "devicememory.hpp"
-#include "staticmesh.hpp"
-#include "resourcetablelayout.hpp"
-#include "memoryheap.hpp"
-#include <window.hpp>
+#include <Renderer/device.hpp>
+#include <Renderer/devicememory.hpp>
+#include <Renderer/staticmesh.hpp>
+#include <Renderer/resourcetablelayout.hpp>
+#include <Renderer/memoryheap.hpp>
+#include <Windowing/window.hpp>
 
 #include <SDL.h>
 #include <SDL_vulkan.h>

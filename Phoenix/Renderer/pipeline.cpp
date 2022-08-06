@@ -1,7 +1,7 @@
-#include "pipeline.hpp"
-#include "device.hpp"
-#include "renderpass.hpp"
-#include "pipelinelayout.hpp"
+#include <Renderer/pipeline.hpp>
+#include <Renderer/device.hpp>
+#include <Renderer/renderpass.hpp>
+#include <Renderer/pipelinelayout.hpp>
 
 Pipeline::Pipeline( RenderDevice* device, PipelineType type, RenderPass* renderPass, PipelineLayout* pipelineLayout,
 	VkPipelineShaderStageCreateInfo* pipelineShaderStageInfos, uint32_t pipelineShaderStageInfoCount,

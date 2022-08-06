@@ -1,6 +1,6 @@
-#include "memoryheap.hpp"
-#include "device.hpp"
-#include "devicememory.hpp"
+#include <Renderer/memoryheap.hpp>
+#include <Renderer/device.hpp>
+#include <Renderer/devicememory.hpp>
 
 MemoryHeap::MemoryHeap( RenderDevice* device, uint32_t size, VkMemoryPropertyFlags memoryProperties) : mDevice( device ), mMemoryProperties( memoryProperties )
 {

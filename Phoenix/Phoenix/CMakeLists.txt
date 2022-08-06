@@ -6,12 +6,7 @@ FILE(GLOB src *.cpp)
 FILE(GLOB headers *.hpp)
 
 add_executable(${PROJECT_NAME} ${src} ${headers})
-
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../Globals)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../Renderer)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../ResourceManager)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../Windowing)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE PhoenixVendor PhoenixRenderer PhoenixWindowing PhoenixResourceManager)
 

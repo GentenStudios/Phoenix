@@ -1,13 +1,13 @@
-#include "rendertarget.hpp"
-#include "device.hpp"
-#include "texture.hpp"
-#include "framebufferattachment.hpp"
-#include "devicememory.hpp"
-#include "renderpass.hpp"
-#include "resourcetable.hpp"
-#include "resourcetablelayout.hpp"
-#include "pipeline.hpp"
-#include "pipelinelayout.hpp"
+#include <Renderer/rendertarget.hpp>
+#include <Renderer/device.hpp>
+#include <Renderer/texture.hpp>
+#include <Renderer/framebufferattachment.hpp>
+#include <Renderer/devicememory.hpp>
+#include <Renderer/renderpass.hpp>
+#include <Renderer/resourcetable.hpp>
+#include <Renderer/resourcetablelayout.hpp>
+#include <Renderer/pipeline.hpp>
+#include <Renderer/pipelinelayout.hpp>
 
 RenderTarget::RenderTarget( RenderDevice* device, uint32_t width, uint32_t height, bool useDepth ) :
 	mDevice( device ), mUseDepth( useDepth )

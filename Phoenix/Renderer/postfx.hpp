@@ -1,9 +1,9 @@
 #pragma once
 
+#include <Renderer/vulkan.hpp>
+
 #include <memory>
 #include <vector>
-
-#include <vulkan.hpp>
 
 class PipelineLayout;
 class Pipeline;
