@@ -1,8 +1,8 @@
-#include <Renderer/device.hpp>
-#include <Renderer/devicememory.hpp>
-#include <Renderer/staticmesh.hpp>
-#include <Renderer/resourcetablelayout.hpp>
-#include <Renderer/memoryheap.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/DeviceMemory.hpp>
+#include <Renderer/StaticMesh.hpp>
+#include <Renderer/ResourceTableLayout.hpp>
+#include <Renderer/MemoryHeap.hpp>
 #include <Windowing/window.hpp>
 
 #include <SDL.h>

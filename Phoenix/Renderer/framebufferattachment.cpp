@@ -1,8 +1,8 @@
 
-#include <Renderer/framebufferattachment.hpp>
-#include <Renderer/device.hpp>
-#include <Renderer/texture.hpp>
-#include <Renderer/devicememory.hpp>
+#include <Renderer/FramebufferAttachment.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/Texture.hpp>
+#include <Renderer/DeviceMemory.hpp>
 
 FramebufferPacket::FramebufferPacket( Texture* textures, uint32_t textureCount, VkFormat format, VkImageLayout layout, EFramebufferImageType imageType ) :
 	mImageViewCount( textureCount ), mFormat( format ), mLayout( layout ), mImageType( imageType )

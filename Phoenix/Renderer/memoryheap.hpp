@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Renderer/vulkan.hpp>
-#include <Renderer/memoryallocator.hpp>
+#include <Renderer/Vulkan.hpp>
+#include <Renderer/MemoryAllocator.hpp>
 
 #include <memory>
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Renderer/vulkan.hpp>
+#include <Renderer/Vulkan.hpp>
 
-#include <Renderer/resourcepacket.hpp>
-#include <Renderer/memoryheap.hpp>
+#include <Renderer/ResourcePacket.hpp>
+#include <Renderer/MemoryHeap.hpp>
 
 #include <memory>
 #include <string>

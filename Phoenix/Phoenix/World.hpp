@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include <Globals/globals.hpp>
+#include <Globals/Globals.hpp>
 
-#include <Renderer/vulkan.hpp>
+#include <Renderer/Vulkan.hpp>
 
 class Chunk;
 class Buffer;

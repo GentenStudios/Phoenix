@@ -1,4 +1,5 @@
-#include <Windowing/window.hpp>
+#include <Windowing/Window.hpp>
+
 #include <assert.h>
 
 Window::Window( const char* title, int width, int height )

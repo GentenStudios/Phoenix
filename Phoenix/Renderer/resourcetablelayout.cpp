@@ -1,6 +1,6 @@
-#include <Renderer/resourcetablelayout.hpp>
-#include <Renderer/device.hpp>
-#include <Renderer/resourcetable.hpp>
+#include <Renderer/ResourceTableLayout.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/ResourceTable.hpp>
 
 #include <assert.h>
 #include <string.h>

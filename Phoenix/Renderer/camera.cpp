@@ -1,4 +1,4 @@
-#include <Renderer/camera.hpp>
+#include <Renderer/Camera.hpp>
 
 #include <Globals/globals.hpp>
 

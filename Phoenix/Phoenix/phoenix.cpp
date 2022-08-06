@@ -1,17 +1,17 @@
-#include <Phoenix/phoenix.hpp>
+#include <Phoenix/Phoenix.hpp>
 
-#include <Renderer/device.hpp>
-#include <Windowing/window.hpp>
-#include <ResourceManager/resourcemanager.hpp>
-#include <Renderer/rendertarget.hpp>
-#include <Renderer/renderpass.hpp>
-#include <Renderer/texture.hpp>
-#include <ResourceManager/globalresources.hpp>
-#include <Renderer/devicememory.hpp>
-#include <Renderer/camera.hpp>
-#include <Renderer/buffer.hpp>
+#include <Renderer/Device.hpp>
+#include <Windowing/Window.hpp>
+#include <ResourceManager/ResourceManager.hpp>
+#include <Renderer/RenderTarget.hpp>
+#include <Renderer/Renderpass.hpp>
+#include <Renderer/Texture.hpp>
+#include <ResourceManager/GlobalResources.hpp>
+#include <Renderer/DeviceMemory.hpp>
+#include <Renderer/Camera.hpp>
+#include <Renderer/Buffer.hpp>
 #include <Renderer/ResourceTable.hpp>
-#include <ResourceManager/rendertechnique.hpp>
+#include <ResourceManager/RenderTechnique.hpp>
 #include <Phoenix/World.hpp>
 
 Phoenix* Phoenix::mInstance = nullptr;

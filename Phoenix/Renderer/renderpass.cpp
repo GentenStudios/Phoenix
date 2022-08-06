@@ -1,6 +1,6 @@
-#include <Renderer/renderpass.hpp>
-#include <Renderer/device.hpp>
-#include <Renderer/framebufferattachment.hpp>
+#include <Renderer/Renderpass.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/FramebufferAttachment.hpp>
 
 #include <assert.h>
 #include <string.h>

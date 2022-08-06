@@ -1,4 +1,4 @@
-#include <Renderer/memoryallocator.hpp>
+#include <Renderer/MemoryAllocator.hpp>
 
 Allocator::Allocator( ) : mOffset(0)
 {

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <Globals/globals.hpp>
+
 #include <memory>
 #include <map>
-
-#include <Globals/globals.hpp>
 
 class Camera
 {

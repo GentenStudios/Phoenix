@@ -1,10 +1,10 @@
-#include <ResourceManager/globalresources.hpp>
-#include <ResourceManager/resourcemanager.hpp>
-#include <Renderer/device.hpp>
-#include <Renderer/resourcetablelayout.hpp>
-#include <Renderer/resourcetable.hpp>
+#include <ResourceManager/GlobalResources.hpp>
+#include <ResourceManager/ResourceManager.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/ResourceTableLayout.hpp>
+#include <Renderer/ResourceTable.hpp>
 
-#include <Globals/globals.hpp>
+#include <Globals/Globals.hpp>
 
 void CreateGlobalResources( RenderDevice* device, ResourceManager* resourceManager )
 {

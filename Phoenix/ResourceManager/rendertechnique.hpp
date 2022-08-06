@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Renderer/vulkan.hpp>
+#include <Renderer/Vulkan.hpp>
 
 #define MAX_SHADER_MODULES 100
 

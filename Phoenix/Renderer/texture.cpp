@@ -1,8 +1,8 @@
-#include <Renderer/texture.hpp>
-#include <Renderer/device.hpp>
-#include <Renderer/buffer.hpp>
-#include <Renderer/devicememory.hpp>
-#include <Renderer/memoryheap.hpp>
+#include <Renderer/Texture.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/Buffer.hpp>
+#include <Renderer/DeviceMemory.hpp>
+#include <Renderer/MemoryHeap.hpp>
 
 Texture::Texture( RenderDevice* device, MemoryHeap* memoryHeap, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags imageUsageFlags, char* data ) :
 	mDevice( device ), mWidth( width ), mHeight( height ), mImageUsageFlags( imageUsageFlags ), mFormat( format ), mMemoryHeap( memoryHeap ), mOwnMemory(false)

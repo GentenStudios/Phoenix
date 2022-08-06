@@ -1,5 +1,5 @@
-#include <Renderer/pipelinelayout.hpp>
-#include <Renderer/device.hpp>
+#include <Renderer/PipelineLayout.hpp>
+#include <Renderer/Device.hpp>
 
 PipelineLayout::PipelineLayout( RenderDevice* device, VkDescriptorSetLayout* descriptorSetLayouts, uint32_t descriptorSetLayoutCount ) : mDevice( device )
 {

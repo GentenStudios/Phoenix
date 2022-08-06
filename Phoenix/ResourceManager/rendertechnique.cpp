@@ -1,10 +1,10 @@
-#include <ResourceManager/rendertechnique.hpp>
-#include <ResourceManager/resourcemanager.hpp>
-#include <Renderer/device.hpp>
-#include <Renderer/pipeline.hpp>
-#include <Renderer/pipelinelayout.hpp>
-#include <Renderer/rendertarget.hpp>
-#include <Renderer/resourcetablelayout.hpp>
+#include <ResourceManager/RenderTechnique.hpp>
+#include <ResourceManager/ResourceManager.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/Pipeline.hpp>
+#include <Renderer/PipelineLayout.hpp>
+#include <Renderer/RenderTarget.hpp>
+#include <Renderer/ResourceTableLayout.hpp>
 
 #include <pugixml.hpp>
 

@@ -1,8 +1,8 @@
-#include <Renderer/resourcetable.hpp>
-#include <Renderer/resourcetablelayout.hpp>
-#include <Renderer/device.hpp>
-#include <Renderer/buffer.hpp>
-#include <Renderer/texture.hpp>
+#include <Renderer/ResourceTable.hpp>
+#include <Renderer/ResourceTableLayout.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/Buffer.hpp>
+#include <Renderer/Texture.hpp>
 
 ResourceTable::ResourceTable( RenderDevice* device, ResourceTableLayout* resourceTableLayout, VkDescriptorSet descriptorSet ) : mDevice( device ), mResourceTableLayout( resourceTableLayout ), mDescriptorSet( descriptorSet )
 {

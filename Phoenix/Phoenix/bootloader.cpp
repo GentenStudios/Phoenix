@@ -1,19 +1,19 @@
-#include <Windowing/window.hpp>
-#include <Phoenix/phoenix.hpp>
+#include <Windowing/Window.hpp>
+#include <Phoenix/Phoenix.hpp>
 
-#include <Renderer/device.hpp>
-#include <Renderer/renderpass.hpp>
-#include <Renderer/resourcetable.hpp>
-#include <Renderer/resourcetablelayout.hpp>
-#include <Renderer/pipeline.hpp>
-#include <Renderer/pipelinelayout.hpp>
-#include <Renderer/buffer.hpp>
-#include <Renderer/devicememory.hpp>
-#include <Renderer/staticmesh.hpp>
-#include <Renderer/texture.hpp>
-#include <Renderer/framebufferattachment.hpp>
-#include <Renderer/rendertarget.hpp>
-#include <ResourceManager/rendertechnique.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/Renderpass.hpp>
+#include <Renderer/ResourceTable.hpp>
+#include <Renderer/ResourceTableLayout.hpp>
+#include <Renderer/Pipeline.hpp>
+#include <Renderer/PipelineLayout.hpp>
+#include <Renderer/Buffer.hpp>
+#include <Renderer/DeviceMemory.hpp>
+#include <Renderer/StaticMesh.hpp>
+#include <Renderer/Texture.hpp>
+#include <Renderer/FramebufferAttachment.hpp>
+#include <Renderer/RenderTarget.hpp>
+#include <ResourceManager/RenderTechnique.hpp>
 
 #include <lodepng.h>
 
