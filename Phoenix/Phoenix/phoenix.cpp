@@ -7,6 +7,12 @@
 #include <Renderer/renderpass.hpp>
 #include <Renderer/texture.hpp>
 #include <ResourceManager/globalresources.hpp>
+#include <Renderer/devicememory.hpp>
+#include <Renderer/camera.hpp>
+#include <Renderer/buffer.hpp>
+#include <Renderer/ResourceTable.hpp>
+#include <ResourceManager/rendertechnique.hpp>
+#include <Phoenix/World.hpp>
 
 Phoenix* Phoenix::mInstance = nullptr;
 
@@ -34,8 +40,13 @@ Phoenix::Phoenix(Window* window) : mWindow(window)
 
 	CreateRenderPassResource();
 	CreateGlobalResources(mDevice.get(), mResourceManager.get());
+	CreateMemoryHeaps();
 
-	// Load core graphic pipelines
+	CreateCameraBuffer();
+	InitCamera();
+	InitWorld();
+
+	// Temporary global defition of all pipelines, will eventualy use the mod loader to load pipelines
 	mResourceManager->LoadPipelineDictionary("Definitions.xml", GetPrimaryRenderTarget()->GetRenderPass());
 
 	mInstance = this;
@@ -46,6 +57,10 @@ Phoenix::~Phoenix()
 	mInstance = nullptr;
 
 	mResourceManager.reset();
+
+	DestroyMemoryHeaps();
+
+	mWorld.reset();
 
 	mDevice.reset();
 }
@@ -95,6 +110,9 @@ void Phoenix::RebuildCommandBuffers()
 				&scissor
 			);
 
+			// Example Rendering
+
+			mWorld->Draw(commandBuffers, i);
 
 
 
@@ -129,6 +147,8 @@ void Phoenix::RebuildCommandBuffers()
 
 void Phoenix::Update()
 {
+	UpdateCamera();
+	mWorld->Update();
 	mDevice->Present();
 }
 
@@ -138,6 +158,12 @@ void Phoenix::Validate()
 
 	RebuildRenderPassResources();
 	RebuildCommandBuffers();
+}
+
+void Phoenix::UpdateCamera()
+{
+	mCamera->Update();
+	mCameraBuffer->TransferInstantly(&mCamera->mCamera, sizeof(Camera::CameraPacket));
 }
 
 void Phoenix::RebuildRenderPassResources()
@@ -167,4 +193,45 @@ void Phoenix::CreateRenderPassResource()
 			mDevice->GetWindowHeight()
 		);
 	}
+}
+
+void Phoenix::CreateMemoryHeaps()
+{
+	uint32_t deviceLocalMemorySize = 40 * 1024 * 1024;
+	uint32_t mappableMemorySize = 240 * 1024 * 1024;
+
+	mDeviceLocalMemoryHeap = std::unique_ptr<MemoryHeap>(new MemoryHeap(mDevice.get(), deviceLocalMemorySize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
+	mGPUMappableMemoryHeap = std::unique_ptr<MemoryHeap>(new MemoryHeap(mDevice.get(), mappableMemorySize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
+
+	mResourceManager->RegisterResource<MemoryHeap>("DeviceLocalMemoryHeap", mDeviceLocalMemoryHeap.get(), false);
+	mResourceManager->RegisterResource<MemoryHeap>("GPUMappableMemoryHeap", mGPUMappableMemoryHeap.get(), false);
+}
+
+void Phoenix::DestroyMemoryHeaps()
+{
+	mDeviceLocalMemoryHeap.reset();
+	mGPUMappableMemoryHeap.reset();
+}
+
+void Phoenix::CreateCameraBuffer()
+{
+	mCameraBuffer = new Buffer(
+		mDevice.get(), mGPUMappableMemoryHeap.get(), sizeof(Camera::CameraPacket),
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE
+	);
+	mResourceManager->RegisterResource<Buffer>("CameraBuffer", mCameraBuffer);
+	mResourceManager->GetResource<ResourceTable>("CameraResourceTable")->Bind(0, mCameraBuffer);
+}
+
+void Phoenix::InitCamera()
+{
+	mCamera = new Camera(mWindow->GetWidth(), mWindow->GetHeight());
+	mCamera->Move(0.0f, 0.0f, 20.0f);
+	mResourceManager->RegisterResource("Camera", mCamera, true);
+}
+
+void Phoenix::InitWorld()
+{
+	mWorld = std::unique_ptr<World>(new World(mDevice.get(), mGPUMappableMemoryHeap.get(), mResourceManager.get()));
+	mResourceManager->RegisterResource("World", mWorld.get(), false);
 }
