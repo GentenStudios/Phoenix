@@ -7,11 +7,12 @@ class RenderDevice;
 class PipelineLayout
 {
 public:
-	PipelineLayout( RenderDevice* device, VkDescriptorSetLayout* descriptorSetLayouts, uint32_t descriptorSetLayoutCount );
-	~PipelineLayout( );
+	PipelineLayout(RenderDevice* device, VkDescriptorSetLayout* descriptorSetLayouts, uint32_t descriptorSetLayoutCount);
+	~PipelineLayout();
 
-	VkPipelineLayout GetPipelineLayout( ) { return mPipelineLayout; }
+	VkPipelineLayout GetPipelineLayout() { return mPipelineLayout; }
+
 private:
-	RenderDevice* mDevice;
+	RenderDevice*    mDevice;
 	VkPipelineLayout mPipelineLayout;
 };

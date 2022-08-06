@@ -5,5 +5,4 @@
 class RenderDevice;
 class ResourceManager;
 
-void CreateGlobalResources( RenderDevice* device, ResourceManager* resourceManager );
-
+void CreateGlobalResources(RenderDevice* device, ResourceManager* resourceManager);
