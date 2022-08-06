@@ -2,22 +2,17 @@
 
 #include <Globals/Globals.hpp>
 
-Camera::Camera( uint32_t width, uint32_t height )
+Camera::Camera(uint32_t width, uint32_t height)
 {
-	SetMatrixPosition( glm::vec3() );
-	SetProjection( width, height );
+	SetMatrixPosition(glm::vec3());
+	SetProjection(width, height);
 
-	Update( ); 
+	Update();
 }
 
-void Camera::SetProjection( uint32_t width, uint32_t height)
+void Camera::SetProjection(uint32_t width, uint32_t height)
 {
-	mProjection = glm::perspective(
-		glm::radians( 45.0f ),
-		(float) width / (float) height,
-		10.0f,
-		100.0f
-	);
+	mProjection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 10.0f, 100.0f);
 	mProjection[1][1] *= -1.0f;
 
 	/*float aspect = static_cast<float>(width) / static_cast<float>(height);
@@ -39,29 +34,22 @@ void Camera::SetProjection( uint32_t width, uint32_t height)
 	*/
 }
 
-void Camera::Move( glm::vec3 position )
-{
-	Move( position.x, position.y, position.z );
-}
+void Camera::Move(glm::vec3 position) { Move(position.x, position.y, position.z); }
 
-void Camera::Move( float x, float y, float z )
-{
-	SetMatrixPosition(-glm::vec3(x, y, z));
-}
+void Camera::Move(float x, float y, float z) { SetMatrixPosition(-glm::vec3(x, y, z)); }
 
-void Camera::Update( )
+void Camera::Update()
 {
 	mCamera.ProPos = mProjection * mPosition;
-	UpdateFrustrum( mCamera.ProPos );
+	UpdateFrustrum(mCamera.ProPos);
 	mOutOfDateFrustrum = false;
 }
 
-bool Camera::CheckSphereFrustrum( glm::vec3 pos, float radius )
+bool Camera::CheckSphereFrustrum(glm::vec3 pos, float radius)
 {
-	for ( auto i = 0; i < 6; i++ )
+	for (auto i = 0; i < 6; i++)
 	{
-		if ((mCamera.planes[i].x * pos.x) + (mCamera.planes[i].y * pos.y) +
-			(mCamera.planes[i].z * pos.z) + mCamera.planes[i].w <= -radius )
+		if ((mCamera.planes[i].x * pos.x) + (mCamera.planes[i].y * pos.y) + (mCamera.planes[i].z * pos.z) + mCamera.planes[i].w <= -radius)
 		{
 			return false;
 		}
@@ -69,13 +57,13 @@ bool Camera::CheckSphereFrustrum( glm::vec3 pos, float radius )
 	return true;
 }
 
-void Camera::SetMatrixPosition( glm::vec3 position )
+void Camera::SetMatrixPosition(glm::vec3 position)
 {
-	//mPosition = glm::lookAt( glm::vec3( 0, 0, 1 ), glm::vec3( 0, 0, 0 ), glm::vec3( 0, 1, 0 ) );
-	mPosition = glm::translate( glm::mat4( 1.0f ), position );
+	// mPosition = glm::lookAt( glm::vec3( 0, 0, 1 ), glm::vec3( 0, 0, 0 ), glm::vec3( 0, 1, 0 ) );
+	mPosition = glm::translate(glm::mat4(1.0f), position);
 }
 
-void Camera::UpdateFrustrum( glm::mat4 matrix )
+void Camera::UpdateFrustrum(glm::mat4 matrix)
 {
 	mCamera.planes[LEFT].x = matrix[0].w + matrix[0].x;
 	mCamera.planes[LEFT].y = matrix[1].w + matrix[1].x;
@@ -106,10 +94,11 @@ void Camera::UpdateFrustrum( glm::mat4 matrix )
 	mCamera.planes[FRONT].y = matrix[1].w - matrix[1].z;
 	mCamera.planes[FRONT].z = matrix[2].w - matrix[2].z;
 	mCamera.planes[FRONT].w = matrix[3].w - matrix[3].z;
-	
-	for ( auto i = 0; i < 6; i++ )
+
+	for (auto i = 0; i < 6; i++)
 	{
-		float length = sqrtf( mCamera.planes[i].x * mCamera.planes[i].x + mCamera.planes[i].y * mCamera.planes[i].y + mCamera.planes[i].z * mCamera.planes[i].z );
+		float length = sqrtf(mCamera.planes[i].x * mCamera.planes[i].x + mCamera.planes[i].y * mCamera.planes[i].y +
+		                     mCamera.planes[i].z * mCamera.planes[i].z);
 		mCamera.planes[i] /= length;
 	}
 }

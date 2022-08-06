@@ -2,11 +2,11 @@
 
 #include <Renderer/Vulkan.hpp>
 
-#include <memory>
-#include <vector>
-#include <map>
 #include <functional>
+#include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include <pugixml.hpp>
 
@@ -24,58 +24,59 @@ class MemoryHeap;
 class Camera;
 class RenderTechnique;
 class Buffer;
-class World;
 
-class Phoenix
+namespace phx
 {
-public:
+	class World;
 
-	Phoenix(Window* window);
+	class Phoenix
+	{
+	public:
+		Phoenix(Window* window);
 
-	~Phoenix();
+		~Phoenix();
 
-	void RebuildCommandBuffers();
+		void RebuildCommandBuffers();
 
-	void Update();
+		void Update();
 
-	void Validate();
+		void Validate();
 
-	RenderTarget* GetPrimaryRenderTarget() { return mPrimaryRenderTarget; }
+		RenderTarget* GetPrimaryRenderTarget() { return mPrimaryRenderTarget; }
 
-private:
+	private:
+		void UpdateCamera();
 
-	void UpdateCamera();
+		void RebuildRenderPassResources();
 
-	void RebuildRenderPassResources();
+		void CreateRenderPassResource();
 
-	void CreateRenderPassResource();
+		void CreateMemoryHeaps();
 
-	void CreateMemoryHeaps();
+		void DestroyMemoryHeaps();
 
-	void DestroyMemoryHeaps();
+		void CreateCameraBuffer();
 
-	void CreateCameraBuffer();
+		void InitCamera();
 
-	void InitCamera();
+		void InitWorld();
 
-	void InitWorld();
+		Window* mWindow;
 
-	Window* mWindow;
+		std::unique_ptr<RenderDevice>    mDevice;
+		std::unique_ptr<ResourceManager> mResourceManager;
 
-	std::unique_ptr<RenderDevice> mDevice;
-	std::unique_ptr<ResourceManager> mResourceManager;
+		std::unique_ptr<World> mWorld;
 
-	std::unique_ptr<World> mWorld;
+		std::unique_ptr<MemoryHeap> mScratchGPUMemoryHeap;
+		std::unique_ptr<MemoryHeap> mDeviceLocalMemoryHeap;
+		std::unique_ptr<MemoryHeap> mGPUMappableMemoryHeap;
 
-	std::unique_ptr<MemoryHeap> mScratchGPUMemoryHeap;
-	std::unique_ptr<MemoryHeap> mDeviceLocalMemoryHeap;
-	std::unique_ptr<MemoryHeap> mGPUMappableMemoryHeap;
+		RenderTarget* mPrimaryRenderTarget = nullptr;
 
-	RenderTarget* mPrimaryRenderTarget = nullptr;
+		Camera* mCamera;
+		Buffer* mCameraBuffer;
 
-	Camera* mCamera;
-	Buffer* mCameraBuffer;
-
-	static Phoenix* mInstance;
-};
-
+		static Phoenix* mInstance;
+	};
+} // namespace phx

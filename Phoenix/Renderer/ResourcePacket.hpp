@@ -13,9 +13,10 @@ class RenderTechnique;
 class ResourcePacketInterface
 {
 public:
-	ResourcePacketInterface( void* ptr ) : mPtr( ptr ) { }
-	virtual ~ResourcePacketInterface( ) { };
-	void* GetPtr( ) { return mPtr; }
+	ResourcePacketInterface(void* ptr) : mPtr(ptr) {}
+	virtual ~ResourcePacketInterface() {};
+	void* GetPtr() { return mPtr; }
+
 protected:
 	void* mPtr;
 };
@@ -24,12 +25,14 @@ template <typename T>
 class ResourceInstance : virtual public ResourcePacketInterface
 {
 public:
-	ResourceInstance( T* t, bool autoCleanup = true) : ResourcePacketInterface( t ), mAutoCleanup(autoCleanup) { }
-	T* Get( ) { return reinterpret_cast<T*>(mPtr); }
-	virtual ~ResourceInstance( )
+	ResourceInstance(T* t, bool autoCleanup = true) : ResourcePacketInterface(t), mAutoCleanup(autoCleanup) {}
+	T* Get() { return reinterpret_cast<T*>(mPtr); }
+	virtual ~ResourceInstance()
 	{
-		if(mAutoCleanup) delete reinterpret_cast<T*>(mPtr);
+		if (mAutoCleanup)
+			delete reinterpret_cast<T*>(mPtr);
 	}
+
 private:
 	bool mAutoCleanup;
 };

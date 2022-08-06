@@ -12,15 +12,16 @@ class MemoryHeap;
 class StaticMesh
 {
 public:
-	StaticMesh( RenderDevice* device, MemoryHeap* memoryHeap, char* vertexData, uint32_t vertexDataSize, char* indexData, uint32_t indexDataSize, uint32_t indexCount );
-	~StaticMesh( );
+	StaticMesh(RenderDevice* device, MemoryHeap* memoryHeap, char* vertexData, uint32_t vertexDataSize, char* indexData,
+	           uint32_t indexDataSize, uint32_t indexCount);
+	~StaticMesh();
 
-	void Use( VkCommandBuffer* commandBuffer, uint32_t index );
+	void Use(VkCommandBuffer* commandBuffer, uint32_t index);
 
-	void Draw( VkCommandBuffer* commandBuffer, uint32_t index );
+	void Draw(VkCommandBuffer* commandBuffer, uint32_t index);
+
 private:
-
-	RenderDevice* mDevice;
+	RenderDevice*           mDevice;
 	std::unique_ptr<Buffer> mVertexBuffer;
 	std::unique_ptr<Buffer> mIndexBuffer;
 
