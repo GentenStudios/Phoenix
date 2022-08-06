@@ -4,6 +4,11 @@
 
 class Buffer;
 
+struct VertexData
+{
+	glm::vec3 position;
+};
+
 class Chunk
 {
 public:

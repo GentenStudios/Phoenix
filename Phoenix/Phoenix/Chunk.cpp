@@ -114,12 +114,12 @@ void Chunk::GenerateMesh()
 
     void* memoryPtr = nullptr;
     mVertexBuffer->GetDeviceMemory()->Map(
-        MAX_VERTECIES_PER_CHUNK * sizeof(glm::vec3),
+        MAX_VERTECIES_PER_CHUNK * sizeof(VertexData),
         mVertexBuffer->GetMemoryOffset() + mVertexBufferOffset,
         memoryPtr
     );
 
-    glm::vec3* vertexStream = reinterpret_cast<glm::vec3*>(memoryPtr);
+    VertexData* vertexStream = reinterpret_cast<VertexData*>(memoryPtr);
 
 
     for (int i = 0; i < MAX_BLOCKS_PER_CHUNK; ++i)
@@ -137,10 +137,10 @@ void Chunk::GenerateMesh()
         {
 
 
-            *vertexStream = globalVerticies[j];
-            (*vertexStream).x += x;
-            (*vertexStream).y += y;
-            (*vertexStream).z += z;
+            (*vertexStream).position = globalVerticies[j];
+            (*vertexStream).position.x += x;
+            (*vertexStream).position.y += y;
+            (*vertexStream).position.z += z;
 
             vertexStream++;
         }

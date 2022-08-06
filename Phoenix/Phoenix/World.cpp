@@ -14,7 +14,7 @@
 World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager) : mDevice(device), mResourceManager(resourceManager)
 {
 	mVertexBuffer = std::unique_ptr<Buffer>(new Buffer(
-		mDevice, memoryHeap, MAX_VERTECIES_PER_CHUNK * sizeof(glm::vec3) * MAX_CHUNKS,
+		mDevice, memoryHeap, MAX_VERTECIES_PER_CHUNK * sizeof(VertexData) * MAX_CHUNKS,
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_SHARING_MODE_EXCLUSIVE
 	));
 
