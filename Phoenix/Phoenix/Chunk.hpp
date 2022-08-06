@@ -19,8 +19,11 @@ public:
 
 private:
 
+	void GenerateMesh();
+
 	unsigned int mVertexCount;
 	unsigned int mVertexBufferOffset;
 	Buffer* mVertexBuffer;
 
+	bool mDirty;
 };

@@ -1,7 +1,5 @@
 #include <World.hpp>
 
-#include <globals.hpp>
-
 #include <Chunk.hpp>
 #include <device.hpp>
 #include <buffer.hpp>
@@ -16,7 +14,7 @@
 World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager) : mDevice(device), mResourceManager(resourceManager)
 {
 	mVertexBuffer = std::unique_ptr<Buffer>(new Buffer(
-		mDevice, memoryHeap, MAX_VERTECIES_PER_CHUNK * MAX_CHUNKS,
+		mDevice, memoryHeap, MAX_VERTECIES_PER_CHUNK * sizeof(glm::vec3) * MAX_CHUNKS,
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_SHARING_MODE_EXCLUSIVE
 	));
 
@@ -25,6 +23,10 @@ World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* reso
 		VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_SHARING_MODE_EXCLUSIVE
 	));
 
+	mPositionBuffer = std::unique_ptr<Buffer>(new Buffer(
+		mDevice, memoryHeap, sizeof(glm::mat4) * MAX_CHUNKS,
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_SHARING_MODE_EXCLUSIVE
+	));
 
 	mIndirectBufferCPU = std::unique_ptr<VkDrawIndirectCommand>(new VkDrawIndirectCommand[MAX_CHUNKS]);
 
@@ -43,10 +45,35 @@ World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* reso
 
 	mChunks = new Chunk[MAX_CHUNKS];
 
+
+	mPositionBufferCPU = std::unique_ptr<glm::mat4>(new glm::mat4[MAX_CHUNKS]);
+
 	for (int i = 0; i < MAX_CHUNKS; ++i)
 	{
-		mChunks[i].SetVertexMemory(mVertexBuffer.get(), MAX_VERTECIES_PER_CHUNK * i);
+		mChunks[i].SetVertexMemory(mVertexBuffer.get(), MAX_VERTECIES_PER_CHUNK * sizeof(glm::vec3) * i);
+
+		glm::mat4 modelMatrix(1.0f);
+
+
+		float x = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
+		float y = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
+		float z = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
+
+		x -= i % MAX_WORLD_CHUNKS_PER_AXIS;
+		y -= (i / MAX_WORLD_CHUNKS_PER_AXIS) % MAX_WORLD_CHUNKS_PER_AXIS;
+		z -= i / (MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS);
+
+		x *= CHUNK_BLOCK_SIZE;
+		y *= CHUNK_BLOCK_SIZE;
+		z *= CHUNK_BLOCK_SIZE;
+
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(x,y,z));
+
+		mPositionBufferCPU.get()[i] = modelMatrix;
 	}
+
+	// Temp, need to be updated dynaicly
+	UpdateAllPositionBuffers();
 }
 
 World::~World()
@@ -58,6 +85,7 @@ World::~World()
 
 void World::Update()
 {
+
 	for (int i = 0; i < MAX_CHUNKS; ++i)
 	{
 		mChunks[i].Update();
@@ -100,13 +128,13 @@ void World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
 	{
 		VkDeviceSize positionOffsets[] = { sizeof(glm::mat4) * i };
 		// Position data
-		/*vkCmdBindVertexBuffers(
+		vkCmdBindVertexBuffers(
 			commandBuffer[index],
 			1,
 			1,
 			&mPositionBuffer->GetBuffer(),
 			positionOffsets
-		);*/
+		);
 		vkCmdDrawIndirect(
 			commandBuffer[index],
 			mIndirectDrawCommands->GetBuffer(),
@@ -121,4 +149,9 @@ void World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
 void World::UpdateAllIndirectDraws()
 {
 	mIndirectDrawCommands->TransferInstantly(mIndirectBufferCPU.get(), sizeof(VkDrawIndirectCommand) * MAX_CHUNKS);
+}
+
+void World::UpdateAllPositionBuffers()
+{
+	mPositionBuffer->TransferInstantly(mPositionBufferCPU.get(), sizeof(glm::mat4) * MAX_CHUNKS);
 }

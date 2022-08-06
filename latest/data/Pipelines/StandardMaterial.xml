@@ -2,21 +2,17 @@
 <Pipeline type="Graphics" topology="Triangle">
 	<VertexBindings>
 		<Binding binding="0" stride="12" rate="INPUT_RATE_VERTEX" />   <!--World Position-->
-		<!--<Binding binding="0" stride="36" rate="INPUT_RATE_VERTEX" />-->   <!--World Position-->
-		<!--<Binding binding="1" stride="64" rate="INPUT_RATE_INSTANCE" />-->   <!--World Position-->
+		<Binding binding="1" stride="64" rate="INPUT_RATE_INSTANCE" />   <!--World Position-->
 	</VertexBindings>
 
 	<VertexInputAttributes>
 		<Attribute location="0" binding="0" format="R32G32B32_SFLOAT" offset="0" /> <!-- Position-->
-		<!--<Attribute location="1" binding="0" format="R32G32B32_SFLOAT" offset="12" />--> <!-- Normal-->
-		<!--<Attribute location="2" binding="0" format="R32G32_SFLOAT" offset="24" />--> <!-- Tex Coords-->
-		<!--<Attribute location="3" binding="0" format="R32_UINT" offset="32" />--> <!-- Material Index-->
 
 		<!-- Position data requires 4 vec4s worth of data -->
-		<!--<Attribute location="4" binding="1" format="R32G32B32A32_SFLOAT" offset="0" />
-		<Attribute location="5" binding="1" format="R32G32B32A32_SFLOAT" offset="16" />
-		<Attribute location="6" binding="1" format="R32G32B32A32_SFLOAT" offset="32" />
-		<Attribute location="7" binding="1" format="R32G32B32A32_SFLOAT" offset="48" />-->
+		<Attribute location="1" binding="1" format="R32G32B32A32_SFLOAT" offset="0" />
+		<Attribute location="2" binding="1" format="R32G32B32A32_SFLOAT" offset="16" />
+		<Attribute location="3" binding="1" format="R32G32B32A32_SFLOAT" offset="32" />
+		<Attribute location="4" binding="1" format="R32G32B32A32_SFLOAT" offset="48" />
 	</VertexInputAttributes>
 
 	<Descriptors>

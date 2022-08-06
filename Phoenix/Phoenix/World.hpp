@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <globals.hpp>
+
 #include <vulkan.hpp>
 
 class Chunk;
@@ -25,12 +27,17 @@ private:
 
 	void UpdateAllIndirectDraws();
 
+	void UpdateAllPositionBuffers();
+
 	RenderDevice* mDevice;
 	ResourceManager* mResourceManager;
 	std::unique_ptr<Buffer> mVertexBuffer;
 
 	std::unique_ptr<VkDrawIndirectCommand> mIndirectBufferCPU;
 	std::unique_ptr<Buffer> mIndirectDrawCommands;
+
+	std::unique_ptr<glm::mat4> mPositionBufferCPU;
+	std::unique_ptr<Buffer> mPositionBuffer;
 
 	Chunk* mChunks;
 
