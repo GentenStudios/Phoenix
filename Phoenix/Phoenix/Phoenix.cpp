@@ -14,11 +14,11 @@
 #include <ResourceManager/RenderTechnique.hpp>
 #include <Phoenix/World.hpp>
 
-Phoenix* Phoenix::mInstance = nullptr;
+phx::Phoenix* phx::Phoenix::mInstance = nullptr;
 
 void WindowEvent(SDL_Event& event, void* ref)
 {
-	Phoenix* engine = reinterpret_cast<Phoenix*>(ref);
+	phx::Phoenix* engine = reinterpret_cast<phx::Phoenix*>(ref);
 
 	switch (event.window.event)
 	{
@@ -30,7 +30,7 @@ void WindowEvent(SDL_Event& event, void* ref)
 }
 
 
-Phoenix::Phoenix(Window* window) : mWindow(window)
+phx::Phoenix::Phoenix(Window* window) : mWindow(window)
 {
 	window->AddEventCallback(SDL_WINDOWEVENT, WindowEvent, this);
 
@@ -52,7 +52,7 @@ Phoenix::Phoenix(Window* window) : mWindow(window)
 	mInstance = this;
 }
 
-Phoenix::~Phoenix()
+phx::Phoenix::~Phoenix()
 {
 	mInstance = nullptr;
 
@@ -65,7 +65,7 @@ Phoenix::~Phoenix()
 	mDevice.reset();
 }
 
-void Phoenix::RebuildCommandBuffers()
+void phx::Phoenix::RebuildCommandBuffers()
 {
 	VkViewport viewport = {};
 	viewport.x = 0;
@@ -145,14 +145,14 @@ void Phoenix::RebuildCommandBuffers()
 	}
 }
 
-void Phoenix::Update()
+void phx::Phoenix::Update()
 {
 	UpdateCamera();
 	mWorld->Update();
 	mDevice->Present();
 }
 
-void Phoenix::Validate()
+void phx::Phoenix::Validate()
 {
 	mDevice->WindowChange(mWindow->GetWidth(), mWindow->GetHeight());
 
@@ -160,13 +160,13 @@ void Phoenix::Validate()
 	RebuildCommandBuffers();
 }
 
-void Phoenix::UpdateCamera()
+void phx::Phoenix::UpdateCamera()
 {
 	mCamera->Update();
 	mCameraBuffer->TransferInstantly(&mCamera->mCamera, sizeof(Camera::CameraPacket));
 }
 
-void Phoenix::RebuildRenderPassResources()
+void phx::Phoenix::RebuildRenderPassResources()
 {
 	mPrimaryRenderTarget->ScreenResize(
 		mDevice->GetWindowWidth(),
@@ -174,7 +174,7 @@ void Phoenix::RebuildRenderPassResources()
 	);
 }
 
-void Phoenix::CreateRenderPassResource()
+void phx::Phoenix::CreateRenderPassResource()
 {
 	if (mPrimaryRenderTarget == nullptr)
 	{
@@ -195,7 +195,7 @@ void Phoenix::CreateRenderPassResource()
 	}
 }
 
-void Phoenix::CreateMemoryHeaps()
+void phx::Phoenix::CreateMemoryHeaps()
 {
 	uint32_t deviceLocalMemorySize = 40 * 1024 * 1024;
 	uint32_t mappableMemorySize = 200 * 1024 * 1024;
@@ -207,13 +207,13 @@ void Phoenix::CreateMemoryHeaps()
 	mResourceManager->RegisterResource<MemoryHeap>("GPUMappableMemoryHeap", mGPUMappableMemoryHeap.get(), false);
 }
 
-void Phoenix::DestroyMemoryHeaps()
+void phx::Phoenix::DestroyMemoryHeaps()
 {
 	mDeviceLocalMemoryHeap.reset();
 	mGPUMappableMemoryHeap.reset();
 }
 
-void Phoenix::CreateCameraBuffer()
+void phx::Phoenix::CreateCameraBuffer()
 {
 	mCameraBuffer = new Buffer(
 		mDevice.get(), mGPUMappableMemoryHeap.get(), sizeof(Camera::CameraPacket),
@@ -223,14 +223,14 @@ void Phoenix::CreateCameraBuffer()
 	mResourceManager->GetResource<ResourceTable>("CameraResourceTable")->Bind(0, mCameraBuffer);
 }
 
-void Phoenix::InitCamera()
+void phx::Phoenix::InitCamera()
 {
 	mCamera = new Camera(mWindow->GetWidth(), mWindow->GetHeight());
 	mCamera->Move(0.0f, 0.0f, 20.0f);
 	mResourceManager->RegisterResource("Camera", mCamera, true);
 }
 
-void Phoenix::InitWorld()
+void phx::Phoenix::InitWorld()
 {
 	mWorld = std::unique_ptr<World>(new World(mDevice.get(), mGPUMappableMemoryHeap.get(), mResourceManager.get()));
 	mResourceManager->RegisterResource("World", mWorld.get(), false);

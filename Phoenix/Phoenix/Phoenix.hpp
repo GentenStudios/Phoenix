@@ -24,58 +24,61 @@ class MemoryHeap;
 class Camera;
 class RenderTechnique;
 class Buffer;
-class World;
 
-class Phoenix
+namespace phx
 {
-public:
+	class World;
 
-	Phoenix(Window* window);
+	class Phoenix
+	{
+	public:
 
-	~Phoenix();
+		Phoenix(Window* window);
 
-	void RebuildCommandBuffers();
+		~Phoenix();
 
-	void Update();
+		void RebuildCommandBuffers();
 
-	void Validate();
+		void Update();
 
-	RenderTarget* GetPrimaryRenderTarget() { return mPrimaryRenderTarget; }
+		void Validate();
 
-private:
+		RenderTarget* GetPrimaryRenderTarget() { return mPrimaryRenderTarget; }
 
-	void UpdateCamera();
+	private:
 
-	void RebuildRenderPassResources();
+		void UpdateCamera();
 
-	void CreateRenderPassResource();
+		void RebuildRenderPassResources();
 
-	void CreateMemoryHeaps();
+		void CreateRenderPassResource();
 
-	void DestroyMemoryHeaps();
+		void CreateMemoryHeaps();
 
-	void CreateCameraBuffer();
+		void DestroyMemoryHeaps();
 
-	void InitCamera();
+		void CreateCameraBuffer();
 
-	void InitWorld();
+		void InitCamera();
 
-	Window* mWindow;
+		void InitWorld();
 
-	std::unique_ptr<RenderDevice> mDevice;
-	std::unique_ptr<ResourceManager> mResourceManager;
+		Window* mWindow;
 
-	std::unique_ptr<World> mWorld;
+		std::unique_ptr<RenderDevice> mDevice;
+		std::unique_ptr<ResourceManager> mResourceManager;
 
-	std::unique_ptr<MemoryHeap> mScratchGPUMemoryHeap;
-	std::unique_ptr<MemoryHeap> mDeviceLocalMemoryHeap;
-	std::unique_ptr<MemoryHeap> mGPUMappableMemoryHeap;
+		std::unique_ptr<World> mWorld;
 
-	RenderTarget* mPrimaryRenderTarget = nullptr;
+		std::unique_ptr<MemoryHeap> mScratchGPUMemoryHeap;
+		std::unique_ptr<MemoryHeap> mDeviceLocalMemoryHeap;
+		std::unique_ptr<MemoryHeap> mGPUMappableMemoryHeap;
 
-	Camera* mCamera;
-	Buffer* mCameraBuffer;
+		RenderTarget* mPrimaryRenderTarget = nullptr;
 
-	static Phoenix* mInstance;
-};
+		Camera* mCamera;
+		Buffer* mCameraBuffer;
 
+		static Phoenix* mInstance;
+	};
+}

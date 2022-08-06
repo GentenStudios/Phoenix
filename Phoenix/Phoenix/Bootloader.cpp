@@ -21,17 +21,16 @@
 #include <assert.h>
 
 std::unique_ptr<Window> window;
-std::unique_ptr<Phoenix> engine;
+std::unique_ptr<phx::Phoenix> engine;
 
 int main( int, char** )
 {
-
 	const uint32_t width = 1080;
 	const uint32_t height = 720;
 
 	window = std::unique_ptr<Window>( new Window( "Phoenix", width, height ) );
 
-	engine = std::unique_ptr<Phoenix>( new Phoenix( window.get() ) );
+	engine = std::unique_ptr<phx::Phoenix>( new phx::Phoenix( window.get() ) );
 	
 	engine->RebuildCommandBuffers( );
 

@@ -3,33 +3,25 @@
 #include <Renderer/Buffer.hpp>
 #include <Renderer/DeviceMemory.hpp>
 
-Chunk::Chunk()
+phx::Chunk::Chunk()
 {
-	mVertexBufferOffset = 0;
-	mVertexBuffer = nullptr;
-	mVertexCount = 0;
-
-    mDirty = true;
-
     // Temp random blocks
     for (int i = 0; i < CHUNK_BLOCK_SIZE; ++i)
-        for (int j = 0; j < CHUNK_BLOCK_SIZE; ++j)
-            for (int k = 0; k < CHUNK_BLOCK_SIZE; ++k)
-            {
-                // Randomly place blocks for now
-                mBlocks[i][j][k] = 1;// rand() % 4 == 0 ? 1 : 0;
-            }
-
-}
-
-Chunk::~Chunk()
-{
+    {
+	    for (int j = 0; j < CHUNK_BLOCK_SIZE; ++j)
+	    {
+		    for (int k = 0; k < CHUNK_BLOCK_SIZE; ++k)
+		    {
+			    // Randomly place blocks for now
+			    m_blocks[i][j][k] = 1;// rand() % 4 == 0 ? 1 : 0;
+		    }
+	    }
+    }
 }
 
 // Temp mesh
-const glm::vec3 BLOCK_VERTICIES[] =
+const glm::vec3 BLOCK_VERTICES[] =
 {
-
     {0.f, 1.f, 1.f},
     {0.f, 1.f, 0.f},
     {0.f, 0.f, 0.f}, // east (right)
@@ -120,50 +112,48 @@ static const glm::vec2 BLOCK_UVS[] = {
         {1.f,  0.f},
 };
 
-void Chunk::Update()
+void phx::Chunk::Update()
 {
-    if(mDirty)
+    if(m_dirty)
     {
         GenerateMesh();
-        mDirty = false;
+        m_dirty = false;
     }
 }
 
-void Chunk::SetVertexMemory(Buffer* buffer, unsigned int offset)
+void phx::Chunk::SetVertexMemory(Buffer* buffer, unsigned int offset)
 {
-	mVertexBuffer = buffer;
-	mVertexBufferOffset = offset;
+	m_vertexBuffer = buffer;
+	m_vertexBufferOffset = offset;
 }
 
-unsigned int Chunk::GetVertexCount()
+unsigned int phx::Chunk::GetVertexCount()
 {
-	return mVertexCount;
+	return m_vertexCount;
 }
 
-uint64_t Chunk::GetBlock(int x, int y, int z)
+uint64_t phx::Chunk::GetBlock(int x, int y, int z)
 {
-    return mBlocks[x][y][z];
+    return m_blocks[x][y][z];
 }
 
-void Chunk::SetBlock(int x, int y, int z, uint64_t block)
+void phx::Chunk::SetBlock(int x, int y, int z, uint64_t block)
 {
-    mBlocks[x][y][z] = block;
+    m_blocks[x][y][z] = block;
 }
 
-void Chunk::GenerateMesh()
+void phx::Chunk::GenerateMesh()
 {
     int vertexCount = 0;
 
     void* memoryPtr = nullptr;
-    mVertexBuffer->GetDeviceMemory()->Map(
-        MAX_VERTECIES_PER_CHUNK * sizeof(VertexData),
-        mVertexBuffer->GetMemoryOffset() + mVertexBufferOffset,
+    m_vertexBuffer->GetDeviceMemory()->Map(
+        MAX_VERTICES_PER_CHUNK * sizeof(VertexData),
+        m_vertexBuffer->GetMemoryOffset() + m_vertexBufferOffset,
         memoryPtr
     );
 
     VertexData* vertexStream = reinterpret_cast<VertexData*>(memoryPtr);
-
-
 
     for (int x = 0; x < CHUNK_BLOCK_SIZE; ++x)
     {
@@ -172,18 +162,18 @@ void Chunk::GenerateMesh()
             for (int z = 0; z < CHUNK_BLOCK_SIZE; ++z)
             {
                 // Check if we are about to render air
-                if (mBlocks[x][y][z] == 0)
+                if (m_blocks[x][y][z] == 0)
                     continue;
 
 
                 bool visibilitySet[6] =
                 {
-                    (x == 0) || (mBlocks[x - 1][y][z] == 0),
-                    (x == CHUNK_BLOCK_SIZE - 1) || (mBlocks[x + 1][y][z] == 0),
-                    (y == 0) || (mBlocks[x][y - 1][z] == 0),
-                    (y == CHUNK_BLOCK_SIZE - 1) || (mBlocks[x][y + 1][z] == 0),
-                    (z == 0) || (mBlocks[x][y][z - 1] == 0),
-                    (z == CHUNK_BLOCK_SIZE - 1) || (mBlocks[x][y][z + 1] == 0),
+                    (x == 0) || (m_blocks[x - 1][y][z] == 0),
+                    (x == CHUNK_BLOCK_SIZE - 1) || (m_blocks[x + 1][y][z] == 0),
+                    (y == 0) || (m_blocks[x][y - 1][z] == 0),
+                    (y == CHUNK_BLOCK_SIZE - 1) || (m_blocks[x][y + 1][z] == 0),
+                    (z == 0) || (m_blocks[x][y][z - 1] == 0),
+                    (z == CHUNK_BLOCK_SIZE - 1) || (m_blocks[x][y][z + 1] == 0),
                 };
 
                 // Loop through for all faces of the block
@@ -197,7 +187,7 @@ void Chunk::GenerateMesh()
 
                             unsigned int lookupIndex = k + (j * 6);
 
-                            (*vertexStream).position = BLOCK_VERTICIES[lookupIndex];
+                            (*vertexStream).position = BLOCK_VERTICES[lookupIndex];
                             (*vertexStream).position.x += x;
                             (*vertexStream).position.y += y;
                             (*vertexStream).position.z += z;
@@ -219,8 +209,8 @@ void Chunk::GenerateMesh()
         }
     }
 
-    mVertexCount = vertexCount;
+    m_vertexCount = vertexCount;
 
 
-    mVertexBuffer->GetDeviceMemory()->UnMap();
+    m_vertexBuffer->GetDeviceMemory()->UnMap();
 }

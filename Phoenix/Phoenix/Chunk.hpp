@@ -4,38 +4,38 @@
 
 class Buffer;
 
-struct VertexData
+namespace phx
 {
-	glm::vec3 position;
-	glm::vec2 uv;
-};
+	struct VertexData
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+	};
 
-class Chunk
-{
-public:
-	Chunk();
+	class Chunk
+	{
+	public:
+		Chunk();
+		~Chunk() = default;
 
-	~Chunk();
+		void Update();
 
-	void Update();
+		void SetVertexMemory(Buffer* buffer, unsigned int offset);
+		unsigned int GetVertexCount();
 
-	void SetVertexMemory(Buffer* buffer, unsigned int offset);
+		uint64_t GetBlock(int x, int y, int z);
+		void SetBlock(int x, int y, int z, uint64_t block);
 
-	unsigned int GetVertexCount();
+	private:
+		void GenerateMesh();
 
-	uint64_t GetBlock(int x, int y, int z);
+	private:
+		unsigned int m_vertexCount = 0;
+		unsigned int m_vertexBufferOffset = 0;
+		Buffer* m_vertexBuffer = nullptr;
 
-	void SetBlock(int x, int y, int z, uint64_t block);
+		bool m_dirty = true;
 
-private:
-
-	void GenerateMesh();
-
-	unsigned int mVertexCount;
-	unsigned int mVertexBufferOffset;
-	Buffer* mVertexBuffer;
-
-	uint64_t mBlocks[CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE];
-
-	bool mDirty;
-};
+		uint64_t m_blocks[CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE];
+	};
+}

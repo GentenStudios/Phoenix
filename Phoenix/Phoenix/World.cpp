@@ -11,10 +11,10 @@
 
 #include <ResourceManager/RenderTechnique.hpp>
 
-World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager) : mDevice(device), mResourceManager(resourceManager)
+phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager) : mDevice(device), mResourceManager(resourceManager)
 {
 	mVertexBuffer = std::unique_ptr<Buffer>(new Buffer(
-		mDevice, memoryHeap, MAX_VERTECIES_PER_CHUNK * sizeof(VertexData) * MAX_CHUNKS,
+		mDevice, memoryHeap, MAX_VERTICES_PER_CHUNK * sizeof(VertexData) * MAX_CHUNKS,
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_SHARING_MODE_EXCLUSIVE
 	));
 
@@ -50,7 +50,7 @@ World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* reso
 
 	for (int i = 0; i < MAX_CHUNKS; ++i)
 	{
-		mChunks[i].SetVertexMemory(mVertexBuffer.get(), MAX_VERTECIES_PER_CHUNK * sizeof(glm::vec3) * i);
+		mChunks[i].SetVertexMemory(mVertexBuffer.get(), MAX_VERTICES_PER_CHUNK * sizeof(glm::vec3) * i);
 
 		glm::mat4 modelMatrix(1.0f);
 
@@ -76,14 +76,14 @@ World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* reso
 	UpdateAllPositionBuffers();
 }
 
-World::~World()
+phx::World::~World()
 {
 	mVertexBuffer.reset();
 
 	delete[] mChunks;
 }
 
-void World::Update()
+void phx::World::Update()
 {
 
 	for (int i = 0; i < MAX_CHUNKS; ++i)
@@ -103,16 +103,15 @@ void World::Update()
 	}
 }
 
-void World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
+void phx::World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
 {
 	RenderTechnique* standardMaterial = mResourceManager->GetResource<RenderTechnique>("StandardMaterial");
 
 	standardMaterial->GetPipeline()->Use(commandBuffer, index);
 
-	// todo find a way of auto binding global data for shaders, prehaps a global and local mapping
+	// todo find a way of auto binding global data for shaders, perhaps a global and local mapping
 	mResourceManager->GetResource<ResourceTable>("CameraResourceTable")->Use(commandBuffer, index, 0, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
 	mResourceManager->GetResource<ResourceTable>("SamplerArrayResourceTable")->Use(commandBuffer, index, 1, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
-
 
 	VkDeviceSize offsets[] = { 0 };
 
@@ -146,12 +145,12 @@ void World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
 
 }
 
-void World::UpdateAllIndirectDraws()
+void phx::World::UpdateAllIndirectDraws()
 {
 	mIndirectDrawCommands->TransferInstantly(mIndirectBufferCPU.get(), sizeof(VkDrawIndirectCommand) * MAX_CHUNKS);
 }
 
-void World::UpdateAllPositionBuffers()
+void phx::World::UpdateAllPositionBuffers()
 {
 	mPositionBuffer->TransferInstantly(mPositionBufferCPU.get(), sizeof(glm::mat4) * MAX_CHUNKS);
 }
