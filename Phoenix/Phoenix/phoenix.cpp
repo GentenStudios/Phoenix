@@ -11,6 +11,8 @@
 #include <camera.hpp>
 #include <buffer.hpp>
 #include <ResourceTable.hpp>
+#include <rendertechnique.hpp>
+#include <World.hpp>
 
 Phoenix* Phoenix::mInstance = nullptr;
 
@@ -42,6 +44,7 @@ Phoenix::Phoenix(Window* window) : mWindow(window)
 
 	CreateCameraBuffer();
 	InitCamera();
+	InitWorld();
 
 	// Temporary global defition of all pipelines, will eventualy use the mod loader to load pipelines
 	mResourceManager->LoadPipelineDictionary("Definitions.xml", GetPrimaryRenderTarget()->GetRenderPass());
@@ -56,6 +59,8 @@ Phoenix::~Phoenix()
 	mResourceManager.reset();
 
 	DestroyMemoryHeaps();
+
+	mWorld.reset();
 
 	mDevice.reset();
 }
@@ -105,6 +110,11 @@ void Phoenix::RebuildCommandBuffers()
 				&scissor
 			);
 
+			// Example Rendering
+
+			mWorld->Draw(commandBuffers, i);
+
+
 
 			vkCmdEndRenderPass(
 				commandBuffers[i]
@@ -137,6 +147,8 @@ void Phoenix::RebuildCommandBuffers()
 
 void Phoenix::Update()
 {
+	UpdateCamera();
+	mWorld->Update();
 	mDevice->Present();
 }
 
@@ -146,6 +158,12 @@ void Phoenix::Validate()
 
 	RebuildRenderPassResources();
 	RebuildCommandBuffers();
+}
+
+void Phoenix::UpdateCamera()
+{
+	mCamera->Update();
+	mCameraBuffer->TransferInstantly(&mCamera->mCamera, sizeof(Camera::CameraPacket));
 }
 
 void Phoenix::RebuildRenderPassResources()
@@ -208,6 +226,12 @@ void Phoenix::CreateCameraBuffer()
 void Phoenix::InitCamera()
 {
 	mCamera = new Camera(mWindow->GetWidth(), mWindow->GetHeight());
-	mCamera->Move(0, 0, 0.0f);
+	mCamera->Move(0.0f, 0.0f, 20.0f);
 	mResourceManager->RegisterResource("Camera", mCamera, true);
+}
+
+void Phoenix::InitWorld()
+{
+	mWorld = std::unique_ptr<World>(new World(mDevice.get(), mGPUMappableMemoryHeap.get(), mResourceManager.get()));
+	mResourceManager->RegisterResource("World", mWorld.get(), false);
 }

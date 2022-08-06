@@ -22,7 +22,9 @@ class ResourceManager;
 class RenderTarget;
 class MemoryHeap;
 class Camera;
+class RenderTechnique;
 class Buffer;
+class World;
 
 class Phoenix
 {
@@ -42,6 +44,8 @@ public:
 
 private:
 
+	void UpdateCamera();
+
 	void RebuildRenderPassResources();
 
 	void CreateRenderPassResource();
@@ -54,10 +58,14 @@ private:
 
 	void InitCamera();
 
+	void InitWorld();
+
 	Window* mWindow;
 
 	std::unique_ptr<RenderDevice> mDevice;
 	std::unique_ptr<ResourceManager> mResourceManager;
+
+	std::unique_ptr<World> mWorld;
 
 	std::unique_ptr<MemoryHeap> mScratchGPUMemoryHeap;
 	std::unique_ptr<MemoryHeap> mDeviceLocalMemoryHeap;
