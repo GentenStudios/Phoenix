@@ -7,7 +7,7 @@
 
 #endif
 #define VK_NO_PROTOTYPES
-#include <vulkan/vulkan.h>
 #include <volk.h>
+#include <vulkan/vulkan.h>
 //#include <volk.h>
 #pragma warning(pop)

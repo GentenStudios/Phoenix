@@ -2,11 +2,11 @@
 
 #include <Renderer/Vulkan.hpp>
 
-#include <memory>
-#include <vector>
-#include <map>
 #include <functional>
+#include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include <pugixml.hpp>
 
@@ -32,7 +32,6 @@ namespace phx
 	class Phoenix
 	{
 	public:
-
 		Phoenix(Window* window);
 
 		~Phoenix();
@@ -46,7 +45,6 @@ namespace phx
 		RenderTarget* GetPrimaryRenderTarget() { return mPrimaryRenderTarget; }
 
 	private:
-
 		void UpdateCamera();
 
 		void RebuildRenderPassResources();
@@ -65,7 +63,7 @@ namespace phx
 
 		Window* mWindow;
 
-		std::unique_ptr<RenderDevice> mDevice;
+		std::unique_ptr<RenderDevice>    mDevice;
 		std::unique_ptr<ResourceManager> mResourceManager;
 
 		std::unique_ptr<World> mWorld;
@@ -81,4 +79,4 @@ namespace phx
 
 		static Phoenix* mInstance;
 	};
-}
+} // namespace phx

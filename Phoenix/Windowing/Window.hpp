@@ -5,38 +5,39 @@
 #include <SDL_vulkan.h>
 
 #include <functional>
-#include <vector>
 #include <map>
+#include <vector>
 
 class Window
 {
 
 	struct EventCallback
 	{
-		std::function<void( SDL_Event&, void* ref )> functionPtr;
-		void* refrencePtr;
+		std::function<void(SDL_Event&, void* ref)> functionPtr;
+		void*                                      refrencePtr;
 	};
+
 public:
-	Window( const char* title, int width, int height );
-	~Window( );
+	Window(const char* title, int width, int height);
+	~Window();
 
-	bool IsOpen( ) { return mOpen; }
+	bool IsOpen() { return mOpen; }
 
-	void Close( ) { mOpen = false; }
+	void Close() { mOpen = false; }
 
-	uint32_t GetWidth( ) { return mWidth; }
-	uint32_t GetHeight( ) { return mHeight; }
+	uint32_t GetWidth() { return mWidth; }
+	uint32_t GetHeight() { return mHeight; }
 
-	void AddEventCallback( SDL_EventType type, std::function<void( SDL_Event&, void* ref )> callback, void* ref );
+	void AddEventCallback(SDL_EventType type, std::function<void(SDL_Event&, void* ref)> callback, void* ref);
 
-	void Poll( );
+	void Poll();
 
 	bool IsRenderable();
 
-	SDL_Window* GetWindow( ) { return mWindow; }
+	SDL_Window* GetWindow() { return mWindow; }
 
 private:
-	SDL_Window* mWindow;
+	SDL_Window*   mWindow;
 	SDL_SysWMinfo mWindowInfo;
 
 	uint32_t mWidth;

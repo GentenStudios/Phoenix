@@ -1,53 +1,52 @@
-#include <Windowing/Window.hpp>
 #include <Phoenix/Phoenix.hpp>
+#include <Windowing/Window.hpp>
 
+#include <Renderer/Buffer.hpp>
 #include <Renderer/Device.hpp>
+#include <Renderer/DeviceMemory.hpp>
+#include <Renderer/FramebufferAttachment.hpp>
+#include <Renderer/Pipeline.hpp>
+#include <Renderer/PipelineLayout.hpp>
+#include <Renderer/RenderTarget.hpp>
 #include <Renderer/Renderpass.hpp>
 #include <Renderer/ResourceTable.hpp>
 #include <Renderer/ResourceTableLayout.hpp>
-#include <Renderer/Pipeline.hpp>
-#include <Renderer/PipelineLayout.hpp>
-#include <Renderer/Buffer.hpp>
-#include <Renderer/DeviceMemory.hpp>
 #include <Renderer/StaticMesh.hpp>
 #include <Renderer/Texture.hpp>
-#include <Renderer/FramebufferAttachment.hpp>
-#include <Renderer/RenderTarget.hpp>
 #include <ResourceManager/RenderTechnique.hpp>
 
 #include <lodepng.h>
 
-#include <memory>
 #include <assert.h>
+#include <memory>
 
-std::unique_ptr<Window> window;
+std::unique_ptr<Window>       window;
 std::unique_ptr<phx::Phoenix> engine;
 
-int main( int, char** )
+int main(int, char**)
 {
-	const uint32_t width = 1080;
+	const uint32_t width  = 1080;
 	const uint32_t height = 720;
 
-	window = std::unique_ptr<Window>( new Window( "Phoenix", width, height ) );
+	window = std::unique_ptr<Window>(new Window("Phoenix", width, height));
 
-	engine = std::unique_ptr<phx::Phoenix>( new phx::Phoenix( window.get() ) );
-	
-	engine->RebuildCommandBuffers( );
+	engine = std::unique_ptr<phx::Phoenix>(new phx::Phoenix(window.get()));
 
-	while ( window->IsOpen() )
+	engine->RebuildCommandBuffers();
+
+	while (window->IsOpen())
 	{
-		window->Poll( );
+		window->Poll();
 
 		if (window->IsRenderable())
 		{
 			engine->Update();
 		}
-
 	}
 
-	engine.reset( );
+	engine.reset();
 
-	window.reset( );
+	window.reset();
 
 	return 0;
 }

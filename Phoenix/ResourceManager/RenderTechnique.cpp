@@ -1,208 +1,180 @@
-#include <ResourceManager/RenderTechnique.hpp>
-#include <ResourceManager/ResourceManager.hpp>
 #include <Renderer/Device.hpp>
 #include <Renderer/Pipeline.hpp>
 #include <Renderer/PipelineLayout.hpp>
 #include <Renderer/RenderTarget.hpp>
 #include <Renderer/ResourceTableLayout.hpp>
+#include <ResourceManager/RenderTechnique.hpp>
+#include <ResourceManager/ResourceManager.hpp>
 
 #include <pugixml.hpp>
 
 #include <assert.h>
 #include <string.h>
 
-const uint32_t MAX_INPUT_BINDINGS = 100;
+const uint32_t MAX_INPUT_BINDINGS   = 100;
 const uint32_t MAX_INPUT_ATTRIBUTES = 100;
-const uint32_t MAX_DESCRIPTOR_SETS = 32;
+const uint32_t MAX_DESCRIPTOR_SETS  = 32;
 
-RenderTechnique::RenderTechnique( RenderDevice* device, ResourceManager* resourceManager, RenderPass* renderPass, const char* name, const char* path ) : mDevice( device ),mResourceManager( resourceManager ), mName(name), mPath(path)
+RenderTechnique::RenderTechnique(RenderDevice* device, ResourceManager* resourceManager, RenderPass* renderPass, const char* name,
+                                 const char* path)
+    : mDevice(device), mResourceManager(resourceManager), mName(name), mPath(path)
 {
-    pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_file( path );
-    if ( !result )
-        return;
-    pugi::xml_node rootNode = doc.child( "Pipeline" );
-    std::string pipelineType = rootNode.attribute( "type" ).as_string();
-    std::string topologyType = rootNode.attribute( "topology" ).as_string();
+	pugi::xml_document     doc;
+	pugi::xml_parse_result result = doc.load_file(path);
+	if (!result)
+		return;
+	pugi::xml_node rootNode     = doc.child("Pipeline");
+	std::string    pipelineType = rootNode.attribute("type").as_string();
+	std::string    topologyType = rootNode.attribute("topology").as_string();
 
-    pugi::xml_node descriptorNode = rootNode.child( "Descriptors" );
-    pugi::xml_node stagesNode = rootNode.child( "Stages" );
-    pugi::xml_node bindingsNode = rootNode.child( "VertexBindings" );
-    pugi::xml_node inputAttributesNode = rootNode.child( "VertexInputAttributes" );
+	pugi::xml_node descriptorNode      = rootNode.child("Descriptors");
+	pugi::xml_node stagesNode          = rootNode.child("Stages");
+	pugi::xml_node bindingsNode        = rootNode.child("VertexBindings");
+	pugi::xml_node inputAttributesNode = rootNode.child("VertexInputAttributes");
 
+	VkDescriptorSetLayout descriptorSetLayouts[MAX_DESCRIPTOR_SETS];
+	uint32_t              descriptorCount = 0;
 
+	VkVertexInputBindingDescription vertexInputBindingDescriptions[MAX_INPUT_BINDINGS];
+	uint32_t                        bindingCount = 0;
 
+	VkVertexInputAttributeDescription vertexInputAttributeDescriptions[MAX_INPUT_ATTRIBUTES];
+	uint32_t                          attributeCount = 0;
 
+	VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[MAX_SHADER_MODULES];
 
-    VkDescriptorSetLayout descriptorSetLayouts[MAX_DESCRIPTOR_SETS];
-    uint32_t descriptorCount = 0;
+	for (pugi::xml_node descriptor : descriptorNode.children("Descriptor"))
+	{
+		descriptorSetLayouts[descriptorCount++] =
+		    resourceManager->GetResource<ResourceTableLayout>(descriptor.attribute("name").as_string())->GetDescriptorSetLayout();
+	}
 
-    VkVertexInputBindingDescription vertexInputBindingDescriptions[MAX_INPUT_BINDINGS];
-    uint32_t bindingCount = 0;
+	for (pugi::xml_node stage : stagesNode.children("Stage"))
+	{
+		mShaderModule[stageCount]                  = mDevice->CreateShaderModule(stage.attribute("path").as_string());
+		pipelineShaderStageCreateInfos[stageCount] = {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		                                              nullptr,
+		                                              0,
+		                                              GetStageFromAttribute(stage.attribute("stage").as_string()),
+		                                              mShaderModule[stageCount],
+		                                              stage.attribute("entrypoint").as_string()};
 
-    VkVertexInputAttributeDescription vertexInputAttributeDescriptions[MAX_INPUT_ATTRIBUTES];
-    uint32_t attributeCount = 0;
+		stageCount++;
+	}
 
-    VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[MAX_SHADER_MODULES];
+	for (pugi::xml_node binding : bindingsNode.children("Binding"))
+	{
+		vertexInputBindingDescriptions[bindingCount++] = {binding.attribute("binding").as_uint(), binding.attribute("stride").as_uint(),
+		                                                  GetVertexInputFromAttribute(binding.attribute("rate").as_string())};
+	}
 
-    for ( pugi::xml_node descriptor : descriptorNode.children( "Descriptor" ) )
-    {
-        descriptorSetLayouts[descriptorCount++] = resourceManager->GetResource<ResourceTableLayout>( descriptor.attribute( "name" ).as_string( ) )->GetDescriptorSetLayout( );
-    }
+	for (pugi::xml_node attribute : inputAttributesNode.children("Attribute"))
+	{
+		vertexInputAttributeDescriptions[attributeCount++] = {
+		    attribute.attribute("location").as_uint(), attribute.attribute("binding").as_uint(),
+		    GetFormatFromAttribute(attribute.attribute("format").as_string()), attribute.attribute("offset").as_uint()};
+	}
 
-    for ( pugi::xml_node stage : stagesNode.children( "Stage" ) )
-    {
-        mShaderModule[stageCount] = mDevice->CreateShaderModule( stage.attribute( "path" ).as_string( ) );
-        pipelineShaderStageCreateInfos[stageCount] = {
-            VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            nullptr,
-            0,
-            GetStageFromAttribute( stage.attribute( "stage" ).as_string( ) ),
-            mShaderModule[stageCount],
-            stage.attribute( "entrypoint" ).as_string( )
-        };
+	mPipelineLayout = new PipelineLayout(mDevice, descriptorSetLayouts, descriptorCount);
 
-        stageCount++;
-    }
+	PipelineType        type;
+	VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
+	if (pipelineType == "Graphics")
+	{
+		type = PipelineType::Graphics;
 
-    for ( pugi::xml_node binding : bindingsNode.children( "Binding" ) )
-    {
-        vertexInputBindingDescriptions[bindingCount++] = {
-            binding.attribute( "binding" ).as_uint( ),
-            binding.attribute( "stride" ).as_uint( ),
-            GetVertexInputFromAttribute( binding.attribute( "rate" ).as_string( ) )
-        };
-    }
+		if (topologyType == "Triangle")
+		{
+			topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		}
+		else if (topologyType == "Point")
+		{
+			topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+		}
+		else
+		{
+			assert(0 && "MISSING TPOLOGY");
+		}
+	}
+	else if (pipelineType == "Compute")
+	{
+		type = PipelineType::Compute;
+	}
+	else
+	{
+		assert(0 && "MISSING STAGE");
+	}
 
-    for ( pugi::xml_node attribute : inputAttributesNode.children( "Attribute" ) )
-    {
-        vertexInputAttributeDescriptions[attributeCount++] = {
-            attribute.attribute( "location" ).as_uint( ),
-            attribute.attribute( "binding" ).as_uint( ),
-            GetFormatFromAttribute( attribute.attribute( "format" ).as_string( ) ),
-            attribute.attribute( "offset" ).as_uint( )
-        };
-    }
-
-    mPipelineLayout = new PipelineLayout(
-        mDevice,
-        descriptorSetLayouts,
-        descriptorCount
-    );
-
-    PipelineType type;
-    VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
-    if ( pipelineType == "Graphics" )
-    {
-        type = PipelineType::Graphics;
-
-        if (topologyType == "Triangle")
-        {
-            topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        }
-        else if (topologyType == "Point")
-        {
-            topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-        }
-        else
-        {
-            assert( 0 && "MISSING TPOLOGY" );
-        }
-    }
-    else if ( pipelineType == "Compute" )
-    {
-        type = PipelineType::Compute;
-    }
-    else
-    {
-        assert( 0 && "MISSING STAGE" );
-    }
-
-
-
-    mPipeline = new Pipeline(
-        mDevice, type, renderPass, mPipelineLayout,
-        pipelineShaderStageCreateInfos, stageCount,
-        vertexInputBindingDescriptions, bindingCount,
-        vertexInputAttributeDescriptions, attributeCount,
-        topology
-    );
-
-
-    
-
+	mPipeline = new Pipeline(mDevice, type, renderPass, mPipelineLayout, pipelineShaderStageCreateInfos, stageCount,
+	                         vertexInputBindingDescriptions, bindingCount, vertexInputAttributeDescriptions, attributeCount, topology);
 }
 
-RenderTechnique::~RenderTechnique( )
+RenderTechnique::~RenderTechnique()
 {
-    for ( uint32_t i = 0; i < stageCount; i++ )
-    {
-        vkDestroyShaderModule(
-            mDevice->GetDevice( ),
-            mShaderModule[i],
-            nullptr
-        );
-    }
+	for (uint32_t i = 0; i < stageCount; i++)
+	{
+		vkDestroyShaderModule(mDevice->GetDevice(), mShaderModule[i], nullptr);
+	}
 
-    delete mPipeline;
+	delete mPipeline;
 
-    delete mPipelineLayout;
+	delete mPipelineLayout;
 }
 
-VkVertexInputRate RenderTechnique::GetVertexInputFromAttribute( const char* text )
+VkVertexInputRate RenderTechnique::GetVertexInputFromAttribute(const char* text)
 {
-    if ( strcmp( text, "INPUT_RATE_VERTEX" ) == 0 )
-    {
-        return VK_VERTEX_INPUT_RATE_VERTEX;
-    }
-    else  if ( strcmp( text, "INPUT_RATE_INSTANCE" ) == 0 )
-    {
-        return VK_VERTEX_INPUT_RATE_INSTANCE;
-    }
-    return VK_VERTEX_INPUT_RATE_MAX_ENUM;
+	if (strcmp(text, "INPUT_RATE_VERTEX") == 0)
+	{
+		return VK_VERTEX_INPUT_RATE_VERTEX;
+	}
+	else if (strcmp(text, "INPUT_RATE_INSTANCE") == 0)
+	{
+		return VK_VERTEX_INPUT_RATE_INSTANCE;
+	}
+	return VK_VERTEX_INPUT_RATE_MAX_ENUM;
 }
 
-VkFormat RenderTechnique::GetFormatFromAttribute( const char* text )
+VkFormat RenderTechnique::GetFormatFromAttribute(const char* text)
 {
-    if ( strcmp( text, "R32G32_SFLOAT" ) == 0 )
-    {
-        return VK_FORMAT_R32G32_SFLOAT;
-    }
-    if (strcmp( text, "R32G32B32_SFLOAT" ) == 0)
-    {
-        return VK_FORMAT_R32G32B32_SFLOAT;
-    }
-    if (strcmp( text, "R32G32B32A32_SFLOAT" ) == 0)
-    {
-        return VK_FORMAT_R32G32B32A32_SFLOAT;
-    }
-    if ( strcmp( text, "R32_UINT" ) == 0 )
-    {
-        return VK_FORMAT_R32_UINT;
-    }
-    
-    assert( 0 && "MISSING FORMAT" );
-    return VK_FORMAT_MAX_ENUM;
+	if (strcmp(text, "R32G32_SFLOAT") == 0)
+	{
+		return VK_FORMAT_R32G32_SFLOAT;
+	}
+	if (strcmp(text, "R32G32B32_SFLOAT") == 0)
+	{
+		return VK_FORMAT_R32G32B32_SFLOAT;
+	}
+	if (strcmp(text, "R32G32B32A32_SFLOAT") == 0)
+	{
+		return VK_FORMAT_R32G32B32A32_SFLOAT;
+	}
+	if (strcmp(text, "R32_UINT") == 0)
+	{
+		return VK_FORMAT_R32_UINT;
+	}
+
+	assert(0 && "MISSING FORMAT");
+	return VK_FORMAT_MAX_ENUM;
 }
 
-VkShaderStageFlagBits RenderTechnique::GetStageFromAttribute( const char* text )
+VkShaderStageFlagBits RenderTechnique::GetStageFromAttribute(const char* text)
 {
-    if ( strcmp( text, "Vertex" ) == 0 )
-    {
-        return VK_SHADER_STAGE_VERTEX_BIT;
-    }
-    else if (strcmp( text, "Geometry" ) == 0)
-    {
-        return VK_SHADER_STAGE_GEOMETRY_BIT;
-    }
-    else if (strcmp( text, "Fragment" ) == 0)
-    {
-        return VK_SHADER_STAGE_FRAGMENT_BIT;
-    }
-    else if ( strcmp( text, "Compute" ) == 0 )
-    {
-        return VK_SHADER_STAGE_COMPUTE_BIT;
-    }
-    assert( 0 && "MISSING STAGE" );
-    return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+	if (strcmp(text, "Vertex") == 0)
+	{
+		return VK_SHADER_STAGE_VERTEX_BIT;
+	}
+	else if (strcmp(text, "Geometry") == 0)
+	{
+		return VK_SHADER_STAGE_GEOMETRY_BIT;
+	}
+	else if (strcmp(text, "Fragment") == 0)
+	{
+		return VK_SHADER_STAGE_FRAGMENT_BIT;
+	}
+	else if (strcmp(text, "Compute") == 0)
+	{
+		return VK_SHADER_STAGE_COMPUTE_BIT;
+	}
+	assert(0 && "MISSING STAGE");
+	return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
 }

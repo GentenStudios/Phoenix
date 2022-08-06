@@ -15,20 +15,20 @@ enum class PipelineType
 class Pipeline
 {
 public:
-	Pipeline( RenderDevice* device, PipelineType type, RenderPass* renderPass, PipelineLayout* pipelineLayout,
-		VkPipelineShaderStageCreateInfo* pipelineShaderStageInfos, uint32_t pipelineShaderStageInfoCount, 
-		VkVertexInputBindingDescription* vertexInputBindingDescriptions, uint32_t vertexInputBindingDescriptionCount,
-		VkVertexInputAttributeDescription* vertexInputAttributeDescriptions, uint32_t vertexInputAttributeDescriptionCount,
-		VkPrimitiveTopology topology);
-	~Pipeline( );
+	Pipeline(RenderDevice* device, PipelineType type, RenderPass* renderPass, PipelineLayout* pipelineLayout,
+	         VkPipelineShaderStageCreateInfo* pipelineShaderStageInfos, uint32_t pipelineShaderStageInfoCount,
+	         VkVertexInputBindingDescription* vertexInputBindingDescriptions, uint32_t vertexInputBindingDescriptionCount,
+	         VkVertexInputAttributeDescription* vertexInputAttributeDescriptions, uint32_t vertexInputAttributeDescriptionCount,
+	         VkPrimitiveTopology topology);
+	~Pipeline();
 
-	void Use( VkCommandBuffer* commandBuffer, uint32_t index );
+	void Use(VkCommandBuffer* commandBuffer, uint32_t index);
 
-	VkPipelineLayout GetPipelineLayout( );
+	VkPipelineLayout GetPipelineLayout();
 
 private:
-	RenderDevice* mDevice;
+	RenderDevice*   mDevice;
 	PipelineLayout* mPipelineLayout;
-	VkPipeline mPipeline;
-	PipelineType mType;
+	VkPipeline      mPipeline;
+	PipelineType    mType;
 };

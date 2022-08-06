@@ -6,18 +6,19 @@ class RenderDevice;
 class DeviceMemory
 {
 public:
-	DeviceMemory( RenderDevice* device, uint32_t size, uint32_t memoryProperties );
-	~DeviceMemory( );
+	DeviceMemory(RenderDevice* device, uint32_t size, uint32_t memoryProperties);
+	~DeviceMemory();
 
-	VkDeviceMemory GetMemory( ) { return mMemory; }
+	VkDeviceMemory GetMemory() { return mMemory; }
 
-	void Map( VkDeviceSize size, VkDeviceSize offset, void*& ptr );
+	void Map(VkDeviceSize size, VkDeviceSize offset, void*& ptr);
 
-	void UnMap( );
+	void UnMap();
 
-	uint32_t GetSize(){ return mSize; }
+	uint32_t GetSize() { return mSize; }
+
 private:
-	RenderDevice* mDevice;
+	RenderDevice*  mDevice;
 	VkDeviceMemory mMemory;
-	uint32_t mSize;
+	uint32_t       mSize;
 };
