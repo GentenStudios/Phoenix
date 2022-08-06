@@ -17,6 +17,10 @@ public:
 
 	unsigned int GetVertexCount();
 
+	uint64_t GetBlock(int x, int y, int z);
+
+	void SetBlock(int x, int y, int z, uint64_t block);
+
 private:
 
 	void GenerateMesh();
@@ -24,6 +28,8 @@ private:
 	unsigned int mVertexCount;
 	unsigned int mVertexBufferOffset;
 	Buffer* mVertexBuffer;
+
+	uint64_t mBlocks[MAX_BLOCKS_PER_CHUNK];
 
 	bool mDirty;
 };

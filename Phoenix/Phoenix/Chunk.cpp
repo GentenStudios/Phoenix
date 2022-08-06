@@ -11,6 +11,13 @@ Chunk::Chunk()
 
     mDirty = true;
 
+    // Temp random blocks
+    for (int i = 0; i < MAX_BLOCKS_PER_CHUNK; ++i)
+    {
+        // Randomly place blocks for now
+        mBlocks[i] = rand() % 4 == 0 ? 1 : 0;
+    }
+
 }
 
 Chunk::~Chunk()
@@ -83,6 +90,24 @@ unsigned int Chunk::GetVertexCount()
 	return mVertexCount;
 }
 
+uint64_t Chunk::GetBlock(int x, int y, int z)
+{
+    unsigned int index = x |
+        ((y & CHUNK_BLOCK_BIT_SIZE_MASK) << CHUNK_BLOCK_BIT_SIZE) |
+        ((z & CHUNK_BLOCK_BIT_SIZE_MASK) << (CHUNK_BLOCK_BIT_SIZE << 1));
+
+    return mBlocks[index];
+}
+
+void Chunk::SetBlock(int x, int y, int z, uint64_t block)
+{
+    unsigned int index = x | 
+        ((y & CHUNK_BLOCK_BIT_SIZE_MASK) << CHUNK_BLOCK_BIT_SIZE) | 
+        ((z & CHUNK_BLOCK_BIT_SIZE_MASK) << (CHUNK_BLOCK_BIT_SIZE << 1));
+
+    mBlocks[index] = block;
+}
+
 void Chunk::GenerateMesh()
 {
     const int vertexCount = MAX_VERTECIES_PER_CHUNK;
@@ -99,6 +124,9 @@ void Chunk::GenerateMesh()
 
     for (int i = 0; i < MAX_BLOCKS_PER_CHUNK; ++i)
     {
+        // Check if we are about to render air
+        if (mBlocks[i] == 0)
+            continue;
 
         float x = i % CHUNK_BLOCK_SIZE;
         float y = (i / CHUNK_BLOCK_SIZE) % CHUNK_BLOCK_SIZE;
