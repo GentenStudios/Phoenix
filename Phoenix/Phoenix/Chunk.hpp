@@ -7,6 +7,7 @@ class Buffer;
 struct VertexData
 {
 	glm::vec3 position;
+	glm::vec2 uv;
 };
 
 class Chunk
@@ -34,7 +35,7 @@ private:
 	unsigned int mVertexBufferOffset;
 	Buffer* mVertexBuffer;
 
-	uint64_t mBlocks[MAX_BLOCKS_PER_CHUNK];
+	uint64_t mBlocks[CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE];
 
 	bool mDirty;
 };

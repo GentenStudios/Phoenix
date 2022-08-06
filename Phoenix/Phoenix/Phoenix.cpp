@@ -198,7 +198,7 @@ void Phoenix::CreateRenderPassResource()
 void Phoenix::CreateMemoryHeaps()
 {
 	uint32_t deviceLocalMemorySize = 40 * 1024 * 1024;
-	uint32_t mappableMemorySize = 240 * 1024 * 1024;
+	uint32_t mappableMemorySize = 200 * 1024 * 1024;
 
 	mDeviceLocalMemoryHeap = std::unique_ptr<MemoryHeap>(new MemoryHeap(mDevice.get(), deviceLocalMemorySize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
 	mGPUMappableMemoryHeap = std::unique_ptr<MemoryHeap>(new MemoryHeap(mDevice.get(), mappableMemorySize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
