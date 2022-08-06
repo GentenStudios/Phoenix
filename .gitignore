@@ -1,7 +1,8 @@
 .codeblocks/*
 .vs*/
 *.filters
-build/
+**/build
+**/Build
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
@@ -10,11 +11,11 @@ Makefile
 # Prerequisites
 *.d
 
-# Compiled Object files
 *.slo
 *.lo
 *.o
 *.obj
+*.pdb
 
 # Precompiled Headers
 *.gch
@@ -34,8 +35,4 @@ Makefile
 *.la
 *.a
 *.lib
-
-# Executables
 *.exe
-*.out
-*.app
