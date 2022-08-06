@@ -1,6 +1,6 @@
 #include <Renderer/Camera.hpp>
 
-#include <Globals/globals.hpp>
+#include <Globals/Globals.hpp>
 
 Camera::Camera( uint32_t width, uint32_t height )
 {
