@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Globals/globals.hpp>
+#include <Globals/Globals.hpp>
 
 #include <memory>
 #include <map>
