@@ -7,6 +7,8 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile
 
+*.bat
+
 # Prerequisites
 *.d
 

@@ -7,6 +7,10 @@
 #include <renderpass.hpp>
 #include <texture.hpp>
 #include <globalresources.hpp>
+#include <devicememory.hpp>
+#include <camera.hpp>
+#include <buffer.hpp>
+#include <ResourceTable.hpp>
 
 Phoenix* Phoenix::mInstance = nullptr;
 
@@ -34,8 +38,12 @@ Phoenix::Phoenix(Window* window) : mWindow(window)
 
 	CreateRenderPassResource();
 	CreateGlobalResources(mDevice.get(), mResourceManager.get());
+	CreateMemoryHeaps();
 
-	// Load core graphic pipelines
+	CreateCameraBuffer();
+	InitCamera();
+
+	// Temporary global defition of all pipelines, will eventualy use the mod loader to load pipelines
 	mResourceManager->LoadPipelineDictionary("Definitions.xml", GetPrimaryRenderTarget()->GetRenderPass());
 
 	mInstance = this;
@@ -46,6 +54,8 @@ Phoenix::~Phoenix()
 	mInstance = nullptr;
 
 	mResourceManager.reset();
+
+	DestroyMemoryHeaps();
 
 	mDevice.reset();
 }
@@ -94,8 +104,6 @@ void Phoenix::RebuildCommandBuffers()
 				1,
 				&scissor
 			);
-
-
 
 
 			vkCmdEndRenderPass(
@@ -167,4 +175,39 @@ void Phoenix::CreateRenderPassResource()
 			mDevice->GetWindowHeight()
 		);
 	}
+}
+
+void Phoenix::CreateMemoryHeaps()
+{
+	uint32_t deviceLocalMemorySize = 40 * 1024 * 1024;
+	uint32_t mappableMemorySize = 120 * 1024 * 1024;
+
+	mDeviceLocalMemoryHeap = std::unique_ptr<MemoryHeap>(new MemoryHeap(mDevice.get(), deviceLocalMemorySize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
+	mGPUMappableMemoryHeap = std::unique_ptr<MemoryHeap>(new MemoryHeap(mDevice.get(), mappableMemorySize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
+
+	mResourceManager->RegisterResource<MemoryHeap>("DeviceLocalMemoryHeap", mDeviceLocalMemoryHeap.get(), false);
+	mResourceManager->RegisterResource<MemoryHeap>("GPUMappableMemoryHeap", mGPUMappableMemoryHeap.get(), false);
+}
+
+void Phoenix::DestroyMemoryHeaps()
+{
+	mDeviceLocalMemoryHeap.reset();
+	mGPUMappableMemoryHeap.reset();
+}
+
+void Phoenix::CreateCameraBuffer()
+{
+	mCameraBuffer = new Buffer(
+		mDevice.get(), mGPUMappableMemoryHeap.get(), sizeof(Camera::CameraPacket),
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE
+	);
+	mResourceManager->RegisterResource<Buffer>("CameraBuffer", mCameraBuffer);
+	mResourceManager->GetResource<ResourceTable>("CameraResourceTable")->Bind(0, mCameraBuffer);
+}
+
+void Phoenix::InitCamera()
+{
+	mCamera = new Camera(mWindow->GetWidth(), mWindow->GetHeight());
+	mCamera->Move(0, 0, 0.0f);
+	mResourceManager->RegisterResource("Camera", mCamera, true);
 }

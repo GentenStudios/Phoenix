@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 
-set(project_name Parlour)
+set(project_name Phoenix)
 project(${project_name})
 
 set(HAVE_LIBC TRUE)
