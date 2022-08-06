@@ -1,15 +1,15 @@
-#include <World.hpp>
+#include <Phoenix/World.hpp>
 
-#include <Chunk.hpp>
-#include <device.hpp>
-#include <buffer.hpp>
-#include <devicememory.hpp>
-#include <resourcemanager.hpp>
-#include <pipeline.hpp>
-#include <pipelinelayout.hpp>
-#include <resourcetable.hpp>
+#include <Phoenix/Chunk.hpp>
+#include <Renderer/device.hpp>
+#include <Renderer/buffer.hpp>
+#include <Renderer/devicememory.hpp>
+#include <ResourceManager/resourcemanager.hpp>
+#include <Renderer/pipeline.hpp>
+#include <Renderer/pipelinelayout.hpp>
+#include <Renderer/resourcetable.hpp>
 
-#include <rendertechnique.hpp>
+#include <ResourceManager/rendertechnique.hpp>
 
 World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager) : mDevice(device), mResourceManager(resourceManager)
 {

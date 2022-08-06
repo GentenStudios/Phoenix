@@ -1,6 +1,6 @@
 #pragma once
 
-#include <globals.hpp>
+#include <Globals/globals.hpp>
 
 class Buffer;
 
