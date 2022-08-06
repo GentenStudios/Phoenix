@@ -1,9 +1,5 @@
-cmake_minimum_required(VERSION 2.6)
+project(volk)
 
-set(project_name volk)
-project(${project_name})
-
-set(HAVE_LIBC TRUE)
 set(src
     volk.c
 )
@@ -13,4 +9,5 @@ set(headers
 )
 
 
-add_library(${project_name} STATIC ${src} ${headers})
+add_library(${PROJECT_NAME} STATIC volk.h volk.c)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../vulkan)

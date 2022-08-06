@@ -1,7 +1,7 @@
-#include <Chunk.hpp>
+#include <Phoenix/Chunk.hpp>
 
-#include <buffer.hpp>
-#include <devicememory.hpp>
+#include <Renderer/Buffer.hpp>
+#include <Renderer/DeviceMemory.hpp>
 
 Chunk::Chunk()
 {

@@ -1,0 +1,5 @@
+add_subdirectory(Globals)
+add_subdirectory(Phoenix)
+add_subdirectory(Renderer)
+add_subdirectory(ResourceManager)
+add_subdirectory(Windowing)
