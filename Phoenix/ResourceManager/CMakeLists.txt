@@ -1,29 +1,10 @@
-cmake_minimum_required(VERSION 3.0)
-
-set(project_name ResourceManager)
-project(${project_name})
-
-set(HAVE_LIBC TRUE)
+project(PhoenixResourceManager)
 
 FILE(GLOB src *.cpp)
 FILE(GLOB headers *.hpp)
 
-include_directories(./)
-include_directories(../Renderer)
-include_directories(../Globals)
-
-add_library(${project_name} STATIC ${src} ${headers})
-
-target_link_libraries( ${project_name} Renderer)
-target_link_libraries( ${project_name} Globals)
-
-target_link_libraries(${project_name} volk)
-target_link_libraries(${project_name} pugixml-static)
-
-#IF (WIN32)
-### Warnings as errors
-#target_compile_options(${project_name} PRIVATE
-#  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-#  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror>
-#)
-#ENDIF()
+add_library(${PROJECT_NAME} STATIC ${src} ${headers})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../Globals)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../Renderer)
+target_link_libraries(${PROJECT_NAME} PRIVATE PhoenixVendor)
