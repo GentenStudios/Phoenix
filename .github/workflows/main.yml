@@ -20,7 +20,6 @@ jobs:
       CC: ${{ matrix.config.cc }}
       CXX: ${{ matrix.config.cxx }}
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v2
       
@@ -33,14 +32,8 @@ jobs:
       - name: Set up Visual Studio shell
         uses: egor-tensin/vs-shell@v2
 
-      - name: Install Dependencies
-        run: sudo apt install libvulkan-dev
-        if: matrix.config.os == 'ubuntu-20.04'
-
-      # Runs a single command using the runners shell
       - name: Configure CMake
         run: cmake -S. -BBuild -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
 
-      # Runs a set of commands using the runners shell
       - name: Build Project
         run: cmake --build Build
