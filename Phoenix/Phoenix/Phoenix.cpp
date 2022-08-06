@@ -13,6 +13,9 @@
 #include <Renderer/ResourceTable.hpp>
 #include <ResourceManager/RenderTechnique.hpp>
 #include <Phoenix/World.hpp>
+#include <Phoenix/DebugUI.hpp>
+
+
 
 Phoenix* Phoenix::mInstance = nullptr;
 
@@ -28,6 +31,31 @@ void WindowEvent(SDL_Event& event, void* ref)
 		break;
 	}
 }
+
+void RenderSystemStatistics(void* ref)
+{
+	Phoenix* engine = reinterpret_cast<Phoenix*>(ref);
+
+
+	ImGui::SetNextWindowPos(ImVec2(20, 20));
+
+	static bool open = true;
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+	if (!ImGui::Begin("Render Statistics", &open, flags))
+	{
+		ImGui::End();
+		return;
+	}
+
+	ImGui::Text("%s: %.5g", "FPS", 420.69f);
+
+
+	ImGui::SetWindowSize(ImVec2(220, ImGui::GetCursorPosY()));
+
+
+	ImGui::End();
+}
+
 
 
 Phoenix::Phoenix(Window* window) : mWindow(window)
@@ -45,6 +73,7 @@ Phoenix::Phoenix(Window* window) : mWindow(window)
 	CreateCameraBuffer();
 	InitCamera();
 	InitWorld();
+	InitDebugUI();
 
 	// Temporary global defition of all pipelines, will eventualy use the mod loader to load pipelines
 	mResourceManager->LoadPipelineDictionary("Definitions.xml", GetPrimaryRenderTarget()->GetRenderPass());
@@ -61,6 +90,8 @@ Phoenix::~Phoenix()
 	DestroyMemoryHeaps();
 
 	mWorld.reset();
+
+	mDebugUI.reset();
 
 	mDevice.reset();
 }
@@ -115,6 +146,7 @@ void Phoenix::RebuildCommandBuffers()
 			mWorld->Draw(commandBuffers, i);
 
 
+			mDebugUI->Use(commandBuffers, i, true);
 
 			vkCmdEndRenderPass(
 				commandBuffers[i]
@@ -149,13 +181,23 @@ void Phoenix::Update()
 {
 	UpdateCamera();
 	mWorld->Update();
+
+	// Temp delta time
+	mDebugUI->Update(0.01f);
+
+	if (mDebugUI->IsCMDOutdated())
+	{
+		RebuildCommandBuffers();
+	}
+
 	mDevice->Present();
 }
 
 void Phoenix::Validate()
 {
+	mCamera->SetProjection(mWindow->GetWidth(), mWindow->GetHeight());
 	mDevice->WindowChange(mWindow->GetWidth(), mWindow->GetHeight());
-
+	mDebugUI->ViewportResize();
 	RebuildRenderPassResources();
 	RebuildCommandBuffers();
 }
@@ -234,4 +276,13 @@ void Phoenix::InitWorld()
 {
 	mWorld = std::unique_ptr<World>(new World(mDevice.get(), mGPUMappableMemoryHeap.get(), mResourceManager.get()));
 	mResourceManager->RegisterResource("World", mWorld.get(), false);
+}
+
+void Phoenix::InitDebugUI()
+{
+	mDebugUI = std::unique_ptr<DebugUI>(new DebugUI(mDevice.get(), mResourceManager.get(), mWindow));
+
+	mResourceManager->RegisterResource("DebugUI", mDebugUI.get(), false);
+
+	mDebugUI->AddRenderCallback(RenderSystemStatistics, this);
 }

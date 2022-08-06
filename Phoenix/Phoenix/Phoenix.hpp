@@ -25,6 +25,7 @@ class Camera;
 class RenderTechnique;
 class Buffer;
 class World;
+class DebugUI;
 
 class Phoenix
 {
@@ -41,6 +42,10 @@ public:
 	void Validate();
 
 	RenderTarget* GetPrimaryRenderTarget() { return mPrimaryRenderTarget; }
+
+	MemoryHeap* GetDeviceLocalMemoryHeap() { return mDeviceLocalMemoryHeap.get(); }
+
+	MemoryHeap* GetGPUMappableMemoryHeap() { return mGPUMappableMemoryHeap.get(); }
 
 private:
 
@@ -60,14 +65,16 @@ private:
 
 	void InitWorld();
 
+	void InitDebugUI();
+
 	Window* mWindow;
 
 	std::unique_ptr<RenderDevice> mDevice;
 	std::unique_ptr<ResourceManager> mResourceManager;
 
 	std::unique_ptr<World> mWorld;
+	std::unique_ptr<DebugUI> mDebugUI;
 
-	std::unique_ptr<MemoryHeap> mScratchGPUMemoryHeap;
 	std::unique_ptr<MemoryHeap> mDeviceLocalMemoryHeap;
 	std::unique_ptr<MemoryHeap> mGPUMappableMemoryHeap;
 
