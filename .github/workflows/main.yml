@@ -1,0 +1,39 @@
+name: C++/CMake CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.config.os }}
+    strategy: 
+      fail-fast: false
+      matrix:
+        config:
+        - { name: "Windows Latest (MSVC)", os: windows-latest, build_type: "Release", cc: "cl", cxx: "cl" }
+        - { name: "Ubuntu 20.04 (GCC 10)", os: ubuntu-20.04, build_type: "Release", cc: "gcc-10", cxx: "g++-10" }
+        - { name: "Ubuntu 20.04 (Clang 12)", os: ubuntu-20.04, build_type: "Release", cc: "clang-12", cxx: "clang++-12" }
+
+    env:
+      CC: ${{ matrix.config.cc }}
+      CXX: ${{ matrix.config.cxx }}
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Checkout submodules.
+        run: git submodule update --init --depth=1
+
+      - name: Get latest CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Set up Visual Studio shell
+        uses: egor-tensin/vs-shell@v2
+
+      - name: Configure CMake
+        run: cmake -S. -BBuild -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
+
+      - name: Build Project
+        run: cmake --build Build
