@@ -35,7 +35,7 @@ void WindowEvent(SDL_Event& event, void* ref)
 
 void RenderSystemStatistics(void* ref)
 {
-	Phoenix* engine = reinterpret_cast<Phoenix*>(ref);
+	phx::Phoenix* engine = reinterpret_cast<phx::Phoenix*>(ref);
 
 
 	ImGui::SetNextWindowPos(ImVec2(20, 20));
@@ -257,7 +257,7 @@ void phx::Phoenix::InitWorld()
 	mResourceManager->RegisterResource("World", mWorld.get(), false);
 }
 
-void Phoenix::InitDebugUI()
+void phx::Phoenix::InitDebugUI()
 {
 	mDebugUI = std::unique_ptr<DebugUI>(new DebugUI(mDevice.get(), mResourceManager.get(), mWindow));
 

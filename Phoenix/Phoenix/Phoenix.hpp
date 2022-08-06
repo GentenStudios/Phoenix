@@ -66,8 +66,6 @@ namespace phx
 
 		void InitWorld();
 
-		Window* mWindow;
-
 		void InitDebugUI();
 
 		Window* mWindow;
