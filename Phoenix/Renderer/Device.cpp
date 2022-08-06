@@ -3,7 +3,7 @@
 #include <Renderer/StaticMesh.hpp>
 #include <Renderer/ResourceTableLayout.hpp>
 #include <Renderer/MemoryHeap.hpp>
-#include <Windowing/window.hpp>
+#include <Windowing/Window.hpp>
 
 #include <SDL.h>
 #include <SDL_vulkan.h>
