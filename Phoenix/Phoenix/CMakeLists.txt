@@ -8,7 +8,7 @@ FILE(GLOB headers *.hpp)
 add_executable(${PROJECT_NAME} ${src} ${headers})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE PhoenixVendor PhoenixRenderer PhoenixWindowing PhoenixResourceManager)
+target_link_libraries(${PROJECT_NAME} PRIVATE PhoenixVendor PhoenixGlobals PhoenixRenderer PhoenixWindowing PhoenixResourceManager)
 
 if(NOT CMAKE_DEBUG_POSTFIX)
   set(CMAKE_DEBUG_POSTFIX  _d)
