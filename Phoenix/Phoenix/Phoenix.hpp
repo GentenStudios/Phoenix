@@ -68,6 +68,10 @@ namespace phx
 
 		void InitDebugUI();
 
+		void InitTexturePool();
+
+		void InitDefaultTextures();
+
 		Window* mWindow;
 		
 		std::unique_ptr<RenderDevice>    mDevice;

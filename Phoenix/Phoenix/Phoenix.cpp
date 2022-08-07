@@ -8,7 +8,9 @@
 #include <Renderer/RenderTarget.hpp>
 #include <Renderer/Renderpass.hpp>
 #include <Renderer/ResourceTable.hpp>
+#include <Renderer/ResourceTableLayout.hpp>
 #include <Renderer/Texture.hpp>
+
 #include <ResourceManager/GlobalResources.hpp>
 #include <ResourceManager/RenderTechnique.hpp>
 #include <Phoenix/World.hpp>
@@ -75,6 +77,8 @@ phx::Phoenix::Phoenix(Window* window) : mWindow(window)
 	InitCamera();
 	InitWorld();
 	InitDebugUI();
+	InitTexturePool();
+	InitDefaultTextures();
 
 	// Temporary global defition of all pipelines, will eventualy use the mod loader to load pipelines
 	mResourceManager->LoadPipelineDictionary("Definitions.xml", GetPrimaryRenderTarget()->GetRenderPass());
@@ -264,4 +268,38 @@ void phx::Phoenix::InitDebugUI()
 	mResourceManager->RegisterResource("DebugUI", mDebugUI.get(), false);
 
 	mDebugUI->AddRenderCallback(RenderSystemStatistics, this);
+}
+
+void phx::Phoenix::InitTexturePool() 
+{
+	ResourceTableLayout* samplerArrayResourceTableLayout = mResourceManager->GetResource<ResourceTableLayout>("SamplerArrayResourceTableLayout");
+
+	ResourceTable* defaultSamplerArrayResourceTable = samplerArrayResourceTableLayout->CreateTable();
+	mResourceManager->RegisterResource<ResourceTable>("SamplerArrayResourceTable", defaultSamplerArrayResourceTable);
+}
+
+void phx::Phoenix::InitDefaultTextures() 
+{
+	ResourceTable* defaultSamplerArrayResourceTable = mResourceManager->GetResource<ResourceTable>("SamplerArrayResourceTable");
+
+	const char errorTextureData[] = {
+		0xFF,0x00,0xFF,0xFF
+	};
+	
+	Texture* errorTexture = new Texture(
+		mDevice.get(), 
+		mDeviceLocalMemoryHeap.get(),
+		1,
+		1,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_IMAGE_USAGE_SAMPLED_BIT,
+		(char*)(errorTextureData));
+
+	mResourceManager->RegisterResource<Texture>("ErrorTexture", errorTexture);
+
+	for (int i = 0; i < MAX_SPRITESHEET_SAMPLER_ARRAY; ++i)
+	{
+		defaultSamplerArrayResourceTable->Bind(0, errorTexture, i);
+	}
+
 }

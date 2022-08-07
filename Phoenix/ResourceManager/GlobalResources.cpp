@@ -45,7 +45,7 @@ void CreateGlobalResources(RenderDevice* device, ResourceManager* resourceManage
 		resourceManager->RegisterResource<ResourceTableLayout>("SamplerArrayResourceTableLayout", resourceTableLayout);
 
 		ResourceTable* defaultSamplerArrayResourceTable = resourceTableLayout->CreateTable();
-		resourceManager->RegisterResource<ResourceTable>("SamplerArrayResourceTable", defaultSamplerArrayResourceTable);
+		resourceManager->RegisterResource<ResourceTable>("DefaultSamplerArrayResourceTable", defaultSamplerArrayResourceTable);
 	}
 
 	{
