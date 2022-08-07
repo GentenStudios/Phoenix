@@ -16,9 +16,10 @@
 #include <Phoenix/World.hpp>
 #include <Phoenix/DebugUI.hpp>
 
-
 #include <ResourceManager/ResourceManager.hpp>
 #include <Windowing/Window.hpp>
+
+#include <lodepng.h>
 
 phx::Phoenix* phx::Phoenix::mInstance = nullptr;
 
@@ -300,6 +301,42 @@ void phx::Phoenix::InitDefaultTextures()
 	for (int i = 0; i < MAX_SPRITESHEET_SAMPLER_ARRAY; ++i)
 	{
 		defaultSamplerArrayResourceTable->Bind(0, errorTexture, i);
+	}
+
+
+	// Load temporary textures
+	const char* paths[2] = {"data/Textures/dirt.png", "data/Textures/stone.png"};
+	for (int i = 0 ; i < 2; i++)
+	{
+		std::vector<unsigned char> image_data;
+		uint32_t                   width, height;
+		unsigned                   error = lodepng::decode(image_data, width, height, paths[i]);
+		if (error)
+		{
+			printf("%s\n", lodepng_error_text(error));
+			
+		}
+		else
+		{
+			Texture* blockTexture = new Texture(
+				mDevice.get(),
+				mDeviceLocalMemoryHeap.get(),
+				width,
+				height,
+				VK_FORMAT_R8G8B8A8_UNORM,
+			    VK_IMAGE_USAGE_SAMPLED_BIT,
+				(char*) (image_data.data()));
+
+			// For memory cleanup
+			mResourceManager->RegisterResource<Texture>(blockTexture);
+
+			defaultSamplerArrayResourceTable->Bind(0, blockTexture, i);
+		}
+
+
+
+
+
 	}
 
 }
