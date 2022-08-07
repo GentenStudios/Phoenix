@@ -6,6 +6,8 @@ class Buffer;
 
 namespace phx
 {
+	class World;
+	class VertexPage;
 	struct VertexData
 	{
 		glm::vec3 position;
@@ -15,14 +17,18 @@ namespace phx
 
 	class Chunk
 	{
+
 	public:
 		Chunk();
 		~Chunk() = default;
 
+		void Initilize(World* world, Buffer* vertexBuffer);
+
+		void SetPosition(glm::mat4 position);
+
 		void Update();
 
-		void         SetVertexMemory(Buffer* buffer, unsigned int offset);
-		unsigned int GetVertexCount();
+		unsigned int GetTotalVertexCount();
 
 		uint64_t GetBlock(int x, int y, int z);
 		void     SetBlock(int x, int y, int z, uint64_t block);
@@ -31,11 +37,15 @@ namespace phx
 		void GenerateMesh();
 
 	private:
-		unsigned int m_vertexCount        = 0;
-		unsigned int m_vertexBufferOffset = 0;
+		World*       m_world;
+		unsigned int m_totalVertexCount = 0;
 		Buffer*      m_vertexBuffer       = nullptr;
 
+		VertexPage* m_vertexPage;
+
 		bool m_dirty = true;
+
+		glm::mat4 m_position;
 
 		uint64_t m_blocks[CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE];
 	};

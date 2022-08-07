@@ -26,4 +26,6 @@ const unsigned int MAX_WORLD_CHUNKS_PER_AXIS = 5;
 // Total chunks in memory at once
 const unsigned int MAX_CHUNKS = MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS;
 
-const unsigned int MAX_VERTICES_PER_CHUNK = 36 * CHUNK_BLOCK_SIZE * CHUNK_BLOCK_SIZE * (CHUNK_BLOCK_SIZE / 4);
+const unsigned int VERTEX_PAGE_SIZE = 36 * 200;
+
+const unsigned int TOTAL_VERTEX_PAGE_COUNT = 1000;

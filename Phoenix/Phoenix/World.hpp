@@ -15,8 +15,17 @@ namespace phx
 {
 	class Chunk;
 
+	struct VertexPage
+	{
+		uint32_t index;
+		uint32_t offset;
+		uint32_t vertexCount;
+		VertexPage* next;
+	};
+
 	class World
 	{
+		friend class Chunk;
 	public:
 		World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager);
 
@@ -26,14 +35,24 @@ namespace phx
 
 		void Draw(VkCommandBuffer* commandBuffer, uint32_t index);
 
+		VertexPage* GetFreeVertexPage();
+
 	private:
 		void UpdateAllIndirectDraws();
 
 		void UpdateAllPositionBuffers();
 
+		void ProcessVertexPages(VertexPage* pages, glm::mat4 position);
+
+		void FreeVertexPages(VertexPage* pages);
+
 		RenderDevice*           mDevice;
 		ResourceManager*        mResourceManager;
 		std::unique_ptr<Buffer> mVertexBuffer;
+
+		std::unique_ptr<VertexPage> mVertexPages;
+
+		VertexPage* mFreeVertexPages;
 
 		std::unique_ptr<VkDrawIndirectCommand> mIndirectBufferCPU;
 		std::unique_ptr<Buffer>                mIndirectDrawCommands;

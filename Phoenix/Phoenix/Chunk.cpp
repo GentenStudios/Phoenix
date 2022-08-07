@@ -1,4 +1,5 @@
 #include <Phoenix/Chunk.hpp>
+#include <Phoenix/World.hpp>
 
 #include <Renderer/Buffer.hpp>
 #include <Renderer/DeviceMemory.hpp>
@@ -17,6 +18,7 @@ phx::Chunk::Chunk()
 			}
 		}
 	}
+	m_vertexPage = nullptr;
 }
 
 // Temp mesh
@@ -110,6 +112,17 @@ static const glm::vec2 BLOCK_UVS[] = {
 };
 // clang-format on
 
+void phx::Chunk::Initilize(World* world, Buffer* vertexBuffer)
+{
+	m_vertexBuffer = vertexBuffer;
+	m_world = world;
+}
+
+void phx::Chunk::SetPosition(glm::mat4 position)
+{
+	m_position = position;
+}
+
 void phx::Chunk::Update()
 {
 	if (m_dirty)
@@ -119,13 +132,7 @@ void phx::Chunk::Update()
 	}
 }
 
-void phx::Chunk::SetVertexMemory(Buffer* buffer, unsigned int offset)
-{
-	m_vertexBuffer       = buffer;
-	m_vertexBufferOffset = offset;
-}
-
-unsigned int phx::Chunk::GetVertexCount() { return m_vertexCount; }
+unsigned int phx::Chunk::GetTotalVertexCount() { return m_totalVertexCount; }
 
 uint64_t phx::Chunk::GetBlock(int x, int y, int z) { return m_blocks[x][y][z]; }
 
@@ -133,13 +140,16 @@ void phx::Chunk::SetBlock(int x, int y, int z, uint64_t block) { m_blocks[x][y][
 
 void phx::Chunk::GenerateMesh()
 {
-	int vertexCount = 0;
+	int totalVertexCount = 0;
 
-	void* memoryPtr = nullptr;
-	m_vertexBuffer->GetDeviceMemory()->Map(MAX_VERTICES_PER_CHUNK * sizeof(VertexData),
-	                                       m_vertexBuffer->GetMemoryOffset() + m_vertexBufferOffset, memoryPtr);
+	void*       memoryPtr    = nullptr;
+	VertexData* vertexStream = nullptr;
 
-	VertexData* vertexStream = reinterpret_cast<VertexData*>(memoryPtr);
+
+
+	m_world->FreeVertexPages(m_vertexPage);
+	m_vertexPage = nullptr;
+
 
 	for (int x = 0; x < CHUNK_BLOCK_SIZE; ++x)
 	{
@@ -151,6 +161,47 @@ void phx::Chunk::GenerateMesh()
 				uint64_t blockID = m_blocks[x][y][z];
 				if (blockID == 0)
 					continue;
+
+				if (m_vertexPage == nullptr)
+				{
+					// Allocate the first page
+
+					m_vertexPage = m_world->GetFreeVertexPage();
+
+					if (m_vertexPage == nullptr)
+					{
+						assert(0 && "To do, no more pages");
+						return;
+					}
+
+					m_vertexBuffer->GetDeviceMemory()->Map(VERTEX_PAGE_SIZE * sizeof(VertexData),
+					                                       m_vertexBuffer->GetMemoryOffset() + m_vertexPage->offset, memoryPtr);
+
+					vertexStream = reinterpret_cast<VertexData*>(memoryPtr);
+				}
+				else if (VERTEX_PAGE_SIZE - m_vertexPage->vertexCount < 36)
+				{
+					// Move onto a new page
+
+					m_vertexBuffer->GetDeviceMemory()->UnMap();
+
+					VertexPage* newPage = m_world->GetFreeVertexPage();
+
+					if (newPage == nullptr)
+					{
+						assert(0 && "To do, no more pages");
+						return;
+					}
+
+					m_vertexBuffer->GetDeviceMemory()->Map(VERTEX_PAGE_SIZE * sizeof(VertexData),
+					                                       m_vertexBuffer->GetMemoryOffset() + newPage->offset, memoryPtr);
+
+					newPage->next = m_vertexPage;
+					m_vertexPage  = newPage;
+
+					vertexStream = reinterpret_cast<VertexData*>(memoryPtr);
+				}
+
 
 				bool visibilitySet[6] = {
 				    (x == 0) || (m_blocks[x - 1][y][z] == 0), (x == CHUNK_BLOCK_SIZE - 1) || (m_blocks[x + 1][y][z] == 0),
@@ -182,14 +233,20 @@ void phx::Chunk::GenerateMesh()
 							vertexStream++;
 						}
 
-						vertexCount += 6;
+						m_vertexPage->vertexCount += 6;
+						totalVertexCount += 6;
 					}
 				}
 			}
 		}
 	}
 
-	m_vertexCount = vertexCount;
+	m_totalVertexCount = totalVertexCount;
 
-	m_vertexBuffer->GetDeviceMemory()->UnMap();
+	if (m_vertexPage != nullptr)
+	{
+		m_vertexBuffer->GetDeviceMemory()->UnMap();
+	}
+
+	m_world->ProcessVertexPages(m_vertexPage, m_position);
 }
