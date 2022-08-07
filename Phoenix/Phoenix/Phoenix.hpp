@@ -16,6 +16,8 @@
 
 #include <Globals/Globals.hpp>
 
+#include <Phoenix/Statistics.hpp>
+
 class Window;
 class RenderDevice;
 class ResourceManager;
@@ -48,6 +50,8 @@ namespace phx
 		MemoryHeap* GetDeviceLocalMemoryHeap() { return mDeviceLocalMemoryHeap.get(); }
 
 		MemoryHeap* GetGPUMappableMemoryHeap() { return mGPUMappableMemoryHeap.get(); }
+
+		StatisticManager& GetStatistics() { return mStatisticManager; }
 
 	private:
 		void UpdateCamera();
@@ -84,6 +88,8 @@ namespace phx
 		std::unique_ptr<MemoryHeap> mGPUMappableMemoryHeap;
 
 		RenderTarget* mPrimaryRenderTarget = nullptr;
+
+		StatisticManager mStatisticManager;
 
 		Camera* mCamera;
 		Buffer* mCameraBuffer;
