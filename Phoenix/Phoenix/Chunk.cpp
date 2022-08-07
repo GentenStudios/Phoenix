@@ -148,7 +148,8 @@ void phx::Chunk::GenerateMesh()
 			for (int z = 0; z < CHUNK_BLOCK_SIZE; ++z)
 			{
 				// Check if we are about to render air
-				if (m_blocks[x][y][z] == 0)
+				uint64_t blockID = m_blocks[x][y][z];
+				if (blockID == 0)
 					continue;
 
 				bool visibilitySet[6] = {
@@ -162,6 +163,7 @@ void phx::Chunk::GenerateMesh()
 				{
 					if (visibilitySet[j])
 					{
+						int faceTextureID = rand() % 2;
 						// Loop through for the face vertices
 						for (int k = 0; k < 6; k++)
 						{
@@ -174,6 +176,8 @@ void phx::Chunk::GenerateMesh()
 							(*vertexStream).position.z += z;
 
 							(*vertexStream).uv = BLOCK_UVS[lookupIndex];
+
+							(*vertexStream).textureID = faceTextureID;
 
 							vertexStream++;
 						}

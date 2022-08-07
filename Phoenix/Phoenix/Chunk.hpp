@@ -10,6 +10,7 @@ namespace phx
 	{
 		glm::vec3 position;
 		glm::vec2 uv;
+		uint32_t textureID;
 	};
 
 	class Chunk

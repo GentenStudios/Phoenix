@@ -152,6 +152,10 @@ VkFormat RenderTechnique::GetFormatFromAttribute(const char* text)
 	{
 		return VK_FORMAT_R32_UINT;
 	}
+	if (strcmp(text, "R32_SINT") == 0)
+	{
+		return VK_FORMAT_R32_SINT;
+	}
 
 	assert(0 && "MISSING FORMAT");
 	return VK_FORMAT_MAX_ENUM;
