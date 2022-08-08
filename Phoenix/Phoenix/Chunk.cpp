@@ -15,12 +15,13 @@ phx::Chunk::Chunk()
 // Temp mesh
 // clang-format off
 const glm::vec3 BLOCK_VERTICES[] = {
-    {0.f, 1.f, 1.f}, // east (right)
+
+	{0.f, 0.f, 0.f}, // east (right)
 	{0.f, 1.f, 0.f},
-	{0.f, 0.f, 0.f},
-    {0.f, 0.f, 0.f},
-	{0.f, 0.f, 1.f},
+    {0.f, 1.f, 1.f}, 
 	{0.f, 1.f, 1.f},
+	{0.f, 0.f, 1.f},
+    {0.f, 0.f, 0.f},
 
     {1.f, 1.f, 1.f}, // west
     {1.f, 1.f, 0.f},
@@ -145,7 +146,7 @@ void phx::Chunk::GenerateWorld()
 			{
 				float y = (float) j + m_position.y;
 				// Randomly place blocks for now
-				m_blocks[i][j][k] = y < 0 ? 1 : 0;
+				m_blocks[i][j][k] = y < 0 ? 1 /*rand() % 2*/ : 0;
 			}
 		}
 	}
