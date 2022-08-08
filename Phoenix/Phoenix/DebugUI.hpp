@@ -50,6 +50,8 @@ public:
 
 	void AddRenderCallback(std::function<void(void*)> callback, void* ref);
 
+	void AddMainmenuCallback(std::function<void(void*)> callback, void* ref);
+
 private:
 
 	void InitImGui();
@@ -92,6 +94,7 @@ private:
 	Texture* mFontTexture = nullptr;
 
 	std::vector<RenderCallback> mRenderCallbacks;
+	std::vector<RenderCallback> mMainMenuCallbacks;
 
 	std::unique_ptr<VkRect2D> mScissors;
 	std::map<std::string, VkShaderModule> mShaderModules;

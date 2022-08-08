@@ -3,6 +3,7 @@
 #include <Phoenix/World.hpp>
 #include <Phoenix/World.hpp>
 #include <Phoenix/DebugUI.hpp>
+#include <Phoenix/DebugWindows.hpp>
 
 #include <Renderer/Buffer.hpp>
 #include <Renderer/Camera.hpp>
@@ -36,45 +37,6 @@ void WindowEvent(SDL_Event& event, void* ref)
 		break;
 	}
 }
-
-void RenderSystemStatistics(void* ref)
-{
-	phx::Phoenix* engine = reinterpret_cast<phx::Phoenix*>(ref);
-
-
-	ImGui::SetNextWindowPos(ImVec2(20, 20));
-
-	static bool open = true;
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
-	if (!ImGui::Begin("Render Statistics", &open, flags))
-	{
-		ImGui::End();
-		return;
-	}
-
-	static float counterUpdateDelta = 2.0f;
-	static float fps = 0.0f;
-	counterUpdateDelta += engine->GetStatistics().GetStatisticSecconds("Total Frametime");
-
-	if (counterUpdateDelta > 1.0f)
-	{
-		counterUpdateDelta = 0.0f;
-		fps                = 1000.0f / engine->GetStatistics().GetStatisticDelta("Total Frametime");
-	}
-
-	ImGui::Text("FPS: %.3g", fps);
-
-	for (auto& it : engine->GetStatistics().GetRecordings())
-	{
-		ImGui::Text("%s: %.3gms", it.name.c_str(), it.time);
-	}
-
-	ImGui::SetWindowSize(ImVec2(220, ImGui::GetCursorPosY()));
-
-
-	ImGui::End();
-}
-
 
 
 phx::Phoenix::Phoenix(Window* window) : mWindow(window)
@@ -291,7 +253,11 @@ void phx::Phoenix::InitDebugUI()
 
 	mResourceManager->RegisterResource("DebugUI", mDebugUI.get(), false);
 
-	mDebugUI->AddRenderCallback(RenderSystemStatistics, this);
+	mDebugUI->AddMainmenuCallback(DebugUIMainMenuBar, this);
+
+
+	mDebugUI->AddRenderCallback(DebugUIRenderSystemStatistics, this);
+	
 }
 
 void phx::Phoenix::InitTexturePool() 

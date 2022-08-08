@@ -167,6 +167,16 @@ void DebugUI::Update(float delta)
 
 	ImGui::NewFrame();
 
+	
+	if (ImGui::BeginMainMenuBar())
+	{
+		for (auto& callback : mMainMenuCallbacks)
+		{
+			callback.function(callback.ref);
+		}
+		ImGui::EndMainMenuBar();
+	}
+
 	for (auto& callback : mRenderCallbacks)
 	{
 		callback.function(callback.ref);
@@ -295,7 +305,11 @@ void DebugUI::ViewportResize()
 
 void DebugUI::AddRenderCallback(std::function<void(void*)> callback, void* ref)
 {
-	mRenderCallbacks.push_back({ callback, ref });
+	mRenderCallbacks.push_back({ callback, ref }); }
+
+void DebugUI::AddMainmenuCallback(std::function<void(void*)> callback, void* ref)
+{
+	mMainMenuCallbacks.push_back({callback, ref});
 }
 
 void DebugUI::InitImGui()
