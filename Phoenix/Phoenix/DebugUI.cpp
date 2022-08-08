@@ -12,7 +12,7 @@
 #include <Renderer/RenderTarget.hpp>
 #include <Renderer/Pipeline.hpp>
 #include <Renderer/PipelineLayout.hpp>
-#include <Renderer/RenderPass.hpp>
+#include <Renderer/Renderpass.hpp>
 #include <Renderer/Texture.hpp>
 
 #include <ResourceManager/ResourceManager.hpp>
