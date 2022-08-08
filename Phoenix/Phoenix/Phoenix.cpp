@@ -221,6 +221,16 @@ void phx::Phoenix::UpdateCamera()
 		mCamera->Move(-movmentSpeed * mDeltaTime, 0.0f, 0.0f);
 	}
 
+	if (mInputHandler->IsPressed(SDL_SCANCODE_LCTRL))
+	{
+		mCamera->Move(0.0f, movmentSpeed * mDeltaTime, 0.0f);
+	}
+
+	if (mInputHandler->IsPressed(SDL_SCANCODE_SPACE))
+	{
+		mCamera->Move(0.0f, -movmentSpeed * mDeltaTime, 0.0f);
+	}
+
 	// End of temp camera movment
 
 
