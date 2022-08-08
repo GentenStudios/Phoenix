@@ -53,7 +53,7 @@ void DebugUIRenderSystemStatistics(void* ref)
 		fps                = 1000.0f / engine->GetStatistics().GetStatisticDelta("Total Frametime");
 	}
 
-	ImGui::Text("FPS: %.3g", fps);
+	ImGui::Text("FPS: %i", (int)fps);
 
 	for (auto& it : engine->GetStatistics().GetRecordings())
 	{

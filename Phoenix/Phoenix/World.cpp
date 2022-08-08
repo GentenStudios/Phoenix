@@ -100,8 +100,6 @@ void phx::World::Update()
 	for (int i = 0; i < MAX_CHUNKS; ++i)
 	{
 		mChunks[i].Update();
-		UpdateAllPositionBuffers();
-		UpdateAllIndirectDraws();
 	}
 }
 
