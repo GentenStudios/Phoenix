@@ -1,7 +1,6 @@
 #include <Phoenix/Phoenix.hpp>
 
 #include <Phoenix/World.hpp>
-#include <Phoenix/World.hpp>
 #include <Phoenix/DebugUI.hpp>
 #include <Phoenix/DebugWindows.hpp>
 
@@ -255,8 +254,10 @@ void phx::Phoenix::InitDebugUI()
 
 	mDebugUI->AddMainmenuCallback(DebugUIMainMenuBar, this);
 
-
+	
 	mDebugUI->AddRenderCallback(DebugUIRenderSystemStatistics, this);
+
+	mDebugUI->AddRenderCallback(DebugUIMemoryUsage, this);
 	
 }
 

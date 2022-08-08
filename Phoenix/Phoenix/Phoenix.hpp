@@ -53,6 +53,8 @@ namespace phx
 
 		StatisticManager& GetStatistics() { return mStatisticManager; }
 
+		ResourceManager* GetResourceManager() { return mResourceManager.get(); }
+
 	private:
 		void UpdateCamera();
 

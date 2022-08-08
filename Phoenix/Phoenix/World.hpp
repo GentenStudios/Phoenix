@@ -37,6 +37,8 @@ namespace phx
 
 		VertexPage* GetFreeVertexPage();
 
+		unsigned int GetFreeMemoryPoolCount();
+
 	private:
 		void UpdateAllIndirectDraws();
 
@@ -59,6 +61,8 @@ namespace phx
 
 		std::unique_ptr<glm::mat4> mPositionBufferCPU;
 		std::unique_ptr<Buffer>    mPositionBuffer;
+
+		unsigned int mFreeMemoryPoolCount;
 
 		phx::Chunk* mChunks;
 	};

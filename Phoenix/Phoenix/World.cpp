@@ -29,6 +29,8 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 	               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	               VK_SHARING_MODE_EXCLUSIVE));
 
+	mFreeMemoryPoolCount = TOTAL_VERTEX_PAGE_COUNT;
+
 	mIndirectBufferCPU = std::unique_ptr<VkDrawIndirectCommand>(new VkDrawIndirectCommand[TOTAL_VERTEX_PAGE_COUNT]);
 
 	VkDrawIndirectCommand indirectCommandInstance {};
@@ -141,9 +143,13 @@ phx::VertexPage* phx::World::GetFreeVertexPage()
 		mFreeVertexPages = mFreeVertexPages->next;
 		next->next       = nullptr;
 		next->vertexCount = 0;
+
+		mFreeMemoryPoolCount--;
 	}
 	return next;
 }
+
+unsigned int phx::World::GetFreeMemoryPoolCount() { return mFreeMemoryPoolCount; }
 
 void phx::World::UpdateAllIndirectDraws()
 {
@@ -192,11 +198,10 @@ void phx::World::FreeVertexPages(VertexPage* pages)
 		                                         pages->index * sizeof(VkDrawIndirectCommand));
 
 
-
-
 		pages->next = mFreeVertexPages;
 		mFreeVertexPages = pages->next;
 
+		mFreeMemoryPoolCount--;
 		pages = next;
 	}
 
