@@ -31,6 +31,14 @@ public:
 
 	void Move(float x, float y, float z);
 
+	void RotateWorldX(float x);
+
+	void RotateWorldY(float y);
+
+	void RotateWorldZ(float z);
+
+	void Rotate(glm::vec3 axis, float angle);
+
 	void Update();
 
 	bool CheckSphereFrustrum(glm::vec3 pos, float radius);

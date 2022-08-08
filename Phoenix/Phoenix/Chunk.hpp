@@ -24,7 +24,11 @@ namespace phx
 
 		void Initilize(World* world, Buffer* vertexBuffer);
 
-		void SetPosition(glm::mat4 position);
+		void SetPosition(glm::vec3 position);
+
+		void Reset();
+
+		void GenerateWorld();
 
 		void Update();
 
@@ -45,7 +49,8 @@ namespace phx
 
 		bool m_dirty = true;
 
-		glm::mat4 m_position;
+		glm::vec3 m_position;
+		glm::mat4 m_matrix;
 
 		uint64_t m_blocks[CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE];
 	};

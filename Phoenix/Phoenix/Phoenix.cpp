@@ -24,6 +24,10 @@
 
 phx::Phoenix* phx::Phoenix::mInstance = nullptr;
 
+
+
+
+
 void WindowEvent(SDL_Event& event, void* ref)
 {
 	phx::Phoenix* engine = reinterpret_cast<phx::Phoenix*>(ref);
@@ -236,7 +240,8 @@ void phx::Phoenix::CreateCameraBuffer()
 void phx::Phoenix::InitCamera()
 {
 	mCamera = new Camera(mWindow->GetWidth(), mWindow->GetHeight());
-	mCamera->Move(0.0f, 0.0f, 20.0f);
+	mCamera->Move(0.0f, 5.0f, 20.0f);
+	mCamera->RotateWorldZ(15.0f);
 	mResourceManager->RegisterResource("Camera", mCamera, true);
 }
 

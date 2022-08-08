@@ -14,29 +14,21 @@ void Camera::SetProjection(uint32_t width, uint32_t height)
 {
 	mProjection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 10.0f, 100.0f);
 	mProjection[1][1] *= -1.0f;
-
-	/*float aspect = static_cast<float>(width) / static_cast<float>(height);
-
-	float wantedHeight = CAMERA_HEIGHT;
-	float calculatedWidth = aspect * wantedHeight;
-
-	mOrthoWidth = calculatedWidth;
-	mOrthoHeight = wantedHeight;
-
-	float zoom = 1.0f;
-	//float zoom = 2.0f;
-	float wH = ((float)calculatedWidth / 2.0f) * zoom;
-	float hH = ((float)wantedHeight / 2.0f) * zoom;
-	mProjection = glm::ortho( -wH, wH, hH, -hH, -1.0f, 100.0f );
-	//mProjection = glm::ortho( 0.0f, aspect, 0.0f, 1.0f, -1.0f, 100.0f );
-	mOutOfDateFrustrum = true;
-	//mProjection = glm::ortho( 0.0f, (float)width, 0.0f, (float) height, -1.0f, 1.0f );
-	*/
 }
 
 void Camera::Move(glm::vec3 position) { Move(position.x, position.y, position.z); }
 
 void Camera::Move(float x, float y, float z) { SetMatrixPosition(-glm::vec3(x, y, z)); }
+
+void Camera::RotateWorldX(float x) { Rotate(glm::vec3(1.0f, 0.0f, 0.0f), x); }
+
+void Camera::RotateWorldY(float y) { Rotate(glm::vec3(1.0f, 0.0f, 0.0f), y); }
+
+void Camera::RotateWorldZ(float z) { Rotate(glm::vec3(1.0f, 0.0f, 0.0f), z); }
+
+void Camera::Rotate(glm::vec3 axis, float angle)
+{ 
+	mPosition = glm::rotate(mPosition, glm::radians(angle), axis); }
 
 void Camera::Update()
 {

@@ -4,21 +4,12 @@
 #include <Renderer/Buffer.hpp>
 #include <Renderer/DeviceMemory.hpp>
 
+#include <Globals/Globals.hpp>
+
 phx::Chunk::Chunk()
 {
-	// Temp random blocks
-	for (int i = 0; i < CHUNK_BLOCK_SIZE; ++i)
-	{
-		for (int j = 0; j < CHUNK_BLOCK_SIZE; ++j)
-		{
-			for (int k = 0; k < CHUNK_BLOCK_SIZE; ++k)
-			{
-				// Randomly place blocks for now
-				m_blocks[i][j][k] = 1; // rand() % 4 == 0 ? 1 : 0;
-			}
-		}
-	}
 	m_vertexPage = nullptr;
+	Reset();
 }
 
 // Temp mesh
@@ -118,9 +109,47 @@ void phx::Chunk::Initilize(World* world, Buffer* vertexBuffer)
 	m_world = world;
 }
 
-void phx::Chunk::SetPosition(glm::mat4 position)
+void phx::Chunk::SetPosition(glm::vec3 position)
 {
 	m_position = position;
+
+	m_matrix = glm::mat4(1.0f);
+	m_matrix = glm::translate(m_matrix, m_position);
+
+	// Temp : generate the worlds data
+	GenerateWorld();
+}
+
+void phx::Chunk::Reset()
+{
+	// Temp random blocks
+	for (int k = 0; k < CHUNK_BLOCK_SIZE; ++k)
+	{
+		for (int j = 0; j < CHUNK_BLOCK_SIZE; ++j)
+		{
+			for (int i = 0; i < CHUNK_BLOCK_SIZE; ++i)
+			{
+				m_blocks[i][j][k] = 0;
+			}
+		}
+	}
+}
+
+void phx::Chunk::GenerateWorld()
+{
+	for (int k = 0; k < CHUNK_BLOCK_SIZE; ++k)
+	{
+		for (int j = 0; j < CHUNK_BLOCK_SIZE; ++j)
+		{
+			for (int i = 0; i < CHUNK_BLOCK_SIZE; ++i)
+			{
+				float y = (float) j + m_position.y;
+				// Randomly place blocks for now
+				m_blocks[i][j][k] = y < 0 ? 1 : 0;
+			}
+		}
+	}
+	m_dirty = true;
 }
 
 void phx::Chunk::Update()
@@ -214,7 +243,8 @@ void phx::Chunk::GenerateMesh()
 				{
 					if (visibilitySet[j])
 					{
-						int faceTextureID = rand() % 2;
+						// Temp texture solution
+						int faceTextureID = blockID - 1;
 						// Loop through for the face vertices
 						for (int k = 0; k < 6; k++)
 						{
@@ -248,5 +278,5 @@ void phx::Chunk::GenerateMesh()
 		m_vertexBuffer->GetDeviceMemory()->UnMap();
 	}
 
-	m_world->ProcessVertexPages(m_vertexPage, m_position);
+	m_world->ProcessVertexPages(m_vertexPage, m_matrix);
 }

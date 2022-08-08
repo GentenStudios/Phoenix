@@ -69,7 +69,6 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 	{
 		mChunks[i].Initilize(this,mVertexBuffer.get());
 
-		glm::mat4 modelMatrix(1.0f);
 
 		float x = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
 		float y = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
@@ -82,10 +81,8 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 		x *= CHUNK_BLOCK_SIZE;
 		y *= CHUNK_BLOCK_SIZE;
 		z *= CHUNK_BLOCK_SIZE;
-
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(x, y, z));
 				
-		mChunks[i].SetPosition(modelMatrix);
+		mChunks[i].SetPosition(glm::vec3(x, y, z));
 	}
 	UpdateAllPositionBuffers();
 }

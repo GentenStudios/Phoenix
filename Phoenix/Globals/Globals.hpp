@@ -21,7 +21,7 @@ const unsigned int CHUNK_BLOCK_BIT_SIZE_MASK = 0b1111;
 const unsigned int MAX_BLOCKS_PER_CHUNK = CHUNK_BLOCK_SIZE * CHUNK_BLOCK_SIZE * CHUNK_BLOCK_SIZE;
 
 // How many chunks are visible in x,y,z range around the camera ((n/2) + 1 rad)
-const unsigned int MAX_WORLD_CHUNKS_PER_AXIS = 5;
+const unsigned int MAX_WORLD_CHUNKS_PER_AXIS = 8;
 
 // Total chunks in memory at once
 const unsigned int MAX_CHUNKS = MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS;
