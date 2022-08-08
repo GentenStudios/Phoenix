@@ -12,13 +12,17 @@ Camera::Camera(uint32_t width, uint32_t height)
 
 void Camera::SetProjection(uint32_t width, uint32_t height)
 {
-	mProjection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 10.0f, 100.0f);
+	mProjection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 0.10f, 1000.0f);
 	mProjection[1][1] *= -1.0f;
 }
 
-void Camera::Move(glm::vec3 position) { Move(position.x, position.y, position.z); }
+void Camera::Move(glm::vec3 position) { mPosition = glm::translate(mPosition, position); }
 
-void Camera::Move(float x, float y, float z) { SetMatrixPosition(-glm::vec3(x, y, z)); }
+void Camera::Move(float x, float y, float z){ Move(glm::vec3(x, y, z)); }
+
+void Camera::SetPosition(glm::vec3 position) { SetMatrixPosition(-position); }
+
+void Camera::SetPosition(float x, float y, float z) { SetPosition(glm::vec3(x, y, z)); }
 
 void Camera::RotateWorldX(float x) { Rotate(glm::vec3(1.0f, 0.0f, 0.0f), x); }
 
@@ -32,7 +36,10 @@ void Camera::Rotate(glm::vec3 axis, float angle)
 
 void Camera::Update()
 {
-	mCamera.ProPos = mProjection * mPosition;
+	glm::mat4 scale(1.0f);
+	scale[3][3]    = 1.0f;
+
+	mCamera.ProPos = (mProjection * mPosition * scale);
 	UpdateFrustrum(mCamera.ProPos);
 	mOutOfDateFrustrum = false;
 }

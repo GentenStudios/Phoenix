@@ -31,6 +31,10 @@ public:
 
 	void Move(float x, float y, float z);
 
+	void SetPosition(glm::vec3 position);
+
+	void SetPosition(float x, float y, float z);
+
 	void RotateWorldX(float x);
 
 	void RotateWorldY(float y);

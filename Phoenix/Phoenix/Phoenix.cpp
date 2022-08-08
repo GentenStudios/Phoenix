@@ -3,6 +3,7 @@
 #include <Phoenix/World.hpp>
 #include <Phoenix/DebugUI.hpp>
 #include <Phoenix/DebugWindows.hpp>
+#include <Phoenix/InputHandler.hpp>
 
 #include <Renderer/Buffer.hpp>
 #include <Renderer/Camera.hpp>
@@ -58,12 +59,14 @@ phx::Phoenix::Phoenix(Window* window) : mWindow(window)
 	InitCamera();
 	InitWorld();
 	InitDebugUI();
+	InitInputHandler();
 	InitTexturePool();
 	InitDefaultTextures();
 
 	// Temporary global defition of all pipelines, will eventualy use the mod loader to load pipelines
 	mResourceManager->LoadPipelineDictionary("Definitions.xml", GetPrimaryRenderTarget()->GetRenderPass());
 
+	mDeltaTime = 0.0f;
 	mInstance = this;
 }
 
@@ -78,6 +81,8 @@ phx::Phoenix::~Phoenix()
 	mWorld.reset();
 
 	mDebugUI.reset();
+
+	mInputHandler.reset();
 
 	mDevice.reset();
 }
@@ -159,7 +164,7 @@ void phx::Phoenix::Update()
 
 	mStatisticManager.StartStatistic("ImGui");
 	// Temp delta time
-	mDebugUI->Update(0.01f);
+	mDebugUI->Update(mDeltaTime);
 	mStatisticManager.StopStatistic("ImGui");
 
 	if (mDebugUI->IsCMDOutdated())
@@ -174,6 +179,9 @@ void phx::Phoenix::Update()
 
 	mStatisticManager.StartStatistic("Total Frametime");
 	mStatisticManager.Update();
+
+	mDeltaTime = GetStatistics().GetStatisticSecconds("Total Frametime");
+
 }
 
 void phx::Phoenix::Validate()
@@ -187,6 +195,35 @@ void phx::Phoenix::Validate()
 
 void phx::Phoenix::UpdateCamera()
 {
+
+
+	// Temp camera movment
+
+	float movmentSpeed = 5.0f;
+
+	if (mInputHandler->IsPressed(SDL_SCANCODE_W))
+	{
+		mCamera->Move(0.0f, 0.0f, movmentSpeed * mDeltaTime);
+	}
+
+	if (mInputHandler->IsPressed(SDL_SCANCODE_S))
+	{
+		mCamera->Move(0.0f, 0.0f, -movmentSpeed * mDeltaTime);
+	}
+
+	if (mInputHandler->IsPressed(SDL_SCANCODE_A))
+	{
+		mCamera->Move(movmentSpeed * mDeltaTime, 0.0f, 0.0f);
+	}
+
+	if (mInputHandler->IsPressed(SDL_SCANCODE_D))
+	{
+		mCamera->Move(-movmentSpeed * mDeltaTime, 0.0f, 0.0f);
+	}
+
+	// End of temp camera movment
+
+
 	mCamera->Update();
 	mCameraBuffer->TransferInstantly(&mCamera->mCamera, sizeof(Camera::CameraPacket));
 }
@@ -240,8 +277,8 @@ void phx::Phoenix::CreateCameraBuffer()
 void phx::Phoenix::InitCamera()
 {
 	mCamera = new Camera(mWindow->GetWidth(), mWindow->GetHeight());
-	mCamera->Move(0.0f, 5.0f, 20.0f);
-	mCamera->RotateWorldZ(15.0f);
+	mCamera->SetPosition(0.0f, 1.5f, 20.0f);
+	mCamera->RotateWorldZ(10.0f);
 	mResourceManager->RegisterResource("Camera", mCamera, true);
 }
 
@@ -264,6 +301,13 @@ void phx::Phoenix::InitDebugUI()
 
 	mDebugUI->AddRenderCallback(DebugUIMemoryUsage, this);
 	
+}
+
+void phx::Phoenix::InitInputHandler()
+{
+	mInputHandler = std::unique_ptr<InputHandler>(new InputHandler(mWindow));
+
+	mResourceManager->RegisterResource<InputHandler>("InputHandler", mInputHandler.get());
 }
 
 void phx::Phoenix::InitTexturePool() 

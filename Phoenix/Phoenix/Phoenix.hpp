@@ -31,6 +31,7 @@ class DebugUI;
 namespace phx
 {
 	class World;
+	class InputHandler;
 
 	class Phoenix
 	{
@@ -74,6 +75,8 @@ namespace phx
 
 		void InitDebugUI();
 
+		void InitInputHandler();
+
 		void InitTexturePool();
 
 		void InitDefaultTextures();
@@ -83,15 +86,18 @@ namespace phx
 		std::unique_ptr<RenderDevice>    mDevice;
 		std::unique_ptr<ResourceManager> mResourceManager;
 
-		std::unique_ptr<World> mWorld;
+		std::unique_ptr<World>   mWorld;
 		std::unique_ptr<DebugUI> mDebugUI;
-
+		std::unique_ptr<InputHandler> mInputHandler;
+		
 		std::unique_ptr<MemoryHeap> mDeviceLocalMemoryHeap;
 		std::unique_ptr<MemoryHeap> mGPUMappableMemoryHeap;
 
 		RenderTarget* mPrimaryRenderTarget = nullptr;
 
 		StatisticManager mStatisticManager;
+
+		float mDeltaTime;
 
 		Camera* mCamera;
 		Buffer* mCameraBuffer;
