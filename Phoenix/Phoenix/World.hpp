@@ -14,6 +14,7 @@ class ResourceManager;
 namespace phx
 {
 	class Chunk;
+	class ChunkNabours;
 
 	struct VertexPage
 	{
@@ -64,6 +65,12 @@ namespace phx
 
 		unsigned int mFreeMemoryPoolCount;
 
+		ChunkNabours* mChunkNeighbours;
+
+		// All chunks sorted in grid alignment
+		phx::Chunk** mChunksSorted;
+
+		// All chunks as they are allocated in memory
 		phx::Chunk* mChunks;
 	};
 } // namespace phx

@@ -2,6 +2,8 @@
 
 #include <Globals/Globals.hpp>
 
+#include <memory>
+
 class Buffer;
 
 namespace phx
@@ -15,16 +17,36 @@ namespace phx
 		uint32_t textureID;
 	};
 
+	class Chunk;
+
+	struct ChunkNabours
+	{
+		Chunk** neighbouringChunks[6];
+	};
+
 	class Chunk
 	{
 
 	public:
+
+		enum Face
+		{
+			East,
+			West,
+			Top,
+			Bottom,
+			North,
+			South,
+		};
+
 		Chunk();
 		~Chunk() = default;
 
 		void Initilize(World* world, Buffer* vertexBuffer);
 
-		void SetPosition(glm::vec3 position);
+		void SetPosition(glm::ivec3 position);
+
+		void SetRenderPosition(glm::vec3 position);
 
 		void Reset();
 
@@ -33,6 +55,8 @@ namespace phx
 		void Update();
 
 		unsigned int GetTotalVertexCount();
+
+		void SetNeighbouringChunk(ChunkNabours* neighbouringChunks);
 
 		uint64_t GetBlock(int x, int y, int z);
 		void     SetBlock(int x, int y, int z, uint64_t block);
@@ -45,11 +69,13 @@ namespace phx
 		unsigned int m_totalVertexCount = 0;
 		Buffer*      m_vertexBuffer       = nullptr;
 
+		ChunkNabours* m_neighbouringChunk;
+
 		VertexPage* m_vertexPage;
 
 		bool m_dirty = true;
 
-		glm::vec3 m_position;
+		glm::ivec3 m_position;
 		glm::mat4 m_matrix;
 
 		uint64_t m_blocks[CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE];

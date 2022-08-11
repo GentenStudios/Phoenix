@@ -47,6 +47,8 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 	UpdateAllIndirectDraws();
 
 	mChunks = new Chunk[MAX_CHUNKS];
+	mChunksSorted = new Chunk*[MAX_CHUNKS];
+	mChunkNeighbours = new ChunkNabours[MAX_CHUNKS];
 
 	mFreeVertexPages = nullptr;
 
@@ -64,15 +66,80 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 
 		mFreeVertexPages = &mVertexPages.get()[i];
 	}
+	
+	for (int z = 0; z < MAX_WORLD_CHUNKS_PER_AXIS; ++z)
+	{
+		for (int y = 0; y < MAX_WORLD_CHUNKS_PER_AXIS; ++y)
+		{
+			for (int x = 0; x < MAX_WORLD_CHUNKS_PER_AXIS; ++x)
+			{
+				int index = x + (y * MAX_WORLD_CHUNKS_PER_AXIS) + (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS);
+
+
+				
+				mChunks[index].SetPosition(glm::ivec3(x, y, z));
+				mChunks[index].SetRenderPosition(glm::vec3(x, y, z));
+
+				// On start up the chunks are already sorted
+				mChunksSorted[index] = &mChunks[index];
+			}
+		}
+	}
+
+	for (int z = 0; z < MAX_WORLD_CHUNKS_PER_AXIS; ++z)
+	{
+		for (int y = 0; y < MAX_WORLD_CHUNKS_PER_AXIS; ++y)
+		{
+			for (int x = 0; x < MAX_WORLD_CHUNKS_PER_AXIS; ++x)
+			{
+				int index = x + (y * MAX_WORLD_CHUNKS_PER_AXIS) + (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS);
+
+				ChunkNabours* chunkNabours = &mChunkNeighbours[index];
+
+				chunkNabours->neighbouringChunks[Chunk::East] =
+				    (x - 1) < 0 ? nullptr
+				                : &mChunksSorted[(x - 1) + (y * MAX_WORLD_CHUNKS_PER_AXIS) +
+				                                 (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
+
+				chunkNabours->neighbouringChunks[Chunk::West] =
+				    (x + 1) >= MAX_WORLD_CHUNKS_PER_AXIS ? nullptr
+				                                         : &mChunksSorted[(x + 1) + (y * MAX_WORLD_CHUNKS_PER_AXIS) +
+				                                                          (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
+
+				chunkNabours->neighbouringChunks[Chunk::Top] =
+				    (y + 1) >= MAX_WORLD_CHUNKS_PER_AXIS ? nullptr
+				                                         : &mChunksSorted[x + ((y + 1) * MAX_WORLD_CHUNKS_PER_AXIS) +
+				                                                          (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
+
+				chunkNabours->neighbouringChunks[Chunk::Bottom] =
+				    (y - 1) < 0 ? nullptr
+				                : &mChunksSorted[x + ((y - 1) * MAX_WORLD_CHUNKS_PER_AXIS) +
+				                                 (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
+
+				chunkNabours->neighbouringChunks[Chunk::South] =
+				    (z - 1) < 0 ? nullptr
+				                : &mChunksSorted[x + (y * MAX_WORLD_CHUNKS_PER_AXIS) +
+				                                 ((z - 1) * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
+
+				chunkNabours->neighbouringChunks[Chunk::North] =
+				    (z + 1) >= MAX_WORLD_CHUNKS_PER_AXIS
+				        ? nullptr
+				        : &mChunksSorted[x + (y * MAX_WORLD_CHUNKS_PER_AXIS) +
+				                         ((z + 1) * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
+
+				mChunksSorted[index]->SetNeighbouringChunk(chunkNabours);
+
+			}
+		}
+	}
 
 	for (int i = 0; i < MAX_CHUNKS; ++i)
 	{
-		mChunks[i].Initilize(this,mVertexBuffer.get());
+		mChunks[i].Initilize(this, mVertexBuffer.get());
 
-
-		float x = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
-		float y = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
-		float z = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
+		int x = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
+		int y = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
+		int z = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
 
 		x -= i % MAX_WORLD_CHUNKS_PER_AXIS;
 		y -= (i / MAX_WORLD_CHUNKS_PER_AXIS) % MAX_WORLD_CHUNKS_PER_AXIS;
@@ -81,8 +148,14 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 		x *= CHUNK_BLOCK_SIZE;
 		y *= CHUNK_BLOCK_SIZE;
 		z *= CHUNK_BLOCK_SIZE;
-				
-		mChunks[i].SetPosition(glm::vec3(x, y, z));
+
+		mChunks[i].SetPosition(glm::ivec3(x, y, z));
+		mChunks[i].SetRenderPosition(glm::vec3(x, y, z));
+	}
+
+	for (int i = 0; i < MAX_CHUNKS; ++i)
+	{
+		mChunks[i].GenerateWorld();
 	}
 	UpdateAllPositionBuffers();
 }
@@ -92,6 +165,7 @@ phx::World::~World()
 	mVertexBuffer.reset();
 
 	delete[] mChunks;
+	delete[] mChunksSorted;
 }
 
 void phx::World::Update()
@@ -166,7 +240,7 @@ void phx::World::ProcessVertexPages(VertexPage* pages, glm::mat4 position)
 		indirectCommandInstance.instanceCount          = 1;
 
 		// Transfer the indirect draw request
-		mIndirectDrawCommands->TransferInstantly(mIndirectBufferCPU.get(), sizeof(VkDrawIndirectCommand),
+		mIndirectDrawCommands->TransferInstantly(&indirectCommandInstance, sizeof(VkDrawIndirectCommand),
 		                                         pages->index * sizeof(VkDrawIndirectCommand));
 
 		mPositionBufferCPU.get()[pages->index] = position;
