@@ -4,6 +4,8 @@
 #include <Phoenix/Chunk.hpp>
 #include <Phoenix/World.hpp>
 
+#include <Windowing/Window.hpp>
+
 #include <ResourceManager/ResourceManager.hpp>
 
 #include <Globals/Globals.hpp>
@@ -33,7 +35,7 @@ void DebugUIRenderSystemStatistics(void* ref)
 
 	phx::Phoenix* engine = reinterpret_cast<phx::Phoenix*>(ref);
 
-	ImGui::SetNextWindowPos(ImVec2(20, 20));
+	ImGui::SetNextWindowPos(ImVec2(engine->GetWindow()->GetWidth() - 220, 20));
 
 	ImGuiWindowFlags flags =
 	    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;

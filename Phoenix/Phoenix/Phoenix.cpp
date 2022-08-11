@@ -193,6 +193,8 @@ void phx::Phoenix::Validate()
 	RebuildCommandBuffers();
 }
 
+Window* phx::Phoenix::GetWindow() { return mWindow; }
+
 void phx::Phoenix::UpdateCamera()
 {
 

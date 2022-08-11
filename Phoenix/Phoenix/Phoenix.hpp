@@ -56,6 +56,8 @@ namespace phx
 
 		ResourceManager* GetResourceManager() { return mResourceManager.get(); }
 
+		Window* GetWindow();
+
 	private:
 		void UpdateCamera();
 
