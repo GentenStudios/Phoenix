@@ -7,8 +7,11 @@
 #include <Renderer/Pipeline.hpp>
 #include <Renderer/PipelineLayout.hpp>
 #include <Renderer/ResourceTable.hpp>
-#include <ResourceManager/ResourceManager.hpp>
+#include <Renderer/ResourceTableLayout.hpp>
 
+
+
+#include <ResourceManager/ResourceManager.hpp>
 #include <ResourceManager/RenderTechnique.hpp>
 
 phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager)
@@ -20,13 +23,11 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 	               VK_SHARING_MODE_EXCLUSIVE));
 
 	mIndirectDrawCommands = std::unique_ptr<Buffer>(
-	    new Buffer(mDevice, memoryHeap, sizeof(VkDrawIndirectCommand) * TOTAL_VERTEX_PAGE_COUNT,
-	               VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	    new Buffer(mDevice, memoryHeap, sizeof(VkDrawIndirectCommand) * TOTAL_VERTEX_PAGE_COUNT, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	               VK_SHARING_MODE_EXCLUSIVE));
 
 	mPositionBuffer = std::unique_ptr<Buffer>(
-	    new Buffer(mDevice, memoryHeap, sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT,
-	               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	    new Buffer(mDevice, memoryHeap, sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	               VK_SHARING_MODE_EXCLUSIVE));
 
 	mFreeMemoryPoolCount = TOTAL_VERTEX_PAGE_COUNT;
@@ -43,6 +44,13 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 	{
 		mIndirectBufferCPU.get()[i] = indirectCommandInstance;
 	}
+
+	mIndexedIndirectResourceTable =
+	    mResourceManager->GetResource<ResourceTableLayout>("IndexedIndirectCommandResourceTableLayout")->CreateTable();
+	mIndexedIndirectResourceTable->Bind(0, mIndirectDrawCommands.get());
+
+	mChunkPositionsResourceTable = mResourceManager->GetResource<ResourceTableLayout>("ChunkPositionResourceTableLayout")->CreateTable();
+	mChunkPositionsResourceTable->Bind(0, mPositionBuffer.get());
 
 	UpdateAllIndirectDraws();
 
@@ -175,6 +183,27 @@ void phx::World::Update()
 	{
 		mChunks[i].Update();
 	}
+}
+
+void phx::World::ComputeVisibility(VkCommandBuffer* commandBuffer, uint32_t index)
+{
+
+	RenderTechnique* frustrumPipeline    = mResourceManager->GetResource<RenderTechnique>("ViewFrustrumCulling");
+	ResourceTable*   cameraResourceTable = mResourceManager->GetResource<ResourceTable>("CameraResourceTable");
+
+	frustrumPipeline->GetPipeline()->Use(commandBuffer, index);
+
+	cameraResourceTable->Use(commandBuffer, index, 0, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
+	                         VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	mChunkPositionsResourceTable->Use(commandBuffer, index, 1, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
+	                                  VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	//mIndirectDrawCommands
+	mIndexedIndirectResourceTable->Use(commandBuffer, index, 2, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
+	                                   VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	vkCmdDispatch(commandBuffer[index], TOTAL_VERTEX_PAGE_COUNT, 1, 1);
 }
 
 void phx::World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)

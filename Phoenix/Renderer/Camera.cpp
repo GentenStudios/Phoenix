@@ -7,6 +7,7 @@ Camera::Camera(uint32_t width, uint32_t height)
 	SetMatrixPosition(glm::vec3());
 	SetProjection(width, height);
 
+	mOutOfDateFrustrum = true;
 	Update();
 }
 
@@ -16,7 +17,10 @@ void Camera::SetProjection(uint32_t width, uint32_t height)
 	mProjection[1][1] *= -1.0f;
 }
 
-void Camera::Move(glm::vec3 position) { mPosition = glm::translate(mPosition, position); }
+void Camera::Move(glm::vec3 position) { 
+	mPosition          = glm::translate(mPosition, position);
+	mOutOfDateFrustrum = true;
+}
 
 void Camera::Move(float x, float y, float z){ Move(glm::vec3(x, y, z)); }
 
@@ -32,7 +36,9 @@ void Camera::RotateWorldZ(float z) { Rotate(glm::vec3(1.0f, 0.0f, 0.0f), z); }
 
 void Camera::Rotate(glm::vec3 axis, float angle)
 { 
-	mPosition = glm::rotate(mPosition, glm::radians(angle), axis); }
+	mPosition = glm::rotate(mPosition, glm::radians(angle), axis); 
+	mOutOfDateFrustrum = true;
+}
 
 void Camera::Update()
 {
@@ -40,8 +46,11 @@ void Camera::Update()
 	scale[3][3]    = 1.0f;
 
 	mCamera.ProPos = (mProjection * mPosition * scale);
-	UpdateFrustrum(mCamera.ProPos);
-	mOutOfDateFrustrum = false;
+	if (mOutOfDateFrustrum)
+	{
+		UpdateFrustrum(mCamera.ProPos);
+		mOutOfDateFrustrum = false;
+	}
 }
 
 bool Camera::CheckSphereFrustrum(glm::vec3 pos, float radius)

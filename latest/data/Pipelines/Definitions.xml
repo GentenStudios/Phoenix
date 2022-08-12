@@ -2,4 +2,9 @@
 <Pipelines>
 	<Pipeline name="Default"/>
 	<Pipeline name="StandardMaterial"/>
+
+
+	<!--Compute-->
+	<Pipeline name="ViewFrustrumCulling"/>
+
 </Pipelines>

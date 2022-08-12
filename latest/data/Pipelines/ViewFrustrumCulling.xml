@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<Pipeline type="Compute">
+	<Descriptors>
+		<Descriptor name="CameraResourceTableLayout" />
+		<Descriptor name="ChunkPositionResourceTableLayout" />
+		<Descriptor name="IndexedIndirectCommandResourceTableLayout" />
+	</Descriptors>
+
+	<Stages>
+		<Stage entrypoint="main" stage="Compute" path="data/Shaders/ViewFrustrumCulling/comp.spv"/>
+	</Stages>
+</Pipeline>

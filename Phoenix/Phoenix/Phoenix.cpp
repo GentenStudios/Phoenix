@@ -112,14 +112,14 @@ void phx::Phoenix::RebuildCommandBuffers()
 
 		mDevice->BeginCommand(commandBuffers[i], VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
+		mWorld->ComputeVisibility(commandBuffers, i);
+
 		{
 			mPrimaryRenderTarget->GetRenderPass()->Use(commandBuffers, i);
 
 			vkCmdSetViewport(commandBuffers[i], 0, 1, &viewport);
 
 			vkCmdSetScissor(commandBuffers[i], 0, 1, &scissor);
-
-			// Example Rendering
 
 			mWorld->Draw(commandBuffers, i);
 

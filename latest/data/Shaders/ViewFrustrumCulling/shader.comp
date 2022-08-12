@@ -1,0 +1,43 @@
+#version 460
+
+
+#extension GL_KHR_shader_subgroup_ballot: enable
+#extension GL_GOOGLE_include_directive : require
+
+#include "../_includes/Constants.glsl"
+#include "../_includes/ChunkPositions.glsl"
+#include "../_includes/Camera.glsl"
+#include "../_includes/IndirectCommand.glsl"
+
+layout(std430, set=2, binding=0) writeonly buffer VkDrawIndexedIndirectCommandBuffer {
+		VkDrawIndirectCommand drawIndexedIndirectCommand[];
+};
+
+bool frustumCheck(vec4 pos, float radius)
+{
+	// Check sphere against frustum planes
+	for (int i = 0; i < 6; i++) 
+	{
+		if (dot(camera.frustumPlanes[i], pos) + camera.frustumPlanes[i].w <= -radius )
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+void main()
+{
+	uint idx = gl_GlobalInvocationID.x;
+
+	vec4 position = chunkPositions[idx].position[3];//vec4( chunkPositions[idx].position, 0.0f, 0.0f );
+
+	if (frustumCheck(position, CHUNK_WIDTH))
+	{
+		drawIndexedIndirectCommand[idx].instanceCount = 1;
+	}
+	else
+	{
+		drawIndexedIndirectCommand[idx].instanceCount = 0;
+	}
+}

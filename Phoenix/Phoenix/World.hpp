@@ -10,6 +10,7 @@ class Buffer;
 class RenderDevice;
 class MemoryHeap;
 class ResourceManager;
+class ResourceTable;
 
 namespace phx
 {
@@ -34,6 +35,8 @@ namespace phx
 
 		void Update();
 
+		void ComputeVisibility(VkCommandBuffer* commandBuffer, uint32_t index);
+
 		void Draw(VkCommandBuffer* commandBuffer, uint32_t index);
 
 		VertexPage* GetFreeVertexPage();
@@ -57,9 +60,11 @@ namespace phx
 
 		VertexPage* mFreeVertexPages;
 
+		ResourceTable*                         mIndexedIndirectResourceTable;
 		std::unique_ptr<VkDrawIndirectCommand> mIndirectBufferCPU;
 		std::unique_ptr<Buffer>                mIndirectDrawCommands;
 
+		ResourceTable*             mChunkPositionsResourceTable;
 		std::unique_ptr<glm::mat4> mPositionBufferCPU;
 		std::unique_ptr<Buffer>    mPositionBuffer;
 
