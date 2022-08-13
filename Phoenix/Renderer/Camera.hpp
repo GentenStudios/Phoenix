@@ -19,7 +19,8 @@ public:
 	};
 	struct CameraPacket
 	{
-		glm::mat4 ProPos; // Projection/Position
+		glm::mat4 modelToProjection; // Projection/Position
+		glm::mat4 modelToWorld;      // Position
 		glm::vec4 planes[6];
 	} mCamera;
 
@@ -42,6 +43,10 @@ public:
 	void Update();
 
 	bool CheckSphereFrustrum(glm::vec3 pos, float radius);
+
+	glm::vec3 GetPosition();
+
+	glm::vec3 GetDirection();
 
 	glm::mat4 GetProjection() { return mProjection; }
 

@@ -62,6 +62,51 @@ const glm::vec3 BLOCK_VERTICES[] = {
 	{0.f, 1.f, 1.f},
 	{1.f, 1.f, 1.f},
 };
+const glm::vec3 BLOCK_NORMALS[] = {
+	
+
+    {1.f, 0.f, 0.f}, // east (right)
+    {1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+
+	{1.f, 0.f, 0.f}, // west
+	{1.f, 0.f, 0.f},
+    {1.f, 0.f, 0.f}, 
+	{1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+    {1.f, 0.f, 0.f},
+
+    {0.f, 1.f, 0.f}, // bottom
+    {0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+
+    {0.f, 1.f, 0.f}, // top
+    {0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	
+	{0.f, 0.f, 1.f},  // north (front)
+	{0.f, 0.f, 1.f},
+    {0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f},
+    {0.f, 0.f, 1.f},
+
+    {0.f, 0.f, 1.f}, // south
+    {0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f}, 
+	{0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f},
+};
 
 static const glm::vec2 BLOCK_UVS[] = {
     {1.f, 0.f},
@@ -151,13 +196,21 @@ void phx::Chunk::GenerateWorld()
 			{
 				float ya = (float) y + m_position.y;
 				// Randomly place blocks for now
-	
-				bool solid = ya < -5;
-	
+				
+				bool solid = ya < 3;
+				
+				//if (ya == -1)
+				//	solid = rand() % 2 == 0;
+				
 				m_blocks[x][y][z] = solid ? 1 : 0;
+				//if (m_position.x == -1 && m_position.y == -1)
+				//{
+				//	m_blocks[x][y][z] = 1;
+				//}
 			}
 		}
 	}
+
 
 	m_dirty = true;
 }
@@ -177,7 +230,17 @@ void phx::Chunk::SetNeighbouringChunk(ChunkNabours* neighbouringChunk) { m_neigh
 
 uint64_t phx::Chunk::GetBlock(int x, int y, int z) { return m_blocks[x][y][z]; }
 
-void phx::Chunk::SetBlock(int x, int y, int z, uint64_t block) { m_blocks[x][y][z] = block; }
+void phx::Chunk::SetBlock(int x, int y, int z, uint64_t block)
+{
+	m_blocks[x][y][z] = block;
+	m_dirty           = true;
+}
+
+void phx::Chunk::MarkDirty() { m_dirty = true; }
+
+glm::ivec3 phx::Chunk::GetPosition() { return m_position; }
+
+phx::ChunkNabours* phx::Chunk::GetNabours() { return m_neighbouringChunk; }
 
 void phx::Chunk::GenerateMesh()
 {
@@ -205,12 +268,9 @@ void phx::Chunk::GenerateMesh()
 				if (blockID == 0)
 					continue;
 
-
-				bool visibilitySet[6] = {
-					false, false,
-					false, false,
-					false, false
-				};
+				
+				bool visibilitySet[6] = {false, false, false, false, false, false};
+				//bool visibilitySet[6] = {true,true,true,true,true,true};
 
 				// East
 				if (x == CHUNK_BLOCK_SIZE - 1)
@@ -356,6 +416,8 @@ void phx::Chunk::GenerateMesh()
 							(*vertexStream).position.x += x;
 							(*vertexStream).position.y += y;
 							(*vertexStream).position.z += z;
+
+							(*vertexStream).normal = BLOCK_NORMALS[lookupIndex];							
 
 							(*vertexStream).uv = BLOCK_UVS[lookupIndex];
 

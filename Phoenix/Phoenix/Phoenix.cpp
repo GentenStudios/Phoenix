@@ -256,6 +256,38 @@ void phx::Phoenix::UpdateCamera()
 		{
 			mCamera->RotatePitch(mouseMoveY);
 		}
+
+		{
+			static bool wasPressed = false;
+			if (mInputHandler->IsMousePressed(0))
+			{
+				if (!wasPressed)
+				{
+					mWorld->DestroyBlockFromView();
+				}
+				wasPressed = true;
+			}
+			else
+			{
+				wasPressed = false;
+			}
+		}
+
+		{
+			static bool wasPressed = false;
+			if (mInputHandler->IsMousePressed(1))
+			{
+				if (!wasPressed)
+				{
+					mWorld->PlaceBlockFromView();
+				}
+				wasPressed = true;
+			}
+			else
+			{
+				wasPressed = false;
+			}
+		}
 	}
 
 	mCamera->Update();
@@ -311,7 +343,7 @@ void phx::Phoenix::CreateCameraBuffer()
 void phx::Phoenix::InitCamera()
 {
 	mCamera = new Camera(mWindow->GetWidth(), mWindow->GetHeight());
-	mCamera->SetWorldPosition(glm::vec3(0.0f, 1.5f, 20.0f));
+	mCamera->SetWorldPosition(glm::vec3(0.0f, 5.5f, 20.0f));
 	mResourceManager->RegisterResource("Camera", mCamera, true);
 }
 

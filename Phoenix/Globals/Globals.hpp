@@ -8,10 +8,6 @@
 #include <glm/gtx/rotate_vector.hpp>
 
 
-
-
-
-
 const unsigned int MAX_SPRITESHEET_SAMPLER_ARRAY = 32;
 
 // How wide the chunk is in blocks
@@ -32,6 +28,6 @@ const unsigned int MAX_WORLD_CHUNKS_PER_AXIS = 7;
 // Total chunks in memory at once
 const unsigned int MAX_CHUNKS = MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS;
 
-const unsigned int VERTEX_PAGE_SIZE = 36 * 200;
+const unsigned int VERTEX_PAGE_SIZE = 24 * 200;
 
 const unsigned int TOTAL_VERTEX_PAGE_COUNT = 1000;

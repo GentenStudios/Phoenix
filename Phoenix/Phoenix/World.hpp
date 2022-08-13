@@ -43,7 +43,20 @@ namespace phx
 
 		unsigned int GetFreeMemoryPoolCount();
 
+		void DestroyBlockFromView();
+
+		void PlaceBlockFromView();
+
 	private:
+
+		enum RaycastMode
+		{
+			Place,
+			Destroy
+		};
+
+		void RaycastToBlock(float step, int itteration, Chunk*& chunk, int& localX, int& localY, int& localZ, RaycastMode mode);
+
 		void UpdateAllIndirectDraws();
 
 		void UpdateAllPositionBuffers();
