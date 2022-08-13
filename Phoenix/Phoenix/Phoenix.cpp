@@ -1,9 +1,10 @@
 #include <Phoenix/Phoenix.hpp>
 
-#include <Phoenix/World.hpp>
 #include <Phoenix/DebugUI.hpp>
 #include <Phoenix/DebugWindows.hpp>
 #include <Phoenix/InputHandler.hpp>
+#include <Phoenix/Mods.hpp>
+#include <Phoenix/World.hpp>
 
 #include <Renderer/Buffer.hpp>
 #include <Renderer/Camera.hpp>
@@ -17,17 +18,12 @@
 
 #include <ResourceManager/GlobalResources.hpp>
 #include <ResourceManager/RenderTechnique.hpp>
-
 #include <ResourceManager/ResourceManager.hpp>
 #include <Windowing/Window.hpp>
 
 #include <lodepng.h>
 
 phx::Phoenix* phx::Phoenix::mInstance = nullptr;
-
-
-
-
 
 void WindowEvent(SDL_Event& event, void* ref)
 {
@@ -42,6 +38,27 @@ void WindowEvent(SDL_Event& event, void* ref)
 	}
 }
 
+void RenderSystemStatistics(void* ref)
+{
+	phx::Phoenix* engine = reinterpret_cast<phx::Phoenix*>(ref);
+
+	ImGui::SetNextWindowPos(ImVec2(20, 20));
+
+	static bool      open = true;
+	ImGuiWindowFlags flags =
+	    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+	if (!ImGui::Begin("Render Statistics", &open, flags))
+	{
+		ImGui::End();
+		return;
+	}
+
+	ImGui::Text("%s: %.5g", "FPS", 420.69f);
+
+	ImGui::SetWindowSize(ImVec2(220, ImGui::GetCursorPosY()));
+
+	ImGui::End();
+}
 
 phx::Phoenix::Phoenix(Window* window) : mWindow(window)
 {
@@ -67,7 +84,7 @@ phx::Phoenix::Phoenix(Window* window) : mWindow(window)
 	mResourceManager->LoadPipelineDictionary("Definitions.xml", GetPrimaryRenderTarget()->GetRenderPass());
 
 	mDeltaTime = 0.0f;
-	mInstance = this;
+	mInstance  = this;
 }
 
 phx::Phoenix::~Phoenix()
@@ -125,9 +142,7 @@ void phx::Phoenix::RebuildCommandBuffers()
 
 			mDebugUI->Use(commandBuffers, i, true);
 
-			vkCmdEndRenderPass(
-				commandBuffers[i]
-			);
+			vkCmdEndRenderPass(commandBuffers[i]);
 		}
 
 		RenderTarget* src = mPrimaryRenderTarget;
@@ -182,10 +197,8 @@ void phx::Phoenix::Update()
 
 	mDeltaTime = GetStatistics().GetStatisticSecconds("Total Frametime");
 
-	
 	// Must come after all mouse move reads
 	mInputHandler->Update();
-
 }
 
 void phx::Phoenix::Validate()
@@ -201,7 +214,7 @@ Window* phx::Phoenix::GetWindow() { return mWindow; }
 
 void phx::Phoenix::UpdateCamera()
 {
-	float movmentSpeed = 5.0f;	
+	float movmentSpeed = 5.0f;
 
 	if (mInputHandler->IsPressed(SDL_SCANCODE_LALT))
 	{
@@ -321,6 +334,14 @@ void phx::Phoenix::InitWorld()
 	mResourceManager->RegisterResource("World", mWorld.get(), false);
 }
 
+void phx::Phoenix::InitMods()
+{
+	int modCount = 1;
+
+	mMods = std::unique_ptr<ModHandler>(new ModHandler(modCount));
+	mResourceManager->RegisterResource("ModHandler", mMods.get(), false);
+}
+
 void phx::Phoenix::InitDebugUI()
 {
 	mDebugUI = std::unique_ptr<DebugUI>(new DebugUI(mDevice.get(), mResourceManager.get(), mWindow));
@@ -329,11 +350,9 @@ void phx::Phoenix::InitDebugUI()
 
 	mDebugUI->AddMainmenuCallback(DebugUIMainMenuBar, this);
 
-	
 	mDebugUI->AddRenderCallback(DebugUIRenderSystemStatistics, this);
 
 	mDebugUI->AddRenderCallback(DebugUIMemoryUsage, this);
-	
 }
 
 void phx::Phoenix::InitInputHandler()
@@ -343,30 +362,23 @@ void phx::Phoenix::InitInputHandler()
 	mResourceManager->RegisterResource<InputHandler>("InputHandler", mInputHandler.get());
 }
 
-void phx::Phoenix::InitTexturePool() 
+void phx::Phoenix::InitTexturePool()
 {
-	ResourceTableLayout* samplerArrayResourceTableLayout = mResourceManager->GetResource<ResourceTableLayout>("SamplerArrayResourceTableLayout");
+	ResourceTableLayout* samplerArrayResourceTableLayout =
+	    mResourceManager->GetResource<ResourceTableLayout>("SamplerArrayResourceTableLayout");
 
 	ResourceTable* defaultSamplerArrayResourceTable = samplerArrayResourceTableLayout->CreateTable();
 	mResourceManager->RegisterResource<ResourceTable>("SamplerArrayResourceTable", defaultSamplerArrayResourceTable);
 }
 
-void phx::Phoenix::InitDefaultTextures() 
+void phx::Phoenix::InitDefaultTextures()
 {
 	ResourceTable* defaultSamplerArrayResourceTable = mResourceManager->GetResource<ResourceTable>("SamplerArrayResourceTable");
 
-	const char errorTextureData[] = {
-		0xFF,0x00,0xFF,0xFF
-	};
-	
-	Texture* errorTexture = new Texture(
-		mDevice.get(), 
-		mDeviceLocalMemoryHeap.get(),
-		1,
-		1,
-		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_IMAGE_USAGE_SAMPLED_BIT,
-		(char*)(errorTextureData));
+	const char errorTextureData[] = {0xFF, 0x00, 0xFF, 0xFF};
+
+	Texture* errorTexture = new Texture(mDevice.get(), mDeviceLocalMemoryHeap.get(), 1, 1, VK_FORMAT_R8G8B8A8_UNORM,
+	                                    VK_IMAGE_USAGE_SAMPLED_BIT, (char*) (errorTextureData));
 
 	mResourceManager->RegisterResource<Texture>("ErrorTexture", errorTexture);
 
@@ -375,10 +387,9 @@ void phx::Phoenix::InitDefaultTextures()
 		defaultSamplerArrayResourceTable->Bind(0, errorTexture, i);
 	}
 
-
 	// Load temporary textures
 	const char* paths[2] = {"data/Textures/dirt.png", "data/Textures/stone.png"};
-	for (int i = 0 ; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		std::vector<unsigned char> image_data;
 		uint32_t                   width, height;
@@ -386,29 +397,16 @@ void phx::Phoenix::InitDefaultTextures()
 		if (error)
 		{
 			printf("%s\n", lodepng_error_text(error));
-			
 		}
 		else
 		{
-			Texture* blockTexture = new Texture(
-				mDevice.get(),
-				mDeviceLocalMemoryHeap.get(),
-				width,
-				height,
-				VK_FORMAT_R8G8B8A8_UNORM,
-			    VK_IMAGE_USAGE_SAMPLED_BIT,
-				(char*) (image_data.data()));
+			Texture* blockTexture = new Texture(mDevice.get(), mDeviceLocalMemoryHeap.get(), width, height, VK_FORMAT_R8G8B8A8_UNORM,
+			                                    VK_IMAGE_USAGE_SAMPLED_BIT, (char*) (image_data.data()));
 
 			// For memory cleanup
 			mResourceManager->RegisterResource<Texture>(blockTexture);
 
 			defaultSamplerArrayResourceTable->Bind(0, blockTexture, i);
 		}
-
-
-
-
-
 	}
-
 }

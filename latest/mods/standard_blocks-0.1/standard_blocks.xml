@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<Mod name="standard_blocks" version="0.1">
+	<Blocks>
+		<Block name="dirt" texture="textures/dirt.png"/>
+	</Blocks>
+</Mod>

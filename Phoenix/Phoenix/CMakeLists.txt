@@ -10,6 +10,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../
 
 target_link_libraries(${PROJECT_NAME} PRIVATE PhoenixVendor PhoenixGlobals PhoenixRenderer PhoenixWindowing PhoenixResourceManager)
 
+# Force C++17 without custom compiler extensions.
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	CXX_STANDARD 17
+	CXX_STANDARD_REQUIRED ON
+	CXX_EXTENSIONS OFF
+)
+
 if(NOT CMAKE_DEBUG_POSTFIX)
   set(CMAKE_DEBUG_POSTFIX  _d)
 endif()

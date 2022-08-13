@@ -32,6 +32,7 @@ namespace phx
 {
 	class World;
 	class InputHandler;
+	class ModHandler;
 
 	class Phoenix
 	{
@@ -75,6 +76,8 @@ namespace phx
 
 		void InitWorld();
 
+		void InitMods();
+
 		void InitDebugUI();
 
 		void InitInputHandler();
@@ -88,7 +91,9 @@ namespace phx
 		std::unique_ptr<RenderDevice>    mDevice;
 		std::unique_ptr<ResourceManager> mResourceManager;
 
-		std::unique_ptr<World>   mWorld;
+		std::unique_ptr<World> mWorld;
+		std::unique_ptr<ModHandler> mMods;
+
 		std::unique_ptr<DebugUI> mDebugUI;
 		std::unique_ptr<InputHandler> mInputHandler;
 		
