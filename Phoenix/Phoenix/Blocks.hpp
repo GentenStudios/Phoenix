@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace phx
 {
@@ -25,22 +27,35 @@ namespace phx
 		uint16_t lookupIndex;
 
 		std::string name;
+		std::string displayName;
+
+		std::string  texture;
+		unsigned int textureIndex = 0;
 	};
 
 	class BlockHandler
 	{
 	public:
 		BlockHandler() = default;
-		~BlockHandler();
+		~BlockHandler() = default;
+
+		BlockHandler(const BlockHandler&) = delete;
+		BlockHandler& operator=(const BlockHandler&) = delete;
+
+		BlockHandler(BlockHandler&& other);
+		BlockHandler& operator=(BlockHandler&& other);
 
 		void AllocateMemory(unsigned int blockCount);
 
-		uint16_t AddBlock();
+		uint16_t AddBlock(const std::string& name, const std::string& displayName, const std::string& texture);
 
 		Block* GetBlock(uint16_t lookupIndex) const;
+		Block* GetBlock(const std::string& name) const;
 
 	private:
-		Block*    m_blocks             = nullptr;
-		uint16_t  m_currentLookupIndex = 0;
+		std::unique_ptr<Block[]> m_blocks;
+		uint16_t                 m_currentLookupIndex = 0;
+
+		std::unordered_map<std::string, uint16_t> m_blockNameLookup;
 	};
 } // namespace phx

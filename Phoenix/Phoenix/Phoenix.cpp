@@ -74,6 +74,7 @@ phx::Phoenix::Phoenix(Window* window) : mWindow(window)
 
 	CreateCameraBuffer();
 	InitCamera();
+	InitMods();
 	InitWorld();
 	InitDebugUI();
 	InitInputHandler();
@@ -340,6 +341,8 @@ void phx::Phoenix::InitMods()
 
 	mMods = std::unique_ptr<ModHandler>(new ModHandler(modCount));
 	mResourceManager->RegisterResource("ModHandler", mMods.get(), false);
+
+	mMods->AddMod("mods/standard_blocks-0.1/standard_blocks.xml");
 }
 
 void phx::Phoenix::InitDebugUI()
