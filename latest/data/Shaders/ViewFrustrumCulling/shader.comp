@@ -30,9 +30,9 @@ void main()
 {
 	uint idx = gl_GlobalInvocationID.x;
 
-	vec4 position = chunkPositions[idx].position[3];//vec4( chunkPositions[idx].position, 0.0f, 0.0f );
+	vec4 position = chunkPositions[idx].position[3];
 
-	if (frustumCheck(position, CHUNK_WIDTH))
+	if (frustumCheck(position, length(vec2(CHUNK_WIDTH*CHUNK_WIDTH,CHUNK_WIDTH*CHUNK_WIDTH))))
 	{
 		drawIndexedIndirectCommand[idx].instanceCount = 1;
 	}

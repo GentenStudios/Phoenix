@@ -152,7 +152,7 @@ void phx::Chunk::GenerateWorld()
 				float ya = (float) y + m_position.y;
 				// Randomly place blocks for now
 	
-				bool solid = ya < 0;
+				bool solid = ya < -5;
 	
 				m_blocks[x][y][z] = solid ? 1 : 0;
 			}

@@ -4,7 +4,8 @@
 
 Camera::Camera(uint32_t width, uint32_t height)
 {
-	SetMatrixPosition(glm::vec3());
+	mDirection = glm::vec3(0,0,-1.0f);
+	mPosition  = glm::vec3();
 	SetProjection(width, height);
 
 	mOutOfDateFrustrum = true;
@@ -15,28 +16,50 @@ void Camera::SetProjection(uint32_t width, uint32_t height)
 {
 	mProjection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 0.10f, 1000.0f);
 	mProjection[1][1] *= -1.0f;
-}
-
-void Camera::Move(glm::vec3 position) { 
-	mPosition          = glm::translate(mPosition, position);
 	mOutOfDateFrustrum = true;
 }
 
-void Camera::Move(float x, float y, float z){ Move(glm::vec3(x, y, z)); }
+void Camera::SetWorldPosition(glm::vec3 position)
+{
+	mPosition          = position;
+	mOutOfDateFrustrum = true;
+}
 
-void Camera::SetPosition(glm::vec3 position) { SetMatrixPosition(-position); }
+void Camera::MoveLocalX(float x)
+{
+	mPosition -= glm::normalize(glm::cross(mDirection, glm::vec3(0, 1.0f, 0))) * x;
+	mOutOfDateFrustrum = true;
+}
 
-void Camera::SetPosition(float x, float y, float z) { SetPosition(glm::vec3(x, y, z)); }
+void Camera::MoveWorldY(float y)
+{
+	mPosition.y += y;
+	mOutOfDateFrustrum = true;
+}
 
-void Camera::RotateWorldX(float x) { Rotate(glm::vec3(1.0f, 0.0f, 0.0f), x); }
+void Camera::MoveLocalZ(float z)
+{
+	mPosition += z * mDirection;
+	mOutOfDateFrustrum = true;
+}
 
-void Camera::RotateWorldY(float y) { Rotate(glm::vec3(1.0f, 0.0f, 0.0f), y); }
+void Camera::RotatePitch(float x)
+{
+	mPitch -= x;
 
-void Camera::RotateWorldZ(float z) { Rotate(glm::vec3(1.0f, 0.0f, 0.0f), z); }
+	if (mPitch > 89.0f)
+		mPitch = 89.0f;
+	if (mPitch < -89.0f)
+		mPitch = -89.0f;
 
-void Camera::Rotate(glm::vec3 axis, float angle)
+	UpdateCameraRotation();
+	mOutOfDateFrustrum = true;
+}
+
+void Camera::RotateYaw(float y)
 { 
-	mPosition = glm::rotate(mPosition, glm::radians(angle), axis); 
+	mYaw += y;
+	UpdateCameraRotation();
 	mOutOfDateFrustrum = true;
 }
 
@@ -45,12 +68,22 @@ void Camera::Update()
 	glm::mat4 scale(1.0f);
 	scale[3][3]    = 1.0f;
 
-	mCamera.ProPos = (mProjection * mPosition * scale);
-	if (mOutOfDateFrustrum)
+	//printf("Pitch:%f Yaw:%f\n", pitch, yaw);
+
+	mDirection   = glm::normalize(mDirection);
+
+	mView = glm::lookAt(mPosition, mPosition + mDirection, glm::vec3(0, 1, 0));
+
+	mCamera.ProPos = (mProjection * mView * scale);
+	//if (mOutOfDateFrustrum)
 	{
 		UpdateFrustrum(mCamera.ProPos);
 		mOutOfDateFrustrum = false;
 	}
+
+	//mView = glm::lookAt(mPosition, mPosition + mDirection, glm::vec3(0, 1, 0));
+
+	//mCamera.ProPos = (mProjection * mView * scale);
 }
 
 bool Camera::CheckSphereFrustrum(glm::vec3 pos, float radius)
@@ -65,10 +98,11 @@ bool Camera::CheckSphereFrustrum(glm::vec3 pos, float radius)
 	return true;
 }
 
-void Camera::SetMatrixPosition(glm::vec3 position)
+void Camera::UpdateCameraRotation()
 {
-	// mPosition = glm::lookAt( glm::vec3( 0, 0, 1 ), glm::vec3( 0, 0, 0 ), glm::vec3( 0, 1, 0 ) );
-	mPosition = glm::translate(glm::mat4(1.0f), position);
+	mDirection.x = cos(glm::radians(mYaw)) * cos(glm::radians(mPitch));
+	mDirection.y = sin(glm::radians(mPitch));
+	mDirection.z = sin(glm::radians(mYaw)) * cos(glm::radians(mPitch));
 }
 
 void Camera::UpdateFrustrum(glm::mat4 matrix)

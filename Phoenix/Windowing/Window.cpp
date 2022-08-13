@@ -4,6 +4,9 @@
 
 Window::Window(const char* title, int width, int height)
 {
+	mMouseCapture = false;
+	mMouseGrab    = false;
+
 	bool initSDL = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) == 0;
 	if (!initSDL)
 	{
@@ -12,7 +15,7 @@ Window::Window(const char* title, int width, int height)
 	}
 
 	mWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
-	                           SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	                           SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE);
 
 	if (!mWindow)
 	{
@@ -79,3 +82,22 @@ void Window::Poll()
 }
 
 bool Window::IsRenderable() { return mRenderable; }
+
+void Window::CaptureMouse(bool capture)
+{
+	if (capture != mMouseCapture)
+	{
+		//SDL_CaptureMouse((SDL_bool) capture);
+		mMouseCapture = capture;
+	}
+}
+
+void Window::GrabMouse(bool grab)
+{
+	if (grab != mMouseGrab)
+	{
+		//SDL_SetWindowGrab(mWindow, (SDL_bool) grab);
+		SDL_SetRelativeMouseMode((SDL_bool) grab);
+		mMouseGrab = grab;
+	}
+}

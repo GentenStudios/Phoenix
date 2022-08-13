@@ -27,21 +27,17 @@ public:
 
 	void SetProjection(uint32_t width, uint32_t height);
 
-	void Move(glm::vec3 position);
+	void SetWorldPosition(glm::vec3 position);
 
-	void Move(float x, float y, float z);
+	void MoveLocalX(float x);
 
-	void SetPosition(glm::vec3 position);
+	void MoveWorldY(float y);
 
-	void SetPosition(float x, float y, float z);
+	void MoveLocalZ(float z);
 
-	void RotateWorldX(float x);
+	void RotatePitch(float x);
 
-	void RotateWorldY(float y);
-
-	void RotateWorldZ(float z);
-
-	void Rotate(glm::vec3 axis, float angle);
+	void RotateYaw(float y);
 
 	void Update();
 
@@ -50,10 +46,20 @@ public:
 	glm::mat4 GetProjection() { return mProjection; }
 
 private:
-	void SetMatrixPosition(glm::vec3 position);
+
+	void UpdateCameraRotation();
 
 	void      UpdateFrustrum(glm::mat4 matrix);
+
+	
+	float     mPitch = 0.0f;
+	float     mYaw   = 0.0f;
+
 	glm::mat4 mProjection;
-	glm::mat4 mPosition;
+	glm::mat4 mView;
+
+	glm::vec3 mPosition;
+	glm::vec3 mDirection;
+
 	bool      mOutOfDateFrustrum;
 };

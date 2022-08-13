@@ -34,6 +34,10 @@ public:
 
 	bool IsRenderable();
 
+	void CaptureMouse(bool capture);
+
+	void GrabMouse(bool grab);
+
 	SDL_Window* GetWindow() { return mWindow; }
 
 private:
@@ -42,6 +46,10 @@ private:
 
 	uint32_t mWidth;
 	uint32_t mHeight;
+
+	bool mMouseCapture;
+
+	bool mMouseGrab;
 
 	bool mOpen;
 

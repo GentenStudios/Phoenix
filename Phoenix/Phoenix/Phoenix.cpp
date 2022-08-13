@@ -182,6 +182,10 @@ void phx::Phoenix::Update()
 
 	mDeltaTime = GetStatistics().GetStatisticSecconds("Total Frametime");
 
+	
+	// Must come after all mouse move reads
+	mInputHandler->Update();
+
 }
 
 void phx::Phoenix::Validate()
@@ -197,44 +201,62 @@ Window* phx::Phoenix::GetWindow() { return mWindow; }
 
 void phx::Phoenix::UpdateCamera()
 {
+	float movmentSpeed = 5.0f;	
 
-
-	// Temp camera movment
-
-	float movmentSpeed = 5.0f;
-
-	if (mInputHandler->IsPressed(SDL_SCANCODE_W))
+	if (mInputHandler->IsPressed(SDL_SCANCODE_LALT))
 	{
-		mCamera->Move(0.0f, 0.0f, movmentSpeed * mDeltaTime);
+		mWindow->GrabMouse(false);
 	}
-
-	if (mInputHandler->IsPressed(SDL_SCANCODE_S))
+	else
 	{
-		mCamera->Move(0.0f, 0.0f, -movmentSpeed * mDeltaTime);
+		mWindow->GrabMouse(true);
+
+		if (mInputHandler->IsPressed(SDL_SCANCODE_LSHIFT))
+		{
+			movmentSpeed *= 3;
+		}
+		if (mInputHandler->IsPressed(SDL_SCANCODE_W))
+		{
+			mCamera->MoveLocalZ(movmentSpeed * mDeltaTime);
+		}
+
+		if (mInputHandler->IsPressed(SDL_SCANCODE_S))
+		{
+			mCamera->MoveLocalZ(-movmentSpeed * mDeltaTime);
+		}
+
+		if (mInputHandler->IsPressed(SDL_SCANCODE_A))
+		{
+			mCamera->MoveLocalX(movmentSpeed * mDeltaTime);
+		}
+
+		if (mInputHandler->IsPressed(SDL_SCANCODE_D))
+		{
+			mCamera->MoveLocalX(-movmentSpeed * mDeltaTime);
+		}
+
+		if (mInputHandler->IsPressed(SDL_SCANCODE_LCTRL))
+		{
+			mCamera->MoveWorldY(-movmentSpeed * mDeltaTime);
+		}
+
+		if (mInputHandler->IsPressed(SDL_SCANCODE_SPACE))
+		{
+			mCamera->MoveWorldY(movmentSpeed * mDeltaTime);
+		}
+
+		float mouseMoveX = mInputHandler->GetMouseMoveX();
+		if (mouseMoveX != 0.0f)
+		{
+			mCamera->RotateYaw(mouseMoveX);
+		}
+
+		float mouseMoveY = mInputHandler->GetMouseMoveY();
+		if (mouseMoveY != 0.0f)
+		{
+			mCamera->RotatePitch(mouseMoveY);
+		}
 	}
-
-	if (mInputHandler->IsPressed(SDL_SCANCODE_A))
-	{
-		mCamera->Move(movmentSpeed * mDeltaTime, 0.0f, 0.0f);
-	}
-
-	if (mInputHandler->IsPressed(SDL_SCANCODE_D))
-	{
-		mCamera->Move(-movmentSpeed * mDeltaTime, 0.0f, 0.0f);
-	}
-
-	if (mInputHandler->IsPressed(SDL_SCANCODE_LCTRL))
-	{
-		mCamera->Move(0.0f, movmentSpeed * mDeltaTime, 0.0f);
-	}
-
-	if (mInputHandler->IsPressed(SDL_SCANCODE_SPACE))
-	{
-		mCamera->Move(0.0f, -movmentSpeed * mDeltaTime, 0.0f);
-	}
-
-	// End of temp camera movment
-
 
 	mCamera->Update();
 	mCameraBuffer->TransferInstantly(&mCamera->mCamera, sizeof(Camera::CameraPacket));
@@ -289,8 +311,7 @@ void phx::Phoenix::CreateCameraBuffer()
 void phx::Phoenix::InitCamera()
 {
 	mCamera = new Camera(mWindow->GetWidth(), mWindow->GetHeight());
-	mCamera->SetPosition(0.0f, 1.5f, 20.0f);
-	mCamera->RotateWorldZ(10.0f);
+	mCamera->SetWorldPosition(glm::vec3(0.0f, 1.5f, 20.0f));
 	mResourceManager->RegisterResource("Camera", mCamera, true);
 }
 
