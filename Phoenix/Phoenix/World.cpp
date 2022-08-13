@@ -522,7 +522,7 @@ void phx::World::FreeVertexPages(VertexPage* pages)
 
 
 		pages->next = mFreeVertexPages;
-		mFreeVertexPages = pages->next;
+		mFreeVertexPages = pages;
 
 		mFreeMemoryPoolCount++;
 		pages = next;
