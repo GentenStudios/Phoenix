@@ -109,6 +109,7 @@ const glm::vec3 BLOCK_NORMALS[] = {
 };
 
 static const glm::vec2 BLOCK_UVS[] = {
+
     {1.f, 0.f},
 	{0.f, 0.f},
 	{0.f, 1.f},
@@ -137,19 +138,19 @@ static const glm::vec2 BLOCK_UVS[] = {
 	{0.f, 0.f},
 	{0.f, 1.f},
 
+	{1.f, 1.f},
+	{0.f, 1.f},
+	{0.f, 0.f},
+	{0.f, 0.f},
+	{1.f, 0.f},
     {1.f, 1.f},
+	
 	{1.f, 0.f},
-	{0.f, 0.f},
-	{0.f, 0.f},
-	{0.f, 1.f},
 	{1.f, 1.f},
-
+	{0.f, 1.f},
+	{0.f, 1.f},
+	{0.f, 0.f},
     {1.f, 0.f},
-	{0.f, 0.f},
-	{0.f, 1.f},
-	{0.f, 1.f},
-	{1.f, 1.f},
-	{1.f, 0.f},
 };
 // clang-format on
 

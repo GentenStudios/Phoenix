@@ -295,7 +295,7 @@ void phx::World::PlaceBlockFromView()
 
 	if (chunk)
 	{
-		chunk->SetBlock(localX, localY, localZ, 1);
+		chunk->SetBlock(localX, localY, localZ, 2);
 
 		chunk->MarkDirty();
 
