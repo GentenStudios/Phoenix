@@ -341,17 +341,18 @@ void phx::World::RaycastToBlock(float step, int itteration, Chunk*& chunkReturn,
 	if (chunk != nullptr)
 	{
 		glm::ivec3 lastPos = viewPosition;
-		// Make it invalid for the first click
-		lastPos.x += 2;
 
 		int lastLocalX = 0;
 		int lastLocalY = 0;
 		int lastLocalZ = 0;
 		Chunk* lastChunk = nullptr;
 
+		float currentStep = step;
+		unsigned int stepHalfCount = 0;
+
 		for (int i = 0; i < itteration; i++)
 		{
-			viewPosition += camera->GetDirection() * step;
+			viewPosition += camera->GetDirection() * currentStep;
 			glm::ivec3 newPos = viewPosition;
 
 			if (viewPosition.x < 0)
@@ -363,6 +364,45 @@ void phx::World::RaycastToBlock(float step, int itteration, Chunk*& chunkReturn,
 
 			if (newPos != lastPos)
 			{
+				bool matchingAxies[3] = {newPos.x == lastPos.x, newPos.y == lastPos.y, newPos.z == lastPos.z};
+
+				int matchingAxiesCount = 0;
+				for (int j = 0; j < 3; j++)
+				{
+					if (matchingAxies[j])
+					{
+						matchingAxiesCount++;
+					}
+				}
+
+				// If we have managed to get a block on a diaganal, 1 or axies of the cube will be touching the other one
+				if (matchingAxiesCount < 2)
+				{
+					// Half the current step size to try and catch the mixxing blocks
+					currentStep *= 0.5f;
+					// Since we are splitting a single step into two, we must add two back to the intteration count
+					i -= 2;
+					if (stepHalfCount < 2)
+					{
+						stepHalfCount++;
+						continue;
+					}
+					if (!matchingAxies[0])
+					{
+						newPos.x = lastPos.x;
+					}
+					else if (!matchingAxies[2])
+					{
+						newPos.z = lastPos.z;
+					}
+					else if (!matchingAxies[1])
+					{
+						newPos.y = lastPos.y;
+					}
+				}
+				stepHalfCount = 0;
+				currentStep = step;
+
 				// make sure after raycasting we are no longer outside the chunk, if we are find the new chunk
 				if (!PointToCube(viewPosition, chunk->GetPosition(), CHUNK_BLOCK_SIZE))
 				{
@@ -389,22 +429,6 @@ void phx::World::RaycastToBlock(float step, int itteration, Chunk*& chunkReturn,
 				unsigned int blockX = newPos.x;
 				unsigned int blockY = newPos.y;
 				unsigned int blockZ = newPos.z;
-				// Acount for negetive block ranges
-				if (blockX < 0)
-				{
-					blockX *= -1;
-					blockX = CHUNK_BLOCK_SIZE - blockX;
-				}
-				if (blockY < 0)
-				{
-					blockY *= -1;
-					blockY = CHUNK_BLOCK_SIZE - blockY;
-				}
-				if (blockZ < 0)
-				{
-					blockZ *= -1;
-					blockZ = CHUNK_BLOCK_SIZE - blockZ;
-				}
 
 				// Get local block index
 				blockX %= CHUNK_BLOCK_SIZE;
@@ -412,8 +436,8 @@ void phx::World::RaycastToBlock(float step, int itteration, Chunk*& chunkReturn,
 				blockZ %= CHUNK_BLOCK_SIZE;
 
 				uint64_t block = chunk->GetBlock(blockX, blockY, blockZ);
-
-
+				
+				// If the block is not air
 				if ( block != 0)
 				{
 					// If we are destroying a block, respond with the block we are wanting to destroy
@@ -427,118 +451,7 @@ void phx::World::RaycastToBlock(float step, int itteration, Chunk*& chunkReturn,
 					}
 					// If we are in place mode, respond with the expected air block information
 					if (mode == RaycastMode::Place)
-					{
-						bool matchingAxies[3] = {
-							newPos.x == lastPos.x,
-							newPos.y == lastPos.y,
-							newPos.z == lastPos.z
-						};
-
-						int matchingAxiesCount = 0;
-						for (int j = 0; j < 3; j++)
-						{
-							if (matchingAxies[j])
-							{
-								matchingAxiesCount++;
-							}
-						}
-						// Normaly we should have two matching axies from the last position to the new one as we raycast along
-						// But there is a change with a step size being a little too large we miss the corner of one of the blocks
-						// In this case we would be placing the block on a diaganal, to fix this we update the resonce to habe two matching axies
-						if (matchingAxiesCount < 2)
-						{
-							// If we are still in the same chunk
-							if (lastChunk == chunk)
-							{
-								if (!matchingAxies[0])
-								{
-									lastLocalX = blockX;
-								}
-								else if (!matchingAxies[1])
-								{
-									lastLocalY = blockY;
-								}
-								else if (!matchingAxies[2])
-								{
-									lastLocalZ = blockZ;
-								}
-							}
-							else
-							{
-								
-								if (!matchingAxies[0])
-								{
-									newPos.x = lastPos.x;
-								}
-								else if (!matchingAxies[1])
-								{
-									newPos.y = lastPos.y;
-								}
-								else if (!matchingAxies[2])
-								{
-									newPos.z = lastPos.z;
-								}
-
-
-								// We have a edge case where if we have a chunk trying to be placed on a diagonal, we need to allow it to be placed on a face insted
-								// BUT if the last chunk we were on was a diffrent chunk, we must scan the list of chunks
-								// This is a edge case and cant be avoided
-
-								chunk = nullptr;
-
-								viewPosition = newPos;
-								viewPosition += glm::vec3(0.5f, 0.5f, 0.5f);
-								for (int j = 0; j < MAX_CHUNKS; j++)
-								{
-									Chunk* next = &mChunks[j];
-
-									if (PointToCube(viewPosition, next->GetPosition(), CHUNK_BLOCK_SIZE))
-									{
-										chunk = next;
-										break;
-									}
-								}
-
-								if (chunk == nullptr)
-								{
-									printf("Failed to find block, cross chunk edge case\n");
-									return;
-								}
-
-								unsigned int newBlockX = newPos.x;
-								unsigned int newBlockY = newPos.y;
-								unsigned int newBlockZ = newPos.z;
-
-								// Acount for negetive block ranges
-								if (newBlockX < 0)
-								{
-									newBlockX *= -1;
-									newBlockX = CHUNK_BLOCK_SIZE - newBlockX;
-								}
-								if (newBlockY < 0)
-								{
-									newBlockY *= -1;
-									newBlockY = CHUNK_BLOCK_SIZE - newBlockY;
-								}
-								if (newBlockZ < 0)
-								{
-									newBlockZ *= -1;
-									newBlockZ = CHUNK_BLOCK_SIZE - newBlockZ;
-								}
-
-								// Get local block index
-								newBlockX %= CHUNK_BLOCK_SIZE;
-								newBlockY %= CHUNK_BLOCK_SIZE;
-								newBlockZ %= CHUNK_BLOCK_SIZE;
-
-								chunkReturn = chunk;
-								localX      = newBlockX;
-								localY      = newBlockY;
-								localZ      = newBlockZ;
-								return;
-							}
-						}
-							
+					{							
 						chunkReturn = lastChunk;
 						localX      = lastLocalX;
 						localY      = lastLocalY;
