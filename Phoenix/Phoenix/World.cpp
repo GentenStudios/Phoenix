@@ -387,17 +387,25 @@ void phx::World::RaycastToBlock(float step, int itteration, Chunk*& chunkReturn,
 						stepHalfCount++;
 						continue;
 					}
-					if (!matchingAxies[0])
+
+					for (int j = matchingAxiesCount; j < 2; j++)
 					{
-						newPos.x = lastPos.x;
-					}
-					else if (!matchingAxies[2])
-					{
-						newPos.z = lastPos.z;
-					}
-					else if (!matchingAxies[1])
-					{
-						newPos.y = lastPos.y;
+						if (!matchingAxies[0])
+						{
+							matchingAxies[0] = true;
+							newPos.x = lastPos.x;
+						}
+						else if (!matchingAxies[2])
+						{
+							matchingAxies[2] = true;
+							newPos.z = lastPos.z;
+						}
+						else if (!matchingAxies[1])
+						{
+							matchingAxies[1] = true;
+							newPos.y = lastPos.y;
+						}
+						matchingAxiesCount++;
 					}
 				}
 				stepHalfCount = 0;
