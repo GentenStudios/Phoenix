@@ -372,7 +372,7 @@ void phx::Phoenix::InitInputHandler()
 {
 	mInputHandler = std::unique_ptr<InputHandler>(new InputHandler(mWindow));
 
-	mResourceManager->RegisterResource<InputHandler>("InputHandler", mInputHandler.get());
+	mResourceManager->RegisterResource<InputHandler>("InputHandler", mInputHandler.get(), false);
 }
 
 void phx::Phoenix::InitTexturePool() 
