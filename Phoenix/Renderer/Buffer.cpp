@@ -4,108 +4,117 @@
 #include <Renderer/DeviceMemory.hpp>
 #include <Renderer/MemoryHeap.hpp>
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 
 Buffer::Buffer(RenderDevice* device, MemoryHeap* memoryHeap, VkDeviceSize size, VkBufferUsageFlags usage, VkSharingMode sharingMode)
-    : mDevice(device), mBufferSize(static_cast<uint32_t>(size)), mMemoryHeap(memoryHeap), mDeviceMemory(VK_NULL_HANDLE)
+    : m_device(device), m_memoryHeap(memoryHeap), m_bufferSize(static_cast<uint32_t>(size))
 {
-	mBuffer = VK_NULL_HANDLE;
-
-	mDeviceMemory = mMemoryHeap->GetMemory();
+	m_deviceMemory = m_memoryHeap->GetMemory();
 
 	VkBufferCreateInfo bufferCreateInfo = {};
 	bufferCreateInfo.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferCreateInfo.size               = mBufferSize;
+	bufferCreateInfo.size               = m_bufferSize;
 	bufferCreateInfo.usage              = usage;
 	bufferCreateInfo.sharingMode        = sharingMode;
 
-	mDevice->Validate(vkCreateBuffer(mDevice->GetDevice(), &bufferCreateInfo, nullptr, &mBuffer));
+	m_device->Validate(vkCreateBuffer(m_device->GetDevice(), &bufferCreateInfo, nullptr, &m_buffer));
 
 	VkMemoryRequirements bufferMemoryRequirements;
-	vkGetBufferMemoryRequirements(mDevice->GetDevice(), mBuffer, &bufferMemoryRequirements);
+	vkGetBufferMemoryRequirements(m_device->GetDevice(), m_buffer, &bufferMemoryRequirements);
 
-	mAllocationSize = (uint32_t) bufferMemoryRequirements.size;
+	m_allocationSize = static_cast<uint32_t>(bufferMemoryRequirements.size);
+	m_memoryOffset   = m_memoryHeap->Allocate(m_allocationSize, static_cast<uint32_t>(bufferMemoryRequirements.alignment));
 
-	mMemoryOffset = mMemoryHeap->Allocate(mAllocationSize, static_cast<uint32_t>(bufferMemoryRequirements.alignment));
-
-	mDevice->Validate(vkBindBufferMemory(mDevice->GetDevice(), mBuffer, mMemoryHeap->GetMemory()->GetMemory(), mMemoryOffset));
+	m_device->Validate(vkBindBufferMemory(m_device->GetDevice(), m_buffer, m_memoryHeap->GetMemory()->GetMemory(), m_memoryOffset));
 }
 
 Buffer::Buffer(RenderDevice* device, VkDeviceSize size, VkBufferUsageFlags usage, VkSharingMode sharingMode)
-    : mDevice(device), mBufferSize(static_cast<uint32_t>(size)), mMemoryHeap(nullptr)
+    : m_device(device), m_bufferSize(static_cast<uint32_t>(size))
 {
-	mBuffer = VK_NULL_HANDLE;
-
 	VkBufferCreateInfo bufferCreateInfo = {};
 	bufferCreateInfo.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferCreateInfo.size               = mBufferSize;
+	bufferCreateInfo.size               = m_bufferSize;
 	bufferCreateInfo.usage              = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	bufferCreateInfo.sharingMode        = sharingMode;
 
-	mDevice->Validate(vkCreateBuffer(mDevice->GetDevice(), &bufferCreateInfo, nullptr, &mBuffer));
+	m_device->Validate(vkCreateBuffer(m_device->GetDevice(), &bufferCreateInfo, nullptr, &m_buffer));
 
 	VkMemoryRequirements bufferMemoryRequirements;
-	vkGetBufferMemoryRequirements(mDevice->GetDevice(), mBuffer, &bufferMemoryRequirements);
+	vkGetBufferMemoryRequirements(m_device->GetDevice(), m_buffer, &bufferMemoryRequirements);
 
-	mDeviceMemory = new DeviceMemory(device, static_cast<uint32_t>(bufferMemoryRequirements.size),
+	m_deviceMemory = new DeviceMemory(device, static_cast<uint32_t>(bufferMemoryRequirements.size),
 	                                 device->FindMemoryType(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
 
-	mMemoryOffset = 0;
+	m_allocationSize = static_cast<uint32_t>(bufferMemoryRequirements.size);
+	m_memoryOffset   = 0;
 
-	mAllocationSize = (uint32_t) bufferMemoryRequirements.size;
-
-	mDevice->Validate(vkBindBufferMemory(mDevice->GetDevice(), mBuffer, mDeviceMemory->GetMemory(), mMemoryOffset));
+	m_device->Validate(vkBindBufferMemory(m_device->GetDevice(), m_buffer, m_deviceMemory->GetMemory(), m_memoryOffset));
 }
 
 Buffer::~Buffer()
 {
-	vkDestroyBuffer(mDevice->GetDevice(), mBuffer, nullptr);
-	if (mMemoryHeap == nullptr)
+	vkDestroyBuffer(m_device->GetDevice(), m_buffer, nullptr);
+	if (m_memoryHeap == nullptr)
 	{
-		delete mDeviceMemory;
+		delete m_deviceMemory;
 	}
 }
 
-VkDescriptorBufferInfo Buffer::GetDescriptorInfo()
+VkBuffer& Buffer::GetBuffer() { return m_buffer; }
+
+uint32_t Buffer::GetMemoryOffset() const { return m_memoryOffset; }
+
+uint32_t Buffer::GetAllocationSize() const { return m_allocationSize; }
+
+uint32_t Buffer::GetBufferSize() const { return m_bufferSize; }
+
+MemoryHeap* Buffer::GetMemoryHeap() const { return m_memoryHeap; }
+
+DeviceMemory* Buffer::GetDeviceMemory() const { return m_deviceMemory; }
+
+VkDescriptorBufferInfo Buffer::GetDescriptorInfo() const
 {
 	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer                 = mBuffer;
+	bufferInfo.buffer                 = m_buffer;
 	bufferInfo.offset                 = 0;
-	bufferInfo.range                  = mBufferSize;
+	bufferInfo.range                  = m_bufferSize;
+
 	return bufferInfo;
 }
 
-void Buffer::TransferInstantly(void* ptr, uint32_t size, uint32_t offset)
+void Buffer::TransferInstantly(void* ptr, uint32_t size, uint32_t offset) const
 {
 	void* memoryPtr = nullptr;
-	GetDeviceMemory()->Map(size, mMemoryOffset + offset, memoryPtr);
+	GetDeviceMemory()->Map(size, m_memoryOffset + offset, memoryPtr);
 	memcpy(memoryPtr, ptr, size);
 	GetDeviceMemory()->UnMap();
 }
 
-VkBuffer Buffer::CreateStaging()
+VkBuffer Buffer::CreateStaging() const
 {
-	VkBuffer           staging          = VK_NULL_HANDLE;
+	VkBuffer staging = VK_NULL_HANDLE;
+
 	VkBufferCreateInfo bufferCreateInfo = {};
 	bufferCreateInfo.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferCreateInfo.size               = mBufferSize;
+	bufferCreateInfo.size               = m_bufferSize;
 	bufferCreateInfo.usage              = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	bufferCreateInfo.sharingMode        = VK_SHARING_MODE_EXCLUSIVE;
 
-	mDevice->Validate(vkCreateBuffer(mDevice->GetDevice(), &bufferCreateInfo, nullptr, &staging));
+	m_device->Validate(vkCreateBuffer(m_device->GetDevice(), &bufferCreateInfo, nullptr, &staging));
 	return staging;
 }
 
-VkBuffer Buffer::CreateStaging(unsigned int bufferSize)
+VkBuffer Buffer::CreateStaging(unsigned int bufferSize) const
 {
-	VkBuffer           staging          = VK_NULL_HANDLE;
+	VkBuffer staging = VK_NULL_HANDLE;
+
 	VkBufferCreateInfo bufferCreateInfo = {};
 	bufferCreateInfo.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferCreateInfo.size               = bufferSize;
 	bufferCreateInfo.usage              = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	bufferCreateInfo.sharingMode        = VK_SHARING_MODE_EXCLUSIVE;
 
-	mDevice->Validate(vkCreateBuffer(mDevice->GetDevice(), &bufferCreateInfo, nullptr, &staging));
+	m_device->Validate(vkCreateBuffer(m_device->GetDevice(), &bufferCreateInfo, nullptr, &staging));
 	return staging;
 }

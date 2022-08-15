@@ -30,10 +30,28 @@ public:
 	RenderDevice(Window* window, uint32_t windowWidth, uint32_t windowHeight);
 	~RenderDevice();
 
-	void Validate(VkResult res);
+	void Validate(VkResult result) const;
+
+	VkDevice                         GetDevice() const { return m_device; }
+	VkPhysicalDeviceFeatures         GetPhysicalDeviceFeatures() const { return m_physicalDeviceFeatures; }
+	VkPhysicalDeviceProperties       GetPhysicalDeviceProperties() const { return m_physicalDeviceProperties; }
+	VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemProperties() const { return m_physicalDeviceMemProperties; }
+
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+	uint32_t FindMemoryType(VkMemoryPropertyFlags properties) const;
+
+	uint32_t     GetWindowWidth() const { return m_windowWidth; }
+	uint32_t     GetWindowHeight() const { return m_windowHeight; }
+	uint32_t     GetSwapchainImageCount() const { return m_swapchainImageCount; }
+	VkImageView* GetSwapchainImageViews() const { return m_swapchainImageViews.get(); }
+	VkImage*     GetSwapchainImages() const { return m_swapchainImages.get(); }
+
+	VkFormat GetSurfaceFormat() const { return m_surfaceFormat.format; }
+	VkFormat GetColorFormat() const { return m_colorFormat; }
+	VkFormat GetDepthFormat() const { return m_depthImageFormat; }
 
 	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
-	                 VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& image_memory, VkImageLayout initialLayout);
+	                 VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, VkImageLayout initialLayout);
 
 	void TransitionImageLayout(VkCommandBuffer& commandBuffer, VkImage image, VkFormat format, VkImageLayout oldLayout,
 	                           VkImageLayout newLayout, VkImageSubresourceRange subresourceRange);
@@ -41,117 +59,93 @@ public:
 	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout,
 	                           VkImageSubresourceRange subresourceRange);
 
-	void EndCommand(VkCommandBuffer& commandBuffer);
-
 	VkFormat FindSupportedFormat(const VkFormat* candidateFormats, const uint32_t candidateFormatCount, VkImageTiling tiling,
-	                             VkFormatFeatureFlags features);
+	                             VkFormatFeatureFlags features) const;
 
-	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	VkQueue GetGraphicsQueue() const { return m_graphicsQueue; }
 
-	uint32_t FindMemoryType(VkMemoryPropertyFlags properties);
-
-	VkFormat GetSurfaceFormat() { return mSurfaceFormat.format; }
-
-	VkFormat GetColorFormat() { return mColorFormat; }
-
-	VkFormat GetDepthFormat() { return mDepthImageFormat; }
-
-	VkDevice GetDevice() { return mDevice; }
-
-	uint32_t GetSwapchainImageCount() { return mSwapchainImageCount; }
-
-	uint32_t GetWindowWidth() { return mWindowWidth; }
-
-	uint32_t GetWindowHeight() { return mWindowHeight; }
-
-	VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() { return mPhysicalDeviceFeatures; }
-
-	VkPhysicalDeviceProperties GetPhysicalDeviceProperties() { return mPhysicalDeviceProperties; }
-
-	VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemProperties() { return mPhysicalDeviceMemProperties; }
-
-	VkImageView* GetSwapchainImageViews() { return mSwapchainImageViews.get(); }
-
-	VkImage* GetSwapchainImages() { return mSwapchainImages.get(); }
-
-	VkCommandBuffer* GetPrimaryCommandBuffers() { return mPrimaryCommandBuffers.get(); }
-
-	VkQueue GetGraphicsQueue() { return mGraphicsQueue; }
-
-	VkCommandBuffer CreateSingleTimeCommand();
-
-	VkCommandBuffer CreateCommand(uint32_t count = 1, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+	VkCommandBuffer* GetPrimaryCommandBuffers() const { return m_primaryCommandBuffers.get(); }
+	VkCommandBuffer  CreateSingleTimeCommand();
+	VkCommandBuffer  CreateCommand(uint32_t count = 1, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+	void             BeginCommand(VkCommandBuffer commandBuffer, uint32_t flags) const;
+	void             EndCommand(VkCommandBuffer& commandBuffer) const;
 
 	VkShaderModule CreateShaderModule(const char* path);
-
 	VkShaderModule CreateShaderModule(char* data, uint32_t size);
 
-	ResourceTableLayout* GetPostProcessSampler();
-
-	void BeginCommand(VkCommandBuffer commandBuffer, uint32_t flags);
+	ResourceTableLayout* GetPostProcessSampler() const;
 
 	void Present();
 
 	void WindowChange(uint32_t width, uint32_t height);
 
 private:
+	void SetupDebugReportCallback();
+	void SelectAndCreateDevice();
+	void CreateCommandPools();
+	void CreateSwapchainSyncPrimitives();
+	void CreatePrimaryCommandBuffers();
+
+	void DestroySwapchainSyncPrimitives() const;
+
 	void CreateSwapchain();
+	void DestroySwapchain() const;
 
-	void DestroySwapchain();
-
-	bool HasRequiredExtentions(const VkPhysicalDevice& physicalDevice, const char** requiredExtentions,
-	                           const uint32_t& requiredExtentionCount);
-
-	bool GetQueueFamily(const VkPhysicalDevice& physicalDevice, VkQueueFlags requiredQueueFlags, uint32_t& queueFamilyIndex);
+	bool GetQueueFamily(const VkPhysicalDevice& physicalDevice, VkQueueFlags requiredQueueFlags, uint32_t& queueFamilyIndex) const;
 
 	bool CheckSwapchainSupport(VkSurfaceCapabilitiesKHR& capabilities, std::unique_ptr<VkSurfaceFormatKHR[]>& formats,
-	                           uint32_t& format_count, std::unique_ptr<VkPresentModeKHR[]>& modes, uint32_t& mode_count);
+	                           uint32_t& formatCount, std::unique_ptr<VkPresentModeKHR[]>& modes, uint32_t& modeCount) const;
 
-	VkSurfaceFormatKHR ChooseSwapchainSurfaceFormat(const VkSurfaceFormatKHR* formats, const uint32_t& formatCount);
+	static VkSurfaceFormatKHR ChooseSwapchainSurfaceFormat(const VkSurfaceFormatKHR* formats, const uint32_t& formatCount);
+	static VkPresentModeKHR   ChooseSwapPresentMode(const VkPresentModeKHR* modes, const uint32_t& modeCount);
+	VkExtent2D                ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) const;
 
-	VkPresentModeKHR ChooseSwapPresentMode(const VkPresentModeKHR* modes, const uint32_t& modeCount);
+	static bool HasRequiredExtensions(const VkPhysicalDevice& physicalDevice, const char** requiredExtensions,
+	                                  const uint32_t& requiredExtensionCount);
 
-	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	static VkImageMemoryBarrier ImageMemoryBarrier(VkImage& image, VkFormat& format, VkImageLayout& oldLayout, VkImageLayout& newLayout);
 
-	VkImageMemoryBarrier ImageMemoryBarrier(VkImage& image, VkFormat& format, VkImageLayout& old_layout, VkImageLayout& new_layout);
+	static void ReadBinaryFile(const char* filename, char*& data, unsigned int& size);
 
-	void ReadBinaryFile(const char* filename, char*& data, unsigned int& size);
+private:
+	VkInstance                       m_instance       = VK_NULL_HANDLE;
+	VkPhysicalDevice                 m_physicalDevice = VK_NULL_HANDLE;
+	VkDevice                         m_device         = VK_NULL_HANDLE;
+	VkPhysicalDeviceProperties       m_physicalDeviceProperties;
+	VkPhysicalDeviceFeatures         m_physicalDeviceFeatures;
+	VkPhysicalDeviceMemoryProperties m_physicalDeviceMemProperties;
 
-	VkInstance                       mInstance                = VK_NULL_HANDLE;
-	VkPhysicalDevice                 mPhysicalDevice          = VK_NULL_HANDLE;
-	VkDevice                         mDevice                  = VK_NULL_HANDLE;
-	VkSurfaceKHR                     mSurface                 = VK_NULL_HANDLE;
-	VkCommandPool                    mCommandPool             = VK_NULL_HANDLE;
-	VkQueue                          mGraphicsQueue           = VK_NULL_HANDLE;
-	VkSwapchainKHR                   mSwapChain               = VK_NULL_HANDLE;
-	VkSemaphore                      mImageAvailableSemaphore = VK_NULL_HANDLE;
-	VkSemaphore                      mRenderFinishedSemaphore = VK_NULL_HANDLE;
-	std::unique_ptr<VkImage>         mSwapchainImages         = nullptr;
-	std::unique_ptr<VkImageView>     mSwapchainImageViews     = nullptr;
-	std::unique_ptr<VkFence>         mSwapchainImageFence     = nullptr;
-	std::unique_ptr<VkCommandBuffer> mPrimaryCommandBuffers   = nullptr;
+	VkSurfaceKHR       m_surface = VK_NULL_HANDLE;
+	VkSurfaceFormatKHR m_surfaceFormat;
+	VkPresentModeKHR   m_presentFormat;
+	VkFormat           m_colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
+	VkFormat           m_depthImageFormat;
 
-	uint32_t                         mWindowWidth                = 0;
-	uint32_t                         mWindowHeight               = 0;
-	uint32_t                         mPhysicalDevicesQueueFamily = 0;
-	uint32_t                         mSwapchainImageCount        = 0;
-	uint32_t                         mSwapchainImageIndex        = 0;
-	VkPhysicalDeviceProperties       mPhysicalDeviceProperties;
-	VkPhysicalDeviceFeatures         mPhysicalDeviceFeatures;
-	VkPhysicalDeviceMemoryProperties mPhysicalDeviceMemProperties;
+	uint32_t                       m_windowWidth  = 0;
+	uint32_t                       m_windowHeight = 0;
+	VkSwapchainKHR                 m_swapchain    = VK_NULL_HANDLE;
+	std::unique_ptr<VkImage[]>     m_swapchainImages;
+	std::unique_ptr<VkImageView[]> m_swapchainImageViews;
+	uint32_t                       m_swapchainImageCount = 0;
+	uint32_t                       m_swapchainImageIndex = 0;
 
-	VkSurfaceFormatKHR mSurfaceFormat;
-	VkPresentModeKHR   mPresentFormat;
-	VkFormat           mColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
-	VkFormat           mDepthImageFormat;
+	std::unique_ptr<VkFence[]> m_swapchainImageFences;
+	VkSemaphore                m_imageAvailableSemaphore = VK_NULL_HANDLE;
+	VkSemaphore                m_renderFinishedSemaphore = VK_NULL_HANDLE;
 
-	VkPipelineStageFlags mRenderWaitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	VkCommandPool m_commandPool                = VK_NULL_HANDLE;
+	VkQueue       m_graphicsQueue              = VK_NULL_HANDLE;
+	uint32_t      m_physicalDevicesQueueFamily = 0;
 
-	VkPresentInfoKHR         mPresentInfo      = {};
-	VkSubmitInfo             mRenderSubmitInfo = {};
-	VkDebugReportCallbackEXT mDebugReportCallback;
+	std::unique_ptr<VkCommandBuffer[]> m_primaryCommandBuffers;
 
-	std::vector<BufferTransferRequest> mMemoryTransferRequests;
+	VkPipelineStageFlags m_renderWaitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-	std::unique_ptr<ResourceTableLayout> mSamplerResourceTableLayout;
+	VkPresentInfoKHR         m_presentInfo      = {};
+	VkSubmitInfo             m_renderSubmitInfo = {};
+	VkDebugReportCallbackEXT m_debugReportCallback;
+
+	std::vector<BufferTransferRequest> m_memoryTransferRequests;
+
+	std::unique_ptr<ResourceTableLayout> m_samplerResourceTableLayout;
 };

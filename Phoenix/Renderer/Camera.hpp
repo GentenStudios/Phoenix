@@ -45,21 +45,21 @@ public:
 
 	glm::vec3 GetPosition();
 	glm::vec3 GetDirection();
-	glm::mat4 GetProjection() { return mProjection; }
+	glm::mat4 GetProjection() { return m_projection; }
 
 private:
 	void UpdateCameraRotation();
 	void UpdateFrustrum(glm::mat4 matrix);
 
 private:
-	float     mPitch = 0.0f;
-	float     mYaw   = 0.0f;
+	float m_pitch = 0.0f;
+	float m_yaw   = 0.0f;
 
-	glm::mat4 mProjection;
-	glm::mat4 mView;
+	glm::mat4 m_projection;
+	glm::mat4 m_view;
 
-	glm::vec3 mPosition;
-	glm::vec3 mDirection;
+	glm::vec3 m_position;
+	glm::vec3 m_direction;
 
-	bool      mOutOfDateFrustrum;
+	bool m_outOfDateFrustrum;
 };
