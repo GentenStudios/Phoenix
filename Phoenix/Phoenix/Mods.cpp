@@ -2,9 +2,10 @@
 
 #include <pugixml.hpp>
 
-#include <cassert>
 #include <filesystem>
 #include <iostream>
+#include <cassert>
+#include <cstring>
 
 phx::ModHandler::ModHandler(unsigned modCount)
 {

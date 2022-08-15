@@ -3,6 +3,7 @@
 #include <Phoenix/Blocks.hpp>
 
 #include <string>
+#include <vector>
 #include <filesystem>
 #include <unordered_map>
 
