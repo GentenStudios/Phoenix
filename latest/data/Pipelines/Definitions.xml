@@ -2,6 +2,7 @@
 <Pipelines>
 	<Pipeline name="Default"/>
 	<Pipeline name="StandardMaterial"/>
+	<Pipeline name="Skybox"/>
 
 
 	<!--Compute-->

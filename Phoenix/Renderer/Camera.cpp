@@ -14,8 +14,8 @@ Camera::Camera(uint32_t width, uint32_t height)
 
 void Camera::SetProjection(uint32_t width, uint32_t height)
 {
-	mProjection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 0.10f, 1000.0f);
-	mProjection[1][1] *= -1.0f;
+	mCamera.projection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 0.10f, 1000.0f);
+	mCamera.projection[1][1] *= -1.0f;
 	mOutOfDateFrustrum = true;
 }
 
@@ -66,7 +66,7 @@ void Camera::RotateYaw(float y)
 void Camera::Update()
 {
 	glm::mat4 scale(1.0f);
-	scale[3][3]    = 1.0f;
+	//scale[3][3]    = 1.0f;
 
 	//printf("Pitch:%f Yaw:%f\n", pitch, yaw);
 
@@ -74,7 +74,7 @@ void Camera::Update()
 
 	mView = glm::lookAt(mPosition, mPosition + mDirection, glm::vec3(0, 1, 0));
 
-	mCamera.modelToProjection = (mProjection * mView * scale);
+	mCamera.modelToProjection = (mCamera.projection * mView * scale);
 	mCamera.modelToWorld = (mView * scale);
 
 	//if (mOutOfDateFrustrum)

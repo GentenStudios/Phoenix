@@ -28,4 +28,3 @@
 		<Stage entrypoint="main" stage="Fragment" path="data/Shaders/StandardMaterial/frag.spv"/>
 	</Stages>
 </Pipeline>
-

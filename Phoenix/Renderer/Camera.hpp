@@ -21,6 +21,7 @@ public:
 	{
 		glm::mat4 modelToProjection; // Projection/Position
 		glm::mat4 modelToWorld;      // Position
+		glm::mat4 projection;
 		glm::vec4 planes[6];
 	} mCamera;
 
@@ -48,7 +49,7 @@ public:
 
 	glm::vec3 GetDirection();
 
-	glm::mat4 GetProjection() { return mProjection; }
+	glm::mat4 GetProjection() { return mCamera.projection; }
 
 private:
 
@@ -60,7 +61,7 @@ private:
 	float     mPitch = 0.0f;
 	float     mYaw   = 0.0f;
 
-	glm::mat4 mProjection;
+	//glm::mat4 mProjection;
 	glm::mat4 mView;
 
 	glm::vec3 mPosition;

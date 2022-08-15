@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<Pipeline type="Graphics" topology="Triangle">
+	<Descriptors>
+		<Descriptor name="CameraResourceTableLayout" />
+		<Descriptor name="SamplerResourceTableLayout" />
+	</Descriptors>
+
+	<Stages>
+		<Stage entrypoint="main" stage="Vertex" path="data/Shaders/Skybox/vert.spv"/>
+		<Stage entrypoint="main" stage="Fragment" path="data/Shaders/Skybox/frag.spv"/>
+	</Stages>
+</Pipeline>

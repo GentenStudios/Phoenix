@@ -2,6 +2,7 @@ struct Camera
 {
     mat4 modelToProjection;
     mat4 modelToWorld;
+    mat4 projection;
 	vec4 frustumPlanes[6];
 };
 

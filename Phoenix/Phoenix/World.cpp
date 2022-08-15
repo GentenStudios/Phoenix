@@ -205,7 +205,7 @@ mChunkPositionsResourceTable->Use(commandBuffer, index, 1, frustrumPipeline->Get
 mIndexedIndirectResourceTable->Use(commandBuffer, index, 2, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
 	VK_PIPELINE_BIND_POINT_COMPUTE);
 
-//vkCmdDispatch(commandBuffer[index], TOTAL_VERTEX_PAGE_COUNT, 1, 1);
+	//vkCmdDispatch(commandBuffer[index], TOTAL_VERTEX_PAGE_COUNT, 1, 1);
 }
 
 void phx::World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)

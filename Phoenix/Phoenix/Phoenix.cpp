@@ -15,6 +15,7 @@
 #include <Renderer/ResourceTable.hpp>
 #include <Renderer/ResourceTableLayout.hpp>
 #include <Renderer/Texture.hpp>
+#include <Renderer/PipelineLayout.hpp>
 
 #include <ResourceManager/GlobalResources.hpp>
 #include <ResourceManager/RenderTechnique.hpp>
@@ -22,6 +23,7 @@
 #include <Windowing/Window.hpp>
 
 #include <lodepng.h>
+#include <Renderer/Pipeline.hpp>
 
 phx::Phoenix* phx::Phoenix::mInstance = nullptr;
 
@@ -140,6 +142,15 @@ void phx::Phoenix::RebuildCommandBuffers()
 			vkCmdSetScissor(commandBuffers[i], 0, 1, &scissor);
 
 			mWorld->Draw(commandBuffers, i);
+
+			RenderTechnique* skybox = mResourceManager->GetResource<RenderTechnique>("Skybox");
+			skybox->GetPipeline()->Use(commandBuffers, i);
+			mResourceManager->GetResource<ResourceTable>("CameraResourceTable")
+			    ->Use(commandBuffers, i, 0, skybox->GetPipelineLayout()->GetPipelineLayout());
+			mResourceManager->GetResource<ResourceTable>("SkyboxResourceTable")
+			    ->Use(commandBuffers, i, 1, skybox->GetPipelineLayout()->GetPipelineLayout());
+
+			vkCmdDraw(commandBuffers[i], 36, 1, 0, 0);
 
 			mDebugUI->Use(commandBuffers, i, true);
 
@@ -404,6 +415,12 @@ void phx::Phoenix::InitTexturePool()
 
 	ResourceTable* defaultSamplerArrayResourceTable = samplerArrayResourceTableLayout->CreateTable();
 	mResourceManager->RegisterResource<ResourceTable>("SamplerArrayResourceTable", defaultSamplerArrayResourceTable);
+
+	ResourceTableLayout* samplerResourceTableLayout =
+	    mResourceManager->GetResource<ResourceTableLayout>("SamplerResourceTableLayout");
+
+	ResourceTable* skyboxResourceTable =  samplerResourceTableLayout->CreateTable();
+	mResourceManager->RegisterResource<ResourceTable>("SkyboxResourceTable", skyboxResourceTable);
 }
 
 void phx::Phoenix::InitDefaultTextures()
@@ -461,9 +478,9 @@ void phx::Phoenix::InitDefaultTextures()
 	}
 
 	// Load skybox textures.
-	const char* skybox[] = {"mods/standard_blocks-0.1/textures/north.png", "mods/standard_blocks-0.1/textures/east.png",
-	                        "mods/standard_blocks-0.1/textures/south.png", "mods/standard_blocks-0.1/textures/west.png",
-	                        "mods/standard_blocks-0.1/textures/zenith.png", "mods/standard_blocks-0.1/textures/nadir.png"};
+	const char* skybox[] = {"mods/standard_blocks-0.1/textures/east.png", "mods/standard_blocks-0.1/textures/west.png",
+	                        "mods/standard_blocks-0.1/textures/zenith.png", "mods/standard_blocks-0.1/textures/nadir.png",
+	                        "mods/standard_blocks-0.1/textures/north.png", "mods/standard_blocks-0.1/textures/south.png"};
 
 	uint32_t width, height;
 
@@ -504,6 +521,7 @@ void phx::Phoenix::InitDefaultTextures()
 
 		Texture* skyboxTexture = new Texture(mDevice.get(), mDeviceLocalMemoryHeap.get(), imageCreateInfo, nullptr);
 		mResourceManager->RegisterResource<Texture>(skyboxTexture);
+		mResourceManager->GetResource<ResourceTable>("SkyboxResourceTable")->Bind(0, skyboxTexture);
 
 		VkBufferImageCopy copies[6] = {};
 		copies[0].imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
