@@ -1,6 +1,7 @@
 #include <Phoenix/World.hpp>
-
 #include <Phoenix/Chunk.hpp>
+#include <Phoenix/Mods.hpp>
+
 #include <Renderer/Buffer.hpp>
 #include <Renderer/Device.hpp>
 #include <Renderer/DeviceMemory.hpp>
@@ -8,8 +9,6 @@
 #include <Renderer/PipelineLayout.hpp>
 #include <Renderer/ResourceTable.hpp>
 #include <Renderer/ResourceTableLayout.hpp>
-
-
 
 #include <ResourceManager/ResourceManager.hpp>
 #include <ResourceManager/RenderTechnique.hpp>
@@ -141,9 +140,10 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 		}
 	}
 
+	ModHandler* modHandler = resourceManager->GetResource<ModHandler>("ModHandler");
 	for (int i = 0; i < MAX_CHUNKS; ++i)
 	{
-		mChunks[i].Initilize(this, mVertexBuffer.get());
+		mChunks[i].Initialize(this, mVertexBuffer.get(), modHandler);
 
 		int x = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
 		int y = (MAX_WORLD_CHUNKS_PER_AXIS / 2);

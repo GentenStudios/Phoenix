@@ -50,3 +50,7 @@ phx::Block* phx::BlockHandler::GetBlock(const std::string& name) const
 
 	return &m_blocks[it->second];
 }
+
+uint16_t phx::BlockHandler::GetBlockCount() const { return m_currentLookupIndex; }
+
+phx::Block* phx::BlockHandler::GetBlocks() const { return m_blocks.get(); }

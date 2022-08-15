@@ -2,6 +2,8 @@
 
 #include <Globals/Globals.hpp>
 
+#include <Phoenix/Blocks.hpp>
+
 #include <memory>
 
 class Buffer;
@@ -17,6 +19,7 @@ namespace phx
 		uint32_t textureID;
 	};
 
+	class ModHandler;
 	class Chunk;
 
 	struct ChunkNabours
@@ -42,7 +45,7 @@ namespace phx
 		Chunk();
 		~Chunk() = default;
 
-		void Initilize(World* world, Buffer* vertexBuffer);
+		void Initialize(World* world, Buffer* vertexBuffer, ModHandler* modHandler);
 
 		void SetPosition(glm::ivec3 position);
 
@@ -58,8 +61,8 @@ namespace phx
 
 		void SetNeighbouringChunk(ChunkNabours* neighbouringChunks);
 
-		uint64_t GetBlock(int x, int y, int z);
-		void     SetBlock(int x, int y, int z, uint64_t block);
+		ChunkBlock GetBlock(int x, int y, int z);
+		void     SetBlock(int x, int y, int z, ChunkBlock block);
 
 	private:
 		void GenerateMesh();
@@ -68,6 +71,8 @@ namespace phx
 		World*       m_world;
 		unsigned int m_totalVertexCount = 0;
 		Buffer*      m_vertexBuffer       = nullptr;
+
+		ModHandler* m_modHandler;
 
 		ChunkNabours* m_neighbouringChunk;
 
@@ -78,6 +83,6 @@ namespace phx
 		glm::ivec3 m_position;
 		glm::mat4 m_matrix;
 
-		uint64_t m_blocks[CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE];
+		ChunkBlock m_blocks[CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE][CHUNK_BLOCK_SIZE];
 	};
 } // namespace phx

@@ -1,7 +1,15 @@
 <?xml version="1.0"?>
 <Mod name="standard_blocks" version="0.1">
 	<Blocks>
-		<Block name="dirt" displayName="Dirt" texture="textures/dirt.png" />
+		<Block name="dirt"  displayName="Dirt"  texture="textures/dirt.png" />
 		<Block name="stone" displayName="Stone" texture="textures/stone.png" />
 	</Blocks>
+	<Skybox>
+		<Texture position="north"  texture="textures/north.png" />
+		<Texture position="east"   texture="textures/east.png" />
+		<Texture position="south"  texture="textures/south.png" />
+		<Texture position="west"   texture="textures/west.png" />
+		<Texture position="top"    texture="textures/zenith.png" />
+		<Texture position="bottom" texture="textures/nadir.png" />
+	</Skybox>
 </Mod>

@@ -16,8 +16,10 @@ public:
 	        VkImageUsageFlags imageUsageFlags, char* data = nullptr);
 	Texture(RenderDevice* device, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags imageUsageFlags,
 	        char* data = nullptr);
+	Texture(RenderDevice* device, MemoryHeap* memoryHeap, const VkImageCreateInfo& imageCreateInfo, char* data = nullptr);
 	~Texture();
 
+	void CopyBufferRegionsToImage(Buffer* buffer, VkBufferImageCopy* copies, uint32_t count);
 	void TransitionImageLayout(VkCommandBuffer& commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 	VkDescriptorImageInfo GetDescriptorImageInfo();
@@ -29,19 +31,31 @@ public:
 	uint32_t              GetHeight() { return mHeight; }
 
 private:
-	void CreateImage(VkImageUsageFlags imageUsageFlags, char* data);
-	void SetImageLayout(VkCommandBuffer cmdbuffer, VkImage image, VkImageLayout oldImageLayout, VkImageLayout newImageLayout,
+	void CreateImageFrom(const VkImageCreateInfo& imageCreateInfo);
+	void TransferData(const VkImageCreateInfo& imageCreateInfo, char* data);
+	void CreateSampler(const VkImageCreateInfo& imageCreateInfo);
+	void CreateImageView(const VkImageCreateInfo& imageCreateInfo);
+
+	void SetImageLayout(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout oldImageLayout, VkImageLayout newImageLayout,
 	                    VkImageSubresourceRange subresourceRange);
 
 	RenderDevice* mDevice;
-	MemoryHeap*   mMemoryHeap;
-	bool          mOwnMemory;
-	uint32_t      mWidth;
-	uint32_t      mHeight;
-	VkImage       mImage;
-	VkSampler     mSampler;
-	VkImageView   mImageView;
-	VkFormat      mFormat;
+
+	bool         mOwnMemory;
+	MemoryHeap*  mMemoryHeap;
+	VkDeviceSize mImageSize;
+	VkDeviceSize mMemoryOffset;
+
+	uint32_t mWidth;
+	uint32_t mHeight;
+	uint32_t mDepth;
+	uint32_t mLayers;
+	uint32_t mMips;
+
+	VkImage     mImage;
+	VkSampler   mSampler;
+	VkImageView mImageView;
+	VkFormat    mFormat;
 
 	VkImageUsageFlags mImageUsageFlags;
 };

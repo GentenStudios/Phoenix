@@ -390,26 +390,108 @@ void phx::Phoenix::InitDefaultTextures()
 		defaultSamplerArrayResourceTable->Bind(0, errorTexture, i);
 	}
 
-	// Load temporary textures
-	const char* paths[2] = {"data/Textures/dirt.png", "data/Textures/stone.png"};
-	for (int i = 0; i < 2; i++)
+	// Temporarily load singular textures from ModHandler.
+	const int  modCount = mMods->GetModCount();
+	const Mod* mods     = mMods->GetMods();
+
+	// Start at 1 bc 0 is error.
+	unsigned int textureCount = 1;
+	for (int i = 0; i < modCount; ++i)
 	{
-		std::vector<unsigned char> image_data;
-		uint32_t                   width, height;
-		unsigned                   error = lodepng::decode(image_data, width, height, paths[i]);
-		if (error)
-		{
-			printf("%s\n", lodepng_error_text(error));
-		}
-		else
-		{
-			Texture* blockTexture = new Texture(mDevice.get(), mDeviceLocalMemoryHeap.get(), width, height, VK_FORMAT_R8G8B8A8_UNORM,
-			                                    VK_IMAGE_USAGE_SAMPLED_BIT, (char*) (image_data.data()));
+		const unsigned int blockCount = mods[i].blocks.GetBlockCount();
+		Block*       blocks     = mods[i].blocks.GetBlocks();
 
-			// For memory cleanup
-			mResourceManager->RegisterResource<Texture>(blockTexture);
+		for (int j = 0; j < blockCount; ++j)
+		{
+			if (blocks[j].texture.empty())
+				continue;
 
-			defaultSamplerArrayResourceTable->Bind(0, blockTexture, i);
+			std::vector<unsigned char> imageData;
+			uint32_t                   width, height;
+			const unsigned int         error = lodepng::decode(imageData, width, height, blocks[j].texture);
+
+			if (error)
+			{
+				printf("%s\n", lodepng_error_text(error));
+			}
+			else
+			{
+				Texture* blockTexture = new Texture(mDevice.get(), mDeviceLocalMemoryHeap.get(), width, height, VK_FORMAT_R8G8B8A8_UNORM,
+				                                    VK_IMAGE_USAGE_SAMPLED_BIT, reinterpret_cast<char*>(imageData.data()));
+
+				// For memory cleanup
+				mResourceManager->RegisterResource<Texture>(blockTexture);
+
+				blocks[j].textureIndex = textureCount;
+				defaultSamplerArrayResourceTable->Bind(0, blockTexture, textureCount++);
+			}
 		}
 	}
+
+	// Load skybox textures.
+	const char* skybox[] = {"mods/standard_blocks-0.1/textures/north.png", "mods/standard_blocks-0.1/textures/east.png",
+	                        "mods/standard_blocks-0.1/textures/south.png", "mods/standard_blocks-0.1/textures/west.png",
+	                        "mods/standard_blocks-0.1/textures/zenith.png", "mods/standard_blocks-0.1/textures/nadir.png"};
+
+	uint32_t width, height;
+
+	{
+		std::vector<unsigned char> imageData;
+		lodepng::decode(imageData, width, height, skybox[0]);
+	}
+
+	uint32_t bufferSize = width * height * 6 * 4;
+	auto     buffer     = new Buffer(mDevice.get(), bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE);
+
+	uint32_t offset = 0;
+	for (const char* tex : skybox)
+	{
+		std::vector<unsigned char> imageData;
+		lodepng::decode(imageData, width, height, tex);
+
+		buffer->TransferInstantly(imageData.data(), imageData.size(), offset);
+		offset += imageData.size();
+	}
+
+	{
+		VkImageCreateInfo imageCreateInfo = {};
+		imageCreateInfo.sType             = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCreateInfo.imageType         = VK_IMAGE_TYPE_2D;
+		imageCreateInfo.extent.width      = width;
+		imageCreateInfo.extent.height     = height;
+		imageCreateInfo.extent.depth      = 1;
+		imageCreateInfo.mipLevels         = 1;
+		imageCreateInfo.arrayLayers       = 6;
+		imageCreateInfo.format            = VK_FORMAT_R8G8B8A8_UNORM;
+		imageCreateInfo.tiling            = VK_IMAGE_TILING_OPTIMAL;
+		imageCreateInfo.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageCreateInfo.usage             = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		imageCreateInfo.samples           = VK_SAMPLE_COUNT_1_BIT;
+		imageCreateInfo.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
+		imageCreateInfo.flags             = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+		Texture* skyboxTexture = new Texture(mDevice.get(), mDeviceLocalMemoryHeap.get(), imageCreateInfo, nullptr);
+		mResourceManager->RegisterResource<Texture>(skyboxTexture);
+
+		VkBufferImageCopy copies[6] = {};
+		copies[0].imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		copies[0].imageSubresource.mipLevel       = 0;
+		copies[0].imageSubresource.baseArrayLayer = 0;
+		copies[0].imageSubresource.layerCount     = 1;
+		copies[0].imageExtent.width               = width;
+		copies[0].imageExtent.height              = height;
+		copies[0].imageExtent.depth               = 1;
+		copies[0].bufferOffset                    = 0;
+
+		for (int i = 1; i < 6; ++i)
+		{
+			copies[i] = copies[0];
+			copies[i].imageSubresource.baseArrayLayer = i;
+			copies[i].bufferOffset                    = width * height * 4 * i;
+		}
+
+		skyboxTexture->CopyBufferRegionsToImage(buffer, copies, 6);
+	}
+
+	delete buffer;
 }

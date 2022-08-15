@@ -23,17 +23,17 @@ phx::ModHandler::ModHandler(unsigned modCount)
 	core->blocks.AddBlock("core.unknown", "Unknown", "");
 
 	core->lookupIndex = 0;
-}
 
-phx::ModHandler::~ModHandler() {}
+	++m_currentLookupIndex;
+}
 
 phx::Block* phx::ModHandler::GetBlock(ChunkBlock block) const
 {
-	const Mod* mod = GetMod(block.modID);
+	const Mod* mod = GetMod(block.val.modID);
 	if (!mod)
 		return nullptr;
 
-	return mod->blocks.GetBlock(block.blockID);
+	return mod->blocks.GetBlock(block.val.blockID);
 }
 
 phx::Block* phx::ModHandler::GetBlock(const std::string& block) const
@@ -94,7 +94,10 @@ phx::Mod* phx::ModHandler::AddMod(const std::filesystem::path& modXMLPath)
 			continue;
 		}
 
-		mod.blocks.AddBlock(blockName.as_string(), blockDisplayName.as_string(), blockTexture.as_string());
+		auto fixedTexturePath = modXMLPath.parent_path();
+		fixedTexturePath /= blockTexture.as_string();
+
+		mod.blocks.AddBlock(blockName.as_string(), blockDisplayName.as_string(), fixedTexturePath.string());
 	}
 
 	m_modNameLookup[mod.name] = m_currentLookupIndex;
@@ -119,3 +122,7 @@ phx::Mod* phx::ModHandler::GetMod(const std::string& modName) const
 
 	return &m_mods[it->second];
 }
+
+uint16_t phx::ModHandler::GetModCount() { return m_currentLookupIndex; }
+
+phx::Mod* phx::ModHandler::GetMods() { return m_mods.get(); }

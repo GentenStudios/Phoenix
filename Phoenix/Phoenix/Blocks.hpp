@@ -16,11 +16,17 @@ namespace phx
 				uint16_t modID;
 				uint16_t blockID;
 				uint32_t metadata;
-			};
+			} val;
 
 			uint64_t id;
 		};
+
+		constexpr ChunkBlock() : id(0) {}
+		constexpr ChunkBlock(uint64_t block) : id(block) {}
+		constexpr ChunkBlock(uint16_t mod, uint16_t block, uint32_t data) : val({mod, block, data}) {}
 	};
+
+	inline bool operator==(const ChunkBlock& lhs, const ChunkBlock& rhs) { return lhs.id == rhs.id; }
 
 	struct Block
 	{
@@ -51,6 +57,9 @@ namespace phx
 
 		Block* GetBlock(uint16_t lookupIndex) const;
 		Block* GetBlock(const std::string& name) const;
+
+		uint16_t GetBlockCount() const;
+		Block*   GetBlocks() const;
 
 	private:
 		std::unique_ptr<Block[]> m_blocks;

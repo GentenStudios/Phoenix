@@ -1,10 +1,13 @@
 #include <Phoenix/Chunk.hpp>
+#include <Phoenix/Phoenix.hpp>
 #include <Phoenix/World.hpp>
+#include <Phoenix/Mods.hpp>
 
 #include <Renderer/Buffer.hpp>
 #include <Renderer/DeviceMemory.hpp>
 
 #include <Globals/Globals.hpp>
+#include <ResourceManager/ResourceManager.hpp>
 
 phx::Chunk::Chunk()
 {
@@ -18,8 +21,6 @@ phx::Chunk::Chunk()
 // Temp mesh
 // clang-format off
 const glm::vec3 BLOCK_VERTICES[] = {
-	
-
     {1.f, 1.f, 1.f}, // east (right)
     {1.f, 1.f, 0.f},
 	{1.f, 0.f, 0.f},
@@ -108,10 +109,11 @@ static const glm::vec2 BLOCK_UVS[] = {
 };
 // clang-format on
 
-void phx::Chunk::Initilize(World* world, Buffer* vertexBuffer)
+void phx::Chunk::Initialize(World* world, Buffer* vertexBuffer, ModHandler* modHandler)
 {
 	m_vertexBuffer = vertexBuffer;
 	m_world = world;
+	m_modHandler   = modHandler;
 }
 
 void phx::Chunk::SetPosition(glm::ivec3 position)
@@ -134,7 +136,7 @@ void phx::Chunk::Reset()
 		{
 			for (int i = 0; i < CHUNK_BLOCK_SIZE; ++i)
 			{
-				m_blocks[i][j][k] = 0;
+				m_blocks[i][j][k] = ModHandler::GetAirBlock();
 			}
 		}
 	}
@@ -150,11 +152,14 @@ void phx::Chunk::GenerateWorld()
 			for (int x = 0; x < CHUNK_BLOCK_SIZE; ++x)
 			{
 				float ya = (float) y + m_position.y;
-				// Randomly place blocks for now
 	
 				bool solid = ya < -5;
-	
-				m_blocks[x][y][z] = solid ? 1 : 0;
+
+				// hard coded blocks.
+				constexpr ChunkBlock dirt  = {0x00000001};
+				constexpr ChunkBlock stone = {0x00000101};
+
+				m_blocks[x][y][z] = solid ? dirt : ModHandler::GetAirBlock();
 			}
 		}
 	}
@@ -175,9 +180,9 @@ unsigned int phx::Chunk::GetTotalVertexCount() { return m_totalVertexCount; }
 
 void phx::Chunk::SetNeighbouringChunk(ChunkNabours* neighbouringChunk) { m_neighbouringChunk = neighbouringChunk; }
 
-uint64_t phx::Chunk::GetBlock(int x, int y, int z) { return m_blocks[x][y][z]; }
+phx::ChunkBlock phx::Chunk::GetBlock(int x, int y, int z) { return m_blocks[x][y][z]; }
 
-void phx::Chunk::SetBlock(int x, int y, int z, uint64_t block) { m_blocks[x][y][z] = block; }
+void phx::Chunk::SetBlock(int x, int y, int z, ChunkBlock block) { m_blocks[x][y][z] = block; }
 
 void phx::Chunk::GenerateMesh()
 {
@@ -185,8 +190,6 @@ void phx::Chunk::GenerateMesh()
 
 	void*       memoryPtr    = nullptr;
 	VertexData* vertexStream = nullptr;
-
-
 
 	m_world->FreeVertexPages(m_vertexPage);
 	m_vertexPage = nullptr;
@@ -201,10 +204,9 @@ void phx::Chunk::GenerateMesh()
 			for (int z = 0; z < CHUNK_BLOCK_SIZE; ++z)
 			{
 				// Check if we are about to render air
-				uint64_t blockID = m_blocks[x][y][z];
-				if (blockID == 0)
+				ChunkBlock blockID = m_blocks[x][y][z];
+				if (blockID == ModHandler::GetAirBlock())
 					continue;
-
 
 				bool visibilitySet[6] = {
 					false, false,
@@ -218,12 +220,12 @@ void phx::Chunk::GenerateMesh()
 					Chunk** neighbor = m_neighbouringChunk->neighbouringChunks[Chunk::East];
 					if (neighbor != nullptr)
 					{
-						visibilitySet[Chunk::East] = (*neighbor)->m_blocks[0][y][z] == 0;
+						visibilitySet[Chunk::East] = (*neighbor)->m_blocks[0][y][z] == ModHandler::GetAirBlock();
 					}
 				}
 				else
 				{
-					visibilitySet[Chunk::East] = (m_blocks[x + 1][y][z] == 0);
+					visibilitySet[Chunk::East] = (m_blocks[x + 1][y][z] == ModHandler::GetAirBlock());
 				}
 				
 				// West
@@ -232,12 +234,12 @@ void phx::Chunk::GenerateMesh()
 					Chunk** neighbor = m_neighbouringChunk->neighbouringChunks[Chunk::West];
 					if (neighbor != nullptr)
 					{
-						visibilitySet[Chunk::West] = (*neighbor)->m_blocks[CHUNK_BLOCK_SIZE - 1][y][z] == 0;
+						visibilitySet[Chunk::West] = (*neighbor)->m_blocks[CHUNK_BLOCK_SIZE - 1][y][z] == ModHandler::GetAirBlock();
 					}
 				}
 				else
 				{
-					visibilitySet[Chunk::West] = (m_blocks[x - 1][y][z] == 0);
+					visibilitySet[Chunk::West] = (m_blocks[x - 1][y][z] == ModHandler::GetAirBlock());
 				}
 				
 				// Top
@@ -246,12 +248,12 @@ void phx::Chunk::GenerateMesh()
 					Chunk** neighbor = m_neighbouringChunk->neighbouringChunks[Chunk::Top];
 					if (neighbor != nullptr)
 					{
-						visibilitySet[Chunk::Top] = (*neighbor)->m_blocks[x][CHUNK_BLOCK_SIZE - 1][z] == 0;
+						visibilitySet[Chunk::Top] = (*neighbor)->m_blocks[x][CHUNK_BLOCK_SIZE - 1][z] == ModHandler::GetAirBlock();
 					}
 				}
 				else
 				{
-					visibilitySet[Chunk::Top] = (m_blocks[x][y - 1][z] == 0);
+					visibilitySet[Chunk::Top] = (m_blocks[x][y - 1][z] == ModHandler::GetAirBlock());
 				}
 				
 				// Bottom
@@ -260,12 +262,12 @@ void phx::Chunk::GenerateMesh()
 					Chunk** neighbor = m_neighbouringChunk->neighbouringChunks[Chunk::Bottom];
 					if (neighbor != nullptr)
 					{
-						visibilitySet[Chunk::Bottom] = (*neighbor)->m_blocks[x][0][z] == 0;
+						visibilitySet[Chunk::Bottom] = (*neighbor)->m_blocks[x][0][z] == ModHandler::GetAirBlock();
 					}
 				}
 				else
 				{
-					visibilitySet[Chunk::Bottom] = (m_blocks[x][y + 1][z] == 0);
+					visibilitySet[Chunk::Bottom] = (m_blocks[x][y + 1][z] == ModHandler::GetAirBlock());
 				}
 				
 				
@@ -275,12 +277,12 @@ void phx::Chunk::GenerateMesh()
 					Chunk** neighbor = m_neighbouringChunk->neighbouringChunks[Chunk::North];
 					if (neighbor != nullptr)
 					{
-						visibilitySet[Chunk::North] = (*neighbor)->m_blocks[x][y][CHUNK_BLOCK_SIZE - 1] == 0;
+						visibilitySet[Chunk::North] = (*neighbor)->m_blocks[x][y][CHUNK_BLOCK_SIZE - 1] == ModHandler::GetAirBlock();
 					}
 				}
 				else
 				{
-					visibilitySet[Chunk::North] = (m_blocks[x][y][z - 1] == 0);
+					visibilitySet[Chunk::North] = (m_blocks[x][y][z - 1] == ModHandler::GetAirBlock());
 				}
 				
 				
@@ -290,12 +292,12 @@ void phx::Chunk::GenerateMesh()
 					Chunk** neighbor = m_neighbouringChunk->neighbouringChunks[Chunk::South];
 					if (neighbor != nullptr)
 					{
-						visibilitySet[Chunk::South] = (*neighbor)->m_blocks[x][y][0] == 0;
+						visibilitySet[Chunk::South] = (*neighbor)->m_blocks[x][y][0] == ModHandler::GetAirBlock();
 					}
 				}
 				else
 				{
-					visibilitySet[Chunk::South] = (m_blocks[x][y][z + 1] == 0);
+					visibilitySet[Chunk::South] = (m_blocks[x][y][z + 1] == ModHandler::GetAirBlock());
 				}
 
 
@@ -345,11 +347,10 @@ void phx::Chunk::GenerateMesh()
 						}
 
 						// Temp texture solution
-						int faceTextureID = blockID - 1;
+						int faceTextureID = m_modHandler->GetBlock(blockID)->textureIndex;
 						// Loop through for the face vertices
 						for (int k = 0; k < 6; k++)
 						{
-
 							unsigned int lookupIndex = k + (j * 6);
 
 							(*vertexStream).position = BLOCK_VERTICES[lookupIndex];

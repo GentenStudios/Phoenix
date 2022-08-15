@@ -20,7 +20,13 @@ namespace phx
 	{
 	public:
 		explicit ModHandler(unsigned int modCount);
-		~ModHandler();
+		~ModHandler() = default;
+
+		// Helper functions to reduce magic numbers.
+		static constexpr ChunkBlock GetAirBlock() { return 0; }
+		static constexpr uint16_t   GetCoreModID() { return 0; }
+		static constexpr uint16_t   GetAirBlockID() { return 0; }
+		static constexpr uint16_t   GetUnknownBlockID() { return 1; }
 
 		Block* GetBlock(ChunkBlock block) const;
 		Block* GetBlock(const std::string& block) const;
@@ -29,6 +35,9 @@ namespace phx
 
 		Mod* GetMod(int lookupIndex) const;
 		Mod* GetMod(const std::string& modName) const;
+
+		uint16_t GetModCount();
+		Mod*     GetMods();
 
 	private:
 		std::unique_ptr<Mod[]> m_mods;
