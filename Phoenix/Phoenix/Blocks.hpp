@@ -27,6 +27,7 @@ namespace phx
 	};
 
 	inline bool operator==(const ChunkBlock& lhs, const ChunkBlock& rhs) { return lhs.id == rhs.id; }
+	inline bool operator!=(const ChunkBlock& lhs, const ChunkBlock& rhs) { return lhs.id != rhs.id; }
 
 	struct Block
 	{

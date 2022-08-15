@@ -15,6 +15,7 @@ namespace phx
 	struct VertexData
 	{
 		glm::vec3 position;
+		glm::vec3 normal;
 		glm::vec2 uv;
 		uint32_t textureID;
 	};
@@ -63,6 +64,13 @@ namespace phx
 
 		ChunkBlock GetBlock(int x, int y, int z);
 		void     SetBlock(int x, int y, int z, ChunkBlock block);
+
+		void MarkDirty();
+
+		glm::ivec3 GetPosition();
+
+		ChunkNabours* GetNabours();
+
 
 	private:
 		void GenerateMesh();

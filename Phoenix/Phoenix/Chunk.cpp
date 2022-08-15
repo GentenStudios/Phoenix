@@ -63,8 +63,54 @@ const glm::vec3 BLOCK_VERTICES[] = {
 	{0.f, 1.f, 1.f},
 	{1.f, 1.f, 1.f},
 };
+const glm::vec3 BLOCK_NORMALS[] = {
+	
+
+    {1.f, 0.f, 0.f}, // east (right)
+    {1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+
+	{1.f, 0.f, 0.f}, // west
+	{1.f, 0.f, 0.f},
+    {1.f, 0.f, 0.f}, 
+	{1.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+    {1.f, 0.f, 0.f},
+
+    {0.f, 1.f, 0.f}, // bottom
+    {0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+
+    {0.f, 1.f, 0.f}, // top
+    {0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	
+	{0.f, 0.f, 1.f},  // north (front)
+	{0.f, 0.f, 1.f},
+    {0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f},
+    {0.f, 0.f, 1.f},
+
+    {0.f, 0.f, 1.f}, // south
+    {0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f}, 
+	{0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f},
+};
 
 static const glm::vec2 BLOCK_UVS[] = {
+
     {1.f, 0.f},
 	{0.f, 0.f},
 	{0.f, 1.f},
@@ -93,19 +139,19 @@ static const glm::vec2 BLOCK_UVS[] = {
 	{0.f, 0.f},
 	{0.f, 1.f},
 
+	{1.f, 1.f},
+	{0.f, 1.f},
+	{0.f, 0.f},
+	{0.f, 0.f},
+	{1.f, 0.f},
     {1.f, 1.f},
+	
 	{1.f, 0.f},
-	{0.f, 0.f},
-	{0.f, 0.f},
-	{0.f, 1.f},
 	{1.f, 1.f},
-
+	{0.f, 1.f},
+	{0.f, 1.f},
+	{0.f, 0.f},
     {1.f, 0.f},
-	{0.f, 0.f},
-	{0.f, 1.f},
-	{0.f, 1.f},
-	{1.f, 1.f},
-	{1.f, 0.f},
 };
 // clang-format on
 
@@ -157,12 +203,14 @@ void phx::Chunk::GenerateWorld()
 
 				// hard coded blocks.
 				constexpr ChunkBlock dirt  = {0x00000001};
-				constexpr ChunkBlock stone = {0x00000101};
+				constexpr ChunkBlock stone = {0x00010001};
 
 				m_blocks[x][y][z] = solid ? dirt : ModHandler::GetAirBlock();
+
 			}
 		}
 	}
+
 
 	m_dirty = true;
 }
@@ -182,7 +230,17 @@ void phx::Chunk::SetNeighbouringChunk(ChunkNabours* neighbouringChunk) { m_neigh
 
 phx::ChunkBlock phx::Chunk::GetBlock(int x, int y, int z) { return m_blocks[x][y][z]; }
 
-void phx::Chunk::SetBlock(int x, int y, int z, ChunkBlock block) { m_blocks[x][y][z] = block; }
+void phx::Chunk::SetBlock(int x, int y, int z, ChunkBlock block)
+{
+	m_blocks[x][y][z] = block;
+	m_dirty           = true;
+}
+
+void phx::Chunk::MarkDirty() { m_dirty = true; }
+
+glm::ivec3 phx::Chunk::GetPosition() { return m_position; }
+
+phx::ChunkNabours* phx::Chunk::GetNabours() { return m_neighbouringChunk; }
 
 void phx::Chunk::GenerateMesh()
 {
@@ -207,12 +265,8 @@ void phx::Chunk::GenerateMesh()
 				ChunkBlock blockID = m_blocks[x][y][z];
 				if (blockID == ModHandler::GetAirBlock())
 					continue;
-
-				bool visibilitySet[6] = {
-					false, false,
-					false, false,
-					false, false
-				};
+		
+				bool visibilitySet[6] = {false, false, false, false, false, false};
 
 				// East
 				if (x == CHUNK_BLOCK_SIZE - 1)
@@ -357,6 +411,8 @@ void phx::Chunk::GenerateMesh()
 							(*vertexStream).position.x += x;
 							(*vertexStream).position.y += y;
 							(*vertexStream).position.z += z;
+
+							(*vertexStream).normal = BLOCK_NORMALS[lookupIndex];							
 
 							(*vertexStream).uv = BLOCK_UVS[lookupIndex];
 

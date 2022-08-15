@@ -58,6 +58,11 @@ phx::InputHandler::InputHandler(Window* window) : mWindow(window)
 	{
 		mKeys[i] = false;
 	}
+
+	for (int i = 0 ; i < 3; i++)
+	{
+		mMouseKeys[i] = false;
+	}
 }
 
 phx::InputHandler::~InputHandler()

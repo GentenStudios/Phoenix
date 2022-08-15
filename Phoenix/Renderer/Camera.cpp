@@ -74,16 +74,14 @@ void Camera::Update()
 
 	mView = glm::lookAt(mPosition, mPosition + mDirection, glm::vec3(0, 1, 0));
 
-	mCamera.ProPos = (mProjection * mView * scale);
+	mCamera.modelToProjection = (mProjection * mView * scale);
+	mCamera.modelToWorld = (mView * scale);
+
 	//if (mOutOfDateFrustrum)
 	{
-		UpdateFrustrum(mCamera.ProPos);
+		UpdateFrustrum(mCamera.modelToProjection);
 		mOutOfDateFrustrum = false;
 	}
-
-	//mView = glm::lookAt(mPosition, mPosition + mDirection, glm::vec3(0, 1, 0));
-
-	//mCamera.ProPos = (mProjection * mView * scale);
 }
 
 bool Camera::CheckSphereFrustrum(glm::vec3 pos, float radius)
@@ -97,6 +95,10 @@ bool Camera::CheckSphereFrustrum(glm::vec3 pos, float radius)
 	}
 	return true;
 }
+
+glm::vec3 Camera::GetPosition() { return mPosition; }
+
+glm::vec3 Camera::GetDirection() { return mDirection; }
 
 void Camera::UpdateCameraRotation()
 {

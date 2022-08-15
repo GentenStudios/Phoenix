@@ -71,10 +71,12 @@ Texture::~Texture()
 	{
 		delete mMemoryHeap;
 	}
+
 	if (mImageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT)
 	{
 		vkDestroySampler(mDevice->GetDevice(), mSampler, nullptr);
 	}
+
 	vkDestroyImageView(mDevice->GetDevice(), mImageView, nullptr);
 	vkDestroyImage(mDevice->GetDevice(), mImage, nullptr);
 }
