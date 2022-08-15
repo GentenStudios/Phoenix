@@ -66,15 +66,13 @@ void Camera::RotateYaw(float y)
 
 void Camera::Update()
 {
-	glm::mat4 scale(1.0f);
-
 	mDirection   = glm::normalize(mDirection);
 
 	mView = glm::lookAt(mPosition, mPosition + mDirection, glm::vec3(0, 1, 0));
 
-	packet.modelToProjection = (mProjection * mView);
-	packet.modelToWorld      = mView * scale;
-	packet.projection        = mProjection;
+	packet.modelToProjection        = mProjection * mView;
+	packet.modelToWorld             = mView;
+	packet.modelToProjectionInverse = glm::inverse(packet.modelToProjection);
 
 	if (mOutOfDateFrustrum)
 	{

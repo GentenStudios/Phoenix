@@ -244,7 +244,7 @@ void phx::World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
 	    ->Use(commandBuffer, index, 1, skybox->GetPipelineLayout()->GetPipelineLayout());
 
 	// Vertices are hard baked into the shader.
-	vkCmdDraw(commandBuffer[index], 36, 1, 0, 0);
+	vkCmdDraw(commandBuffer[index], 6, 1, 0, 0);
 }
 
 phx::VertexPage* phx::World::GetFreeVertexPage()

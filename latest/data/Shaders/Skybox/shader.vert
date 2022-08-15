@@ -6,49 +6,21 @@
 
 #include "../_includes/Camera.glsl"
 
-vec3 positions[36] = vec3[](
-    vec3(-1.0f,-1.0f,-1.0f),
-    vec3(-1.0f,-1.0f, 1.0f),
-    vec3(-1.0f, 1.0f, 1.0f),
-    vec3( 1.0f, 1.0f,-1.0f),
-    vec3(-1.0f,-1.0f,-1.0f),
-    vec3(-1.0f, 1.0f,-1.0f),
-    vec3( 1.0f,-1.0f, 1.0f),
-    vec3(-1.0f,-1.0f,-1.0f),
-    vec3( 1.0f,-1.0f,-1.0f),
-    vec3( 1.0f, 1.0f,-1.0f),
-    vec3( 1.0f,-1.0f,-1.0f),
-    vec3(-1.0f,-1.0f,-1.0f),
-    vec3(-1.0f,-1.0f,-1.0f),
-    vec3(-1.0f, 1.0f, 1.0f),
-    vec3(-1.0f, 1.0f,-1.0f),
-    vec3( 1.0f,-1.0f, 1.0f),
-    vec3(-1.0f,-1.0f, 1.0f),
-    vec3(-1.0f,-1.0f,-1.0f),
-    vec3(-1.0f, 1.0f, 1.0f),
-    vec3(-1.0f,-1.0f, 1.0f),
-    vec3( 1.0f,-1.0f, 1.0f),
-    vec3( 1.0f, 1.0f, 1.0f),
-    vec3( 1.0f,-1.0f,-1.0f),
-    vec3( 1.0f, 1.0f,-1.0f),
-    vec3( 1.0f,-1.0f,-1.0f),
-    vec3( 1.0f, 1.0f, 1.0f),
-    vec3( 1.0f,-1.0f, 1.0f),
-    vec3( 1.0f, 1.0f, 1.0f),
-    vec3( 1.0f, 1.0f,-1.0f),
-    vec3(-1.0f, 1.0f,-1.0f),
-    vec3( 1.0f, 1.0f, 1.0f),
-    vec3(-1.0f, 1.0f,-1.0f),
-    vec3(-1.0f, 1.0f, 1.0f),
-    vec3( 1.0f, 1.0f, 1.0f),
-    vec3(-1.0f, 1.0f, 1.0f),
-    vec3( 1.0f,-1.0f, 1.0f)
+vec2 screenPos[6] = vec2[](
+    vec2(-1, -1), 
+    vec2( 1, -1), 
+    vec2(-1,  1), 
+    vec2(-1,  1),
+    vec2( 1, -1),
+    vec2( 1,  1)
 );
 
-layout(location = 0) out vec3 texCoord;
+layout(location = 0) smooth out vec3 texCoord;
 
 void main()
 {
-    texCoord = positions[gl_VertexIndex];
-	gl_Position = (camera.projection * mat4(mat3(camera.modelToWorld)) * vec4(positions[gl_VertexIndex], 1.f)).xyww;
+    vec4 translatedPosition = camera.modelToProjectionInverse * vec4(screenPos[gl_VertexIndex], 1.f, 1.f);
+    texCoord = normalize(translatedPosition.xyz / translatedPosition.w);
+
+    gl_Position = vec4(screenPos[gl_VertexIndex], 1.f, 1.f);
 }

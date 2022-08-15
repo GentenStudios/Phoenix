@@ -2,12 +2,11 @@ struct Camera
 {
     mat4 modelToProjection;
     mat4 modelToWorld;
-    mat4 projection;
+    mat4 modelToProjectionInverse;
 	vec4 frustumPlanes[6];
 };
 
-layout (binding=0, set = 0) readonly uniform CameraBuffer {Camera camera; };
-
+layout (binding = 0, set = 0) readonly uniform CameraBuffer { Camera camera; };
 
 vec4 CalculateCamera(vec4 position)
 {
