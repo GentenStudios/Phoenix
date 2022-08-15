@@ -13,18 +13,16 @@ class MemoryHeap
 public:
 	MemoryHeap(RenderDevice* device, uint32_t size, VkMemoryPropertyFlags memoryProperties);
 
-	DeviceMemory* GetMemory() { return mDeviceMemory.get(); }
+	DeviceMemory* GetMemory() const;
 
-	uint32_t Allocate(uint32_t size, uint32_t allignment);
+	uint32_t Allocate(uint32_t size, uint32_t alignment);
 
 	void ResetAllocation();
 
 private:
-	RenderDevice* mDevice;
+	RenderDevice* m_device;
+	Allocator     m_allocator;
 
-	std::unique_ptr<DeviceMemory> mDeviceMemory;
-
-	Allocator mAllocator;
-
-	VkMemoryPropertyFlags mMemoryProperties;
+	std::unique_ptr<DeviceMemory> m_deviceMemory;
+	VkMemoryPropertyFlags         m_memoryProperties;
 };

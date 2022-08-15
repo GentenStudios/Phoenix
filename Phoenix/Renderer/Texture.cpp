@@ -6,30 +6,30 @@
 
 Texture::Texture(RenderDevice* device, MemoryHeap* memoryHeap, uint32_t width, uint32_t height, VkFormat format,
                  VkImageUsageFlags imageUsageFlags, char* data)
-    : mDevice(device), mMemoryHeap(memoryHeap), mWidth(width), mHeight(height), mFormat(format), mImageUsageFlags(imageUsageFlags)
+    : m_device(device), m_memoryHeap(memoryHeap), m_width(width), m_height(height), m_format(format), m_imageUsageFlags(imageUsageFlags)
 {
-	if (mMemoryHeap == nullptr)
+	if (m_memoryHeap == nullptr)
 	{
-		mOwnMemory = true;
+		m_ownMemory = true;
 	}
 
 	// Default to 2D texture with 1 layer and 1 mipmap level.
-	mDepth  = 1;
-	mLayers = 1;
-	mMips   = 1;
+	m_depth  = 1;
+	m_layers = 1;
+	m_mips   = 1;
 
 	VkImageCreateInfo imageCreateInfo = {};
 	imageCreateInfo.sType             = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageCreateInfo.imageType         = VK_IMAGE_TYPE_2D;
-	imageCreateInfo.extent.width      = mWidth;
-	imageCreateInfo.extent.height     = mHeight;
-	imageCreateInfo.extent.depth      = mDepth;
-	imageCreateInfo.mipLevels         = mMips;
-	imageCreateInfo.arrayLayers       = mLayers;
-	imageCreateInfo.format            = mFormat;
+	imageCreateInfo.extent.width      = m_width;
+	imageCreateInfo.extent.height     = m_height;
+	imageCreateInfo.extent.depth      = m_depth;
+	imageCreateInfo.mipLevels         = m_mips;
+	imageCreateInfo.arrayLayers       = m_layers;
+	imageCreateInfo.format            = m_format;
 	imageCreateInfo.tiling            = VK_IMAGE_TILING_OPTIMAL;
 	imageCreateInfo.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageCreateInfo.usage             = mImageUsageFlags | (data != nullptr ? VK_IMAGE_USAGE_TRANSFER_DST_BIT : 0);
+	imageCreateInfo.usage             = m_imageUsageFlags | (data != nullptr ? VK_IMAGE_USAGE_TRANSFER_DST_BIT : 0);
 	imageCreateInfo.samples           = VK_SAMPLE_COUNT_1_BIT;
 	imageCreateInfo.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -44,20 +44,20 @@ Texture::Texture(RenderDevice* device, uint32_t width, uint32_t height, VkFormat
 {
 }
 
-Texture::Texture(RenderDevice* device, MemoryHeap* memoryHeap, const VkImageCreateInfo& imageCreateInfo, char* data) : mDevice(device), mMemoryHeap(memoryHeap)
+Texture::Texture(RenderDevice* device, MemoryHeap* memoryHeap, const VkImageCreateInfo& imageCreateInfo, char* data) : m_device(device), m_memoryHeap(memoryHeap)
 {
-	if (mMemoryHeap == nullptr)
+	if (m_memoryHeap == nullptr)
 	{
-		mOwnMemory = true;
+		m_ownMemory = true;
 	}
 
-	mWidth           = imageCreateInfo.extent.width;
-	mHeight          = imageCreateInfo.extent.height;
-	mDepth           = imageCreateInfo.extent.depth;
-	mLayers          = imageCreateInfo.arrayLayers;
-	mMips            = imageCreateInfo.mipLevels;
-	mFormat          = imageCreateInfo.format;
-	mImageUsageFlags = imageCreateInfo.usage;
+	m_width           = imageCreateInfo.extent.width;
+	m_height          = imageCreateInfo.extent.height;
+	m_depth           = imageCreateInfo.extent.depth;
+	m_layers          = imageCreateInfo.arrayLayers;
+	m_mips            = imageCreateInfo.mipLevels;
+	m_format          = imageCreateInfo.format;
+	m_imageUsageFlags = imageCreateInfo.usage;
 
 	CreateImageFrom(imageCreateInfo);
 	TransferData(imageCreateInfo, data);
@@ -67,73 +67,85 @@ Texture::Texture(RenderDevice* device, MemoryHeap* memoryHeap, const VkImageCrea
 
 Texture::~Texture()
 {
-	if (mOwnMemory)
+	if (m_ownMemory)
 	{
-		delete mMemoryHeap;
+		delete m_memoryHeap;
 	}
 
-	if (mImageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT)
+	if (m_imageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT)
 	{
-		vkDestroySampler(mDevice->GetDevice(), mSampler, nullptr);
+		vkDestroySampler(m_device->GetDevice(), m_sampler, nullptr);
 	}
 
-	vkDestroyImageView(mDevice->GetDevice(), mImageView, nullptr);
-	vkDestroyImage(mDevice->GetDevice(), mImage, nullptr);
+	vkDestroyImageView(m_device->GetDevice(), m_imageView, nullptr);
+	vkDestroyImage(m_device->GetDevice(), m_image, nullptr);
 }
 
 void Texture::CopyBufferRegionsToImage(Buffer* buffer, VkBufferImageCopy* copies, uint32_t count)
 {
-	VkCommandBuffer copyCmd = mDevice->CreateSingleTimeCommand();
+	VkCommandBuffer copyCmd = m_device->CreateSingleTimeCommand();
 
 	const VkImageAspectFlagBits aspectMask =
-	    mImageUsageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+	    m_imageUsageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
 	VkImageSubresourceRange subresourceRange = {};
 	subresourceRange.aspectMask              = aspectMask;
 	subresourceRange.baseMipLevel            = 0;
-	subresourceRange.levelCount              = mMips;
-	subresourceRange.layerCount              = mLayers;
+	subresourceRange.levelCount              = m_mips;
+	subresourceRange.layerCount              = m_layers;
 
-	SetImageLayout(copyCmd, mImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
-	vkCmdCopyBufferToImage(copyCmd, buffer->GetBuffer(), mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, count, copies);
-	SetImageLayout(copyCmd, mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	               (mImageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT) ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL,
+	SetImageLayout(copyCmd, m_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+	vkCmdCopyBufferToImage(copyCmd, buffer->GetBuffer(), m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, count, copies);
+	SetImageLayout(copyCmd, m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	               (m_imageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT) ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL,
 	               subresourceRange);
 
-	mDevice->EndCommand(copyCmd);
+	m_device->EndCommand(copyCmd);
 }
 
 void Texture::TransitionImageLayout(VkCommandBuffer& commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout)
 {
-	mDevice->TransitionImageLayout(commandBuffer, mImage, mFormat, oldLayout, newLayout, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+	m_device->TransitionImageLayout(commandBuffer, m_image, m_format, oldLayout, newLayout, {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 }
 
 VkDescriptorImageInfo Texture::GetDescriptorImageInfo()
 {
 	VkDescriptorImageInfo descriptorImageInfo = {};
 	// Provide the descriptor info the texture data it requires
-	descriptorImageInfo.sampler     = mSampler;
-	descriptorImageInfo.imageView   = mImageView;
+	descriptorImageInfo.sampler     = m_sampler;
+	descriptorImageInfo.imageView   = m_imageView;
 	descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	return descriptorImageInfo;
 }
 
+VkImage Texture::GetImage() const { return m_image; }
+
+VkSampler Texture::GetSampler() const { return m_sampler; }
+
+VkImageView Texture::GetImageView() const { return m_imageView; }
+
+VkFormat Texture::GetFormat() const { return m_format; }
+
+uint32_t Texture::GetWidth() const { return m_width; }
+
+uint32_t Texture::GetHeight() const { return m_height; }
+
 void Texture::CreateImageFrom(const VkImageCreateInfo& imageCreateInfo)
 {
-	mDevice->Validate(vkCreateImage(mDevice->GetDevice(), &imageCreateInfo, nullptr, &mImage));
+	m_device->Validate(vkCreateImage(m_device->GetDevice(), &imageCreateInfo, nullptr, &m_image));
 
 	VkMemoryRequirements imageMemoryRequirements;
-	vkGetImageMemoryRequirements(mDevice->GetDevice(), mImage, &imageMemoryRequirements);
+	vkGetImageMemoryRequirements(m_device->GetDevice(), m_image, &imageMemoryRequirements);
 
-	if (mOwnMemory)
+	if (m_ownMemory)
 	{
-		mMemoryHeap = new MemoryHeap(mDevice, imageMemoryRequirements.size, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_memoryHeap = new MemoryHeap(m_device, imageMemoryRequirements.size, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	}
 
-	mImageSize    = static_cast<uint32_t>(imageMemoryRequirements.size);
-	mMemoryOffset = mMemoryHeap->Allocate(mImageSize, imageMemoryRequirements.alignment);
+	m_imageSize    = static_cast<uint32_t>(imageMemoryRequirements.size);
+	m_memoryOffset = m_memoryHeap->Allocate(m_imageSize, imageMemoryRequirements.alignment);
 
-	mDevice->Validate(vkBindImageMemory(mDevice->GetDevice(), mImage, mMemoryHeap->GetMemory()->GetMemory(), mMemoryOffset));
+	m_device->Validate(vkBindImageMemory(m_device->GetDevice(), m_image, m_memoryHeap->GetMemory()->GetMemory(), m_memoryOffset));
 }
 
 void Texture::TransferData(const VkImageCreateInfo& imageCreateInfo, char* data)
@@ -141,21 +153,20 @@ void Texture::TransferData(const VkImageCreateInfo& imageCreateInfo, char* data)
 	if (data == nullptr)
 		return;
 
-	std::unique_ptr<Buffer> transferBuffer =
-	    std::unique_ptr<Buffer>(new Buffer(mDevice, mImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE));
+	auto transferBuffer = std::make_unique<Buffer>(m_device, m_imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE);
 
-	transferBuffer->TransferInstantly(data, mImageSize);
+	transferBuffer->TransferInstantly(data, m_imageSize);
 
-	VkCommandBuffer copyCmd = mDevice->CreateSingleTimeCommand();
+	VkCommandBuffer copyCmd = m_device->CreateSingleTimeCommand();
 
 	const VkImageAspectFlagBits aspectMask =
-	    mImageUsageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+	    m_imageUsageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
 	VkImageSubresourceRange subresourceRange = {};
 	subresourceRange.aspectMask              = aspectMask;
 	subresourceRange.baseMipLevel            = 0;
-	subresourceRange.levelCount              = mMips;
-	subresourceRange.layerCount              = mLayers;
+	subresourceRange.levelCount              = m_mips;
+	subresourceRange.layerCount              = m_layers;
 
 	if (data != nullptr)
 	{
@@ -163,31 +174,31 @@ void Texture::TransferData(const VkImageCreateInfo& imageCreateInfo, char* data)
 		bufferCopyRegion.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 		bufferCopyRegion.imageSubresource.mipLevel       = 0;
 		bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
-		bufferCopyRegion.imageSubresource.layerCount     = mLayers;
-		bufferCopyRegion.imageExtent.width               = mWidth;
-		bufferCopyRegion.imageExtent.height              = mHeight;
-		bufferCopyRegion.imageExtent.depth               = mDepth;
+		bufferCopyRegion.imageSubresource.layerCount     = m_layers;
+		bufferCopyRegion.imageExtent.width               = m_width;
+		bufferCopyRegion.imageExtent.height              = m_height;
+		bufferCopyRegion.imageExtent.depth               = m_depth;
 		bufferCopyRegion.bufferOffset                    = 0;
-		SetImageLayout(copyCmd, mImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
-		vkCmdCopyBufferToImage(copyCmd, transferBuffer->GetBuffer(), mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
-		SetImageLayout(copyCmd, mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		               (mImageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT) ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL,
+		SetImageLayout(copyCmd, m_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+		vkCmdCopyBufferToImage(copyCmd, transferBuffer->GetBuffer(), m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
+		SetImageLayout(copyCmd, m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		               (m_imageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT) ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL,
 		               subresourceRange);
 	}
 	else
 	{
 
-		SetImageLayout(copyCmd, mImage, VK_IMAGE_LAYOUT_UNDEFINED,
-		               (mImageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT) ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL,
+		SetImageLayout(copyCmd, m_image, VK_IMAGE_LAYOUT_UNDEFINED,
+		               (m_imageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT) ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL,
 		               subresourceRange);
 	}
 
-	mDevice->EndCommand(copyCmd);
+	m_device->EndCommand(copyCmd);
 }
 
 void Texture::CreateSampler(const VkImageCreateInfo& imageCreateInfo)
 {
-	if (mImageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT)
+	if (m_imageUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT)
 	{
 		VkSamplerCreateInfo samplerCreateInfo = {};
 		samplerCreateInfo.sType               = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -200,19 +211,19 @@ void Texture::CreateSampler(const VkImageCreateInfo& imageCreateInfo)
 		samplerCreateInfo.mipLodBias          = 0.0f;
 		samplerCreateInfo.compareOp           = VK_COMPARE_OP_NEVER;
 		samplerCreateInfo.minLod              = 0.0f;
-		samplerCreateInfo.maxLod              = static_cast<float>(mMips);
+		samplerCreateInfo.maxLod              = static_cast<float>(m_mips);
 		samplerCreateInfo.anisotropyEnable    = VK_FALSE;
 		samplerCreateInfo.maxAnisotropy       = 1.0;
 		samplerCreateInfo.borderColor         = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 
-		mDevice->Validate(vkCreateSampler(mDevice->GetDevice(), &samplerCreateInfo, nullptr, &mSampler));
+		m_device->Validate(vkCreateSampler(m_device->GetDevice(), &samplerCreateInfo, nullptr, &m_sampler));
 	}
 }
 
 void Texture::CreateImageView(const VkImageCreateInfo& imageCreateInfo)
 {
 	const VkImageAspectFlagBits aspectMask =
-	    mImageUsageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+	    m_imageUsageFlags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
 	VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D;
 	if (imageCreateInfo.imageType == VK_IMAGE_TYPE_2D)
@@ -222,25 +233,25 @@ void Texture::CreateImageView(const VkImageCreateInfo& imageCreateInfo)
 
 	if (imageCreateInfo.flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT)
 		imageViewType = VK_IMAGE_VIEW_TYPE_CUBE;
-	else if (mLayers > 1)
+	else if (m_layers > 1)
 		imageViewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 
 	VkImageViewCreateInfo imageViewCreateInfo           = {};
 	imageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	imageViewCreateInfo.image                           = mImage;
+	imageViewCreateInfo.image                           = m_image;
 	imageViewCreateInfo.viewType                        = imageViewType;
-	imageViewCreateInfo.format                          = mFormat;
+	imageViewCreateInfo.format                          = m_format;
 	imageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
 	imageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
 	imageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
 	imageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
 	imageViewCreateInfo.subresourceRange.aspectMask     = aspectMask;
 	imageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
-	imageViewCreateInfo.subresourceRange.levelCount     = mMips;
+	imageViewCreateInfo.subresourceRange.levelCount     = m_mips;
 	imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-	imageViewCreateInfo.subresourceRange.layerCount     = mLayers;
+	imageViewCreateInfo.subresourceRange.layerCount     = m_layers;
 
-	mDevice->Validate(vkCreateImageView(mDevice->GetDevice(), &imageViewCreateInfo, nullptr, &mImageView));
+	m_device->Validate(vkCreateImageView(m_device->GetDevice(), &imageViewCreateInfo, nullptr, &m_imageView));
 }
 
 void Texture::SetImageLayout(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout oldImageLayout, VkImageLayout newImageLayout,

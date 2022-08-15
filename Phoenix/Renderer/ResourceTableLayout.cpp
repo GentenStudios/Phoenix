@@ -2,32 +2,34 @@
 #include <Renderer/ResourceTable.hpp>
 #include <Renderer/ResourceTableLayout.hpp>
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 
 ResourceTableLayout::ResourceTableLayout(RenderDevice* device, VkDescriptorSetLayoutBinding* descriptorSetLayoutBinding,
                                          uint32_t descriptorSetLayoutBindingCount, uint32_t maxSets)
-    : mDevice(device)
+    : m_device(device)
 {
-	mDescriptorSetLayoutBindings =
+	m_descriptorSetLayoutBindings =
 	    std::unique_ptr<VkDescriptorSetLayoutBinding>(new VkDescriptorSetLayoutBinding[descriptorSetLayoutBindingCount]);
-	memcpy(mDescriptorSetLayoutBindings.get(), descriptorSetLayoutBinding,
-	       sizeof(VkDescriptorSetLayoutBinding) * descriptorSetLayoutBindingCount);
-	mDescriptorSetLayoutBindingCount = descriptorSetLayoutBindingCount;
+
+	std::memcpy(m_descriptorSetLayoutBindings.get(), descriptorSetLayoutBinding,
+	            sizeof(VkDescriptorSetLayoutBinding) * descriptorSetLayoutBindingCount);
+
+	m_descriptorSetLayoutBindingCount = descriptorSetLayoutBindingCount;
 
 	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
 	descriptorSetLayoutCreateInfo.sType                           = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	descriptorSetLayoutCreateInfo.bindingCount                    = descriptorSetLayoutBindingCount;
 	descriptorSetLayoutCreateInfo.pBindings                       = descriptorSetLayoutBinding;
 
-	mDevice->Validate(vkCreateDescriptorSetLayout(mDevice->GetDevice(), &descriptorSetLayoutCreateInfo, nullptr, &mDescriptorSetLayout));
+	m_device->Validate(vkCreateDescriptorSetLayout(m_device->GetDevice(), &descriptorSetLayoutCreateInfo, nullptr, &m_descriptorSetLayout));
 
-	std::unique_ptr<VkDescriptorPoolSize> descriptorPoolSizes(new VkDescriptorPoolSize[descriptorSetLayoutBindingCount]);
+	auto descriptorPoolSizes = std::make_unique<VkDescriptorPoolSize[]>(descriptorSetLayoutBindingCount);
 
 	for (uint32_t i = 0; i < descriptorSetLayoutBindingCount; ++i)
 	{
-		descriptorPoolSizes.get()[i].type            = descriptorSetLayoutBinding[i].descriptorType;
-		descriptorPoolSizes.get()[i].descriptorCount = maxSets;
+		descriptorPoolSizes[i].type            = descriptorSetLayoutBinding[i].descriptorType;
+		descriptorPoolSizes[i].descriptorCount = maxSets;
 	}
 
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
@@ -36,32 +38,36 @@ ResourceTableLayout::ResourceTableLayout(RenderDevice* device, VkDescriptorSetLa
 	descriptorPoolCreateInfo.pPoolSizes                 = descriptorPoolSizes.get();
 	descriptorPoolCreateInfo.maxSets                    = maxSets;
 
-	mDevice->Validate(vkCreateDescriptorPool(mDevice->GetDevice(), &descriptorPoolCreateInfo, nullptr, &mDescriptorPool));
+	m_device->Validate(vkCreateDescriptorPool(m_device->GetDevice(), &descriptorPoolCreateInfo, nullptr, &m_descriptorPool));
 }
 
 ResourceTableLayout::~ResourceTableLayout()
 {
-	vkDestroyDescriptorSetLayout(mDevice->GetDevice(), mDescriptorSetLayout, nullptr);
-	vkDestroyDescriptorPool(mDevice->GetDevice(), mDescriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(m_device->GetDevice(), m_descriptorSetLayout, nullptr);
+	vkDestroyDescriptorPool(m_device->GetDevice(), m_descriptorPool, nullptr);
 }
 
 ResourceTable* ResourceTableLayout::CreateTable()
 {
 	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
 	descriptorSetAllocateInfo.sType                       = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	descriptorSetAllocateInfo.descriptorPool              = mDescriptorPool;
+	descriptorSetAllocateInfo.descriptorPool              = m_descriptorPool;
 	descriptorSetAllocateInfo.descriptorSetCount          = 1;
-	descriptorSetAllocateInfo.pSetLayouts                 = &mDescriptorSetLayout;
+	descriptorSetAllocateInfo.pSetLayouts                 = &m_descriptorSetLayout;
 
 	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 
-	mDevice->Validate(vkAllocateDescriptorSets(mDevice->GetDevice(), &descriptorSetAllocateInfo, &descriptorSet));
+	m_device->Validate(vkAllocateDescriptorSets(m_device->GetDevice(), &descriptorSetAllocateInfo, &descriptorSet));
 
-	return new ResourceTable(mDevice, this, descriptorSet);
+	return new ResourceTable(m_device, this, descriptorSet);
 }
 
-VkDescriptorType ResourceTableLayout::GetDescriptorType(uint32_t index)
+VkDescriptorPool ResourceTableLayout::GetDescriptorPool() const { return m_descriptorPool; }
+
+VkDescriptorSetLayout ResourceTableLayout::GetDescriptorSetLayout() const { return m_descriptorSetLayout; }
+
+VkDescriptorType ResourceTableLayout::GetDescriptorType(uint32_t index) const
 {
-	assert(index < mDescriptorSetLayoutBindingCount);
-	return mDescriptorSetLayoutBindings.get()[index].descriptorType;
+	assert(index < m_descriptorSetLayoutBindingCount);
+	return m_descriptorSetLayoutBindings.get()[index].descriptorType;
 }

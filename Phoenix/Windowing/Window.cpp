@@ -1,41 +1,56 @@
 #include <Windowing/Window.hpp>
 
-#include <assert.h>
+//#include <SDL_vulkan.h>
+
+#include <cassert>
 
 Window::Window(const char* title, int width, int height)
 {
-	mMouseCapture = false;
-	mMouseGrab    = false;
+	m_mouseCapture = false;
+	m_mouseGrab    = false;
 
-	bool initSDL = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) == 0;
+	const bool initSDL = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) == 0;
 	if (!initSDL)
 	{
 		assert(initSDL && "Error, unable to init SDL");
 		return;
 	}
 
-	mWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
+	m_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
 	                           SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_CAPTURE);
 
-	if (!mWindow)
+	if (!m_window)
 	{
 		assert(0 && "Failed it make window");
 		SDL_Quit();
 		return;
 	}
-	SDL_ShowWindow(mWindow);
 
-	mWidth  = width;
-	mHeight = height;
+	SDL_ShowWindow(m_window);
 
-	SDL_VERSION(&mWindowInfo.version);
-	bool sucsess = SDL_GetWindowWMInfo(mWindow, &mWindowInfo);
-	assert(sucsess && "Error, unable to get window info");
-	mOpen       = true;
-	mRenderable = true;
+	m_width  = width;
+	m_height = height;
+
+	SDL_VERSION(&m_windowInfo.version);
+
+	const bool success = SDL_GetWindowWMInfo(m_window, &m_windowInfo);
+	assert(success && "Error, unable to get window info");
+
+	m_open       = true;
+	m_renderable = true;
 }
 
-Window::~Window() { SDL_DestroyWindow(mWindow); }
+Window::~Window() { SDL_DestroyWindow(m_window); }
+
+bool Window::IsOpen() const { return m_open; }
+
+void Window::Close() { m_open = false; }
+
+uint32_t Window::GetWidth() const { return m_width; }
+
+uint32_t Window::GetHeight() const { return m_height; }
+
+SDL_Window* Window::GetWindow() const { return m_window; }
 
 void Window::AddEventCallback(SDL_EventType type, std::function<void(SDL_Event&, void* ref)> callback, void* ref)
 {
@@ -50,54 +65,56 @@ void Window::Poll()
 		switch (event.type)
 		{
 		case SDL_QUIT:
-			mOpen = false;
+			m_open = false;
 			break;
 		case SDL_WINDOWEVENT:
 			switch (event.window.event)
 			{
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
 			{
-				mWidth  = event.window.data1;
-				mHeight = event.window.data2;
+				m_width  = event.window.data1;
+				m_height = event.window.data2;
 				break;
 			}
 			case SDL_WINDOWEVENT_MINIMIZED:
 			{
-				mRenderable = false;
+				m_renderable = false;
 				break;
 			}
 			case SDL_WINDOWEVENT_MAXIMIZED:
 			{
-				mRenderable = true;
+				m_renderable = true;
 				break;
 			}
 			}
 			break;
+		default:
+			break;
 		}
 		for (auto callback : mEventCallbacks[static_cast<SDL_EventType>(event.type)])
 		{
-			callback.functionPtr(event, callback.refrencePtr);
+			callback.functionPtr(event, callback.referencePtr);
 		}
 	}
 }
 
-bool Window::IsRenderable() { return mRenderable; }
+bool Window::IsRenderable() { return m_renderable; }
 
 void Window::CaptureMouse(bool capture)
 {
-	if (capture != mMouseCapture)
+	if (capture != m_mouseCapture)
 	{
 		//SDL_CaptureMouse((SDL_bool) capture);
-		mMouseCapture = capture;
+		m_mouseCapture = capture;
 	}
 }
 
 void Window::GrabMouse(bool grab)
 {
-	if (grab != mMouseGrab)
+	if (grab != m_mouseGrab)
 	{
 		//SDL_SetWindowGrab(mWindow, (SDL_bool) grab);
 		SDL_SetRelativeMouseMode((SDL_bool) grab);
-		mMouseGrab = grab;
+		m_mouseGrab = grab;
 	}
 }

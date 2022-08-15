@@ -57,7 +57,7 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 
 	mChunks = new Chunk[MAX_CHUNKS];
 	mChunksSorted = new Chunk*[MAX_CHUNKS];
-	mChunkNeighbours = new ChunkNabours[MAX_CHUNKS];
+	mChunkNeighbours = new ChunkNeighbours[MAX_CHUNKS];
 
 	mFreeVertexPages = nullptr;
 
@@ -103,7 +103,7 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 			{
 				int index = x + (y * MAX_WORLD_CHUNKS_PER_AXIS) + (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS);
 
-				ChunkNabours* chunkNabours = &mChunkNeighbours[index];
+				ChunkNeighbours* chunkNabours = &mChunkNeighbours[index];
 
 				chunkNabours->neighbouringChunks[Chunk::East] =
 				    (x - 1) < 0 ? nullptr
@@ -281,7 +281,7 @@ void phx::World::DestroyBlockFromView()
 
 		chunk->MarkDirty();
 
-		phx::ChunkNabours* nabours = chunk->GetNabours();
+		phx::ChunkNeighbours* nabours = chunk->GetNabours();
 
 		for (int j = 0; j < 6; j++)
 		{
@@ -313,7 +313,7 @@ void phx::World::PlaceBlockFromView()
 
 		chunk->MarkDirty();
 
-		phx::ChunkNabours* nabours = chunk->GetNabours();
+		phx::ChunkNeighbours* nabours = chunk->GetNabours();
 
 		for (int j = 0; j < 6; j++)
 		{
@@ -326,7 +326,7 @@ void phx::World::PlaceBlockFromView()
 
 }
 
-void phx::World::RaycastToBlock(float step, int itteration, Chunk*& chunkReturn, int& localX, int& localY, int& localZ, RaycastMode mode)
+void phx::World::RaycastToBlock(float step, int iteration, Chunk*& chunkReturn, int& localX, int& localY, int& localZ, RaycastMode mode)
 {
 	chunkReturn            = nullptr; 
 	localX                 = 0;
@@ -364,7 +364,7 @@ void phx::World::RaycastToBlock(float step, int itteration, Chunk*& chunkReturn,
 		float currentStep = step;
 		unsigned int stepHalfCount = 0;
 
-		for (int i = 0; i < itteration; i++)
+		for (int i = 0; i < iteration; i++)
 		{
 			viewPosition += camera->GetDirection() * currentStep;
 			glm::ivec3 newPos = viewPosition;
@@ -429,7 +429,7 @@ void phx::World::RaycastToBlock(float step, int itteration, Chunk*& chunkReturn,
 				if (!PointToCube(viewPosition, chunk->GetPosition(), CHUNK_BLOCK_SIZE))
 				{
 					Chunk*             newChunk = nullptr;
-					phx::ChunkNabours* nabours  = chunk->GetNabours();
+					phx::ChunkNeighbours* nabours  = chunk->GetNabours();
 					for (int j = 0; j < 6; j++)
 					{
 						if (nabours->neighbouringChunks[j] == nullptr)

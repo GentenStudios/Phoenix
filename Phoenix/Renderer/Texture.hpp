@@ -14,8 +14,10 @@ class Texture
 public:
 	Texture(RenderDevice* device, MemoryHeap* memoryHeap, uint32_t width, uint32_t height, VkFormat format,
 	        VkImageUsageFlags imageUsageFlags, char* data = nullptr);
+
 	Texture(RenderDevice* device, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags imageUsageFlags,
 	        char* data = nullptr);
+
 	Texture(RenderDevice* device, MemoryHeap* memoryHeap, const VkImageCreateInfo& imageCreateInfo, char* data = nullptr);
 	~Texture();
 
@@ -23,12 +25,12 @@ public:
 	void TransitionImageLayout(VkCommandBuffer& commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 	VkDescriptorImageInfo GetDescriptorImageInfo();
-	VkImage               GetImage() { return mImage; }
-	VkSampler             GetSampler() { return mSampler; }
-	VkImageView           GetImageView() { return mImageView; }
-	VkFormat              GetFormat() { return mFormat; }
-	uint32_t              GetWidth() { return mWidth; }
-	uint32_t              GetHeight() { return mHeight; }
+	VkImage               GetImage() const;
+	VkSampler             GetSampler() const;
+	VkImageView           GetImageView() const;
+	VkFormat              GetFormat() const;
+	uint32_t              GetWidth() const;
+	uint32_t              GetHeight() const;
 
 private:
 	void CreateImageFrom(const VkImageCreateInfo& imageCreateInfo);
@@ -39,23 +41,23 @@ private:
 	void SetImageLayout(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout oldImageLayout, VkImageLayout newImageLayout,
 	                    VkImageSubresourceRange subresourceRange);
 
-	RenderDevice* mDevice;
+	RenderDevice* m_device;
 
-	bool         mOwnMemory;
-	MemoryHeap*  mMemoryHeap;
-	VkDeviceSize mImageSize;
-	VkDeviceSize mMemoryOffset;
+	bool         m_ownMemory;
+	MemoryHeap*  m_memoryHeap;
+	VkDeviceSize m_imageSize;
+	VkDeviceSize m_memoryOffset;
 
-	uint32_t mWidth;
-	uint32_t mHeight;
-	uint32_t mDepth;
-	uint32_t mLayers;
-	uint32_t mMips;
+	uint32_t m_width;
+	uint32_t m_height;
+	uint32_t m_depth;
+	uint32_t m_layers;
+	uint32_t m_mips;
 
-	VkImage     mImage;
-	VkSampler   mSampler;
-	VkImageView mImageView;
-	VkFormat    mFormat;
+	VkImage     m_image;
+	VkSampler   m_sampler;
+	VkImageView m_imageView;
+	VkFormat    m_format;
 
-	VkImageUsageFlags mImageUsageFlags;
+	VkImageUsageFlags m_imageUsageFlags;
 };

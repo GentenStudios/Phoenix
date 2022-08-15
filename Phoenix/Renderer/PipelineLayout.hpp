@@ -10,9 +10,9 @@ public:
 	PipelineLayout(RenderDevice* device, VkDescriptorSetLayout* descriptorSetLayouts, uint32_t descriptorSetLayoutCount);
 	~PipelineLayout();
 
-	VkPipelineLayout GetPipelineLayout() { return mPipelineLayout; }
+	VkPipelineLayout GetPipelineLayout() const;
 
 private:
-	RenderDevice*    mDevice;
-	VkPipelineLayout mPipelineLayout;
+	RenderDevice*    m_device;
+	VkPipelineLayout m_pipelineLayout;
 };

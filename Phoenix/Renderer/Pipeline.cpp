@@ -8,19 +8,18 @@ Pipeline::Pipeline(RenderDevice* device, PipelineType type, RenderPass* renderPa
                    VkVertexInputBindingDescription* vertexInputBindingDescriptions, uint32_t vertexInputBindingDescriptionCount,
                    VkVertexInputAttributeDescription* vertexInputAttributeDescriptions, uint32_t vertexInputAttributeDescriptionCount,
                    VkPrimitiveTopology topology)
-    : mDevice(device), mPipelineLayout(pipelineLayout), mType(type)
+    : m_device(device), m_pipelineLayout(pipelineLayout), m_type(type)
 {
-
 	switch (type)
 	{
 	case PipelineType::Graphics:
 	{
-		VkPipelineVertexInputStateCreateInfo vertex_input_info = {};
-		vertex_input_info.sType                                = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertex_input_info.vertexBindingDescriptionCount        = vertexInputBindingDescriptionCount;
-		vertex_input_info.vertexAttributeDescriptionCount      = vertexInputAttributeDescriptionCount;
-		vertex_input_info.pVertexBindingDescriptions           = vertexInputBindingDescriptions;
-		vertex_input_info.pVertexAttributeDescriptions         = vertexInputAttributeDescriptions;
+		VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+		vertexInputInfo.sType                                = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertexInputInfo.vertexBindingDescriptionCount        = vertexInputBindingDescriptionCount;
+		vertexInputInfo.vertexAttributeDescriptionCount      = vertexInputAttributeDescriptionCount;
+		vertexInputInfo.pVertexBindingDescriptions           = vertexInputBindingDescriptions;
+		vertexInputInfo.pVertexAttributeDescriptions         = vertexInputAttributeDescriptions;
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 		inputAssembly.sType                                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -87,7 +86,7 @@ Pipeline::Pipeline(RenderDevice* device, PipelineType type, RenderPass* renderPa
 		graphicsPipelineCreateInfo.sType                        = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		graphicsPipelineCreateInfo.stageCount                   = pipelineShaderStageInfoCount;
 		graphicsPipelineCreateInfo.pStages                      = pipelineShaderStageInfos;
-		graphicsPipelineCreateInfo.pVertexInputState            = &vertex_input_info;
+		graphicsPipelineCreateInfo.pVertexInputState            = &vertexInputInfo;
 		graphicsPipelineCreateInfo.pInputAssemblyState          = &inputAssembly;
 		graphicsPipelineCreateInfo.pViewportState               = &viewportState;
 		graphicsPipelineCreateInfo.pRasterizationState          = &rasterizer;
@@ -102,8 +101,8 @@ Pipeline::Pipeline(RenderDevice* device, PipelineType type, RenderPass* renderPa
 		graphicsPipelineCreateInfo.basePipelineIndex            = -1;
 		graphicsPipelineCreateInfo.flags                        = VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT;
 
-		mDevice->Validate(
-		    vkCreateGraphicsPipelines(mDevice->GetDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &mPipeline));
+		m_device->Validate(
+		    vkCreateGraphicsPipelines(m_device->GetDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &m_pipeline));
 
 		break;
 	}
@@ -119,19 +118,19 @@ Pipeline::Pipeline(RenderDevice* device, PipelineType type, RenderPass* renderPa
 		computePipelineCreateInfo.basePipelineHandle          = VK_NULL_HANDLE;
 		computePipelineCreateInfo.basePipelineIndex           = -1;
 
-		mDevice->Validate(
-		    vkCreateComputePipelines(mDevice->GetDevice(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &mPipeline));
+		m_device->Validate(
+		    vkCreateComputePipelines(m_device->GetDevice(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &m_pipeline));
 		break;
 	}
 	}
 }
 
-Pipeline::~Pipeline() { vkDestroyPipeline(mDevice->GetDevice(), mPipeline, nullptr); }
+Pipeline::~Pipeline() { vkDestroyPipeline(m_device->GetDevice(), m_pipeline, nullptr); }
 
-void Pipeline::Use(VkCommandBuffer* commandBuffer, uint32_t index)
+void Pipeline::Use(VkCommandBuffer* commandBuffer, uint32_t index) const
 {
-	VkPipelineBindPoint bindPoint;
-	switch (mType)
+	VkPipelineBindPoint bindPoint = {};
+	switch (m_type)
 	{
 	case PipelineType::Graphics:
 	{
@@ -144,7 +143,8 @@ void Pipeline::Use(VkCommandBuffer* commandBuffer, uint32_t index)
 		break;
 	}
 	}
-	vkCmdBindPipeline(commandBuffer[index], bindPoint, mPipeline);
+
+	vkCmdBindPipeline(commandBuffer[index], bindPoint, m_pipeline);
 }
 
-VkPipelineLayout Pipeline::GetPipelineLayout() { return mPipelineLayout->GetPipelineLayout(); }
+VkPipelineLayout Pipeline::GetPipelineLayout() const { return m_pipelineLayout->GetPipelineLayout(); }

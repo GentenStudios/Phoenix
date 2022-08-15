@@ -18,14 +18,6 @@ public:
 		FRONT  = 5
 	};
 
-	struct CameraPacket
-	{
-		glm::mat4 modelToProjection; // Projection/Position
-		glm::mat4 modelToWorld;      // Position
-		glm::mat4 modelToProjectionInverse;
-		glm::vec4 planes[6];
-	} packet;
-
 public:
 	Camera(uint32_t width, uint32_t height);
 
@@ -46,6 +38,14 @@ public:
 	glm::vec3 GetPosition();
 	glm::vec3 GetDirection();
 	glm::mat4 GetProjection() { return m_projection; }
+
+	struct CameraPacket
+	{
+		glm::mat4 modelToProjection; // Projection/Position
+		glm::mat4 modelToWorld;      // Position
+		glm::mat4 modelToProjectionInverse;
+		glm::vec4 planes[6];
+	} packet;
 
 private:
 	void UpdateCameraRotation();

@@ -20,15 +20,16 @@ public:
 	         VkVertexInputBindingDescription* vertexInputBindingDescriptions, uint32_t vertexInputBindingDescriptionCount,
 	         VkVertexInputAttributeDescription* vertexInputAttributeDescriptions, uint32_t vertexInputAttributeDescriptionCount,
 	         VkPrimitiveTopology topology);
+
 	~Pipeline();
 
-	void Use(VkCommandBuffer* commandBuffer, uint32_t index);
+	void Use(VkCommandBuffer* commandBuffer, uint32_t index) const;
 
-	VkPipelineLayout GetPipelineLayout();
+	VkPipelineLayout GetPipelineLayout() const;
 
 private:
-	RenderDevice*   mDevice;
-	PipelineLayout* mPipelineLayout;
-	VkPipeline      mPipeline;
-	PipelineType    mType;
+	RenderDevice*   m_device;
+	PipelineLayout* m_pipelineLayout;
+	VkPipeline      m_pipeline;
+	PipelineType    m_type;
 };

@@ -21,29 +21,29 @@ public:
 	RenderTarget(RenderDevice* device, uint32_t width, uint32_t height, VkFormat format, bool useDepth = false);
 	~RenderTarget();
 
-	RenderPass* GetRenderPass() { return mRenderpass.get(); }
-	Texture*    GetImage() { return mImage.get(); }
+	RenderPass* GetRenderPass() const;
+	Texture*    GetImage() const;
 
 	void ScreenResize(uint32_t width, uint32_t height);
 
-	void StartRendering(VkCommandBuffer* commandBuffer, uint32_t index);
+	void StartRendering(VkCommandBuffer* commandBuffer, uint32_t index) const;
 
-	void StartSampling(VkCommandBuffer* commandBuffer, uint32_t index, Pipeline* pipeline);
+	void StartSampling(VkCommandBuffer* commandBuffer, uint32_t index, Pipeline* pipeline) const;
 
-	void StopSampling(VkCommandBuffer* commandBuffer, uint32_t index);
+	void StopSampling(VkCommandBuffer* commandBuffer, uint32_t index) const;
 
 private:
 	void CreateRenderTarget(uint32_t width, uint32_t height);
 	void DestroyRenderTarget();
 
-	RenderDevice*                          mDevice;
-	std::unique_ptr<RenderPass>            mRenderpass;
-	std::unique_ptr<Texture>               mImage;
-	std::unique_ptr<Texture>               mDepthImage;
-	std::unique_ptr<FramebufferPacket>     mFramebufferPacket;
-	std::unique_ptr<FramebufferPacket>     mDepthFramebufferPacket;
-	std::unique_ptr<FramebufferAttachment> mFramebufferAttachment;
-	std::unique_ptr<ResourceTable>         mSamplerResourceTable;
-	VkFormat                               mFormat;
-	bool                                   mUseDepth;
+	RenderDevice*                          m_device;
+	std::unique_ptr<RenderPass>            m_renderpass;
+	std::unique_ptr<Texture>               m_image;
+	std::unique_ptr<Texture>               m_depthImage;
+	std::unique_ptr<FramebufferPacket>     m_framebufferPacket;
+	std::unique_ptr<FramebufferPacket>     m_depthFramebufferPacket;
+	std::unique_ptr<FramebufferAttachment> m_framebufferAttachment;
+	std::unique_ptr<ResourceTable>         m_samplerResourceTable;
+	VkFormat                               m_format;
+	bool                                   m_useDepth;
 };

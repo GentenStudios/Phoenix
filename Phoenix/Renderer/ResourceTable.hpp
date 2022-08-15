@@ -11,19 +11,18 @@ class ResourceTable
 {
 public:
 	ResourceTable(RenderDevice* device, ResourceTableLayout* resourceTableLayout, VkDescriptorSet descriptorSet);
-	~ResourceTable();
+	~ResourceTable() = default;
 
-	VkDescriptorSet GetDescriptorSet() { return mDescriptorSet; }
+	VkDescriptorSet GetDescriptorSet() const;
 
 	void Use(VkCommandBuffer* commandBuffer, uint32_t index, uint32_t set, VkPipelineLayout layout,
-	         VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS);
+	         VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
-	void Bind(uint32_t binding, Buffer* buffer);
-
-	void Bind(uint32_t binding, Texture* texture, uint32_t arrayElement = 0);
+	void Bind(uint32_t binding, Buffer* buffer) const;
+	void Bind(uint32_t binding, Texture* texture, uint32_t arrayElement = 0) const;
 
 private:
-	RenderDevice*        mDevice;
-	ResourceTableLayout* mResourceTableLayout;
-	VkDescriptorSet      mDescriptorSet;
+	RenderDevice*        m_device;
+	ResourceTableLayout* m_resourceTableLayout;
+	VkDescriptorSet      m_descriptorSet;
 };

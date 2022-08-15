@@ -16,15 +16,15 @@ public:
 
 	ResourceTable* CreateTable();
 
-	VkDescriptorPool      GetDescriptorPool() { return mDescriptorPool; }
-	VkDescriptorSetLayout GetDescriptorSetLayout() { return mDescriptorSetLayout; }
+	VkDescriptorPool      GetDescriptorPool() const;
+	VkDescriptorSetLayout GetDescriptorSetLayout() const;
 
-	VkDescriptorType GetDescriptorType(uint32_t index);
+	VkDescriptorType GetDescriptorType(uint32_t index) const;
 
 private:
-	RenderDevice*                                 mDevice;
-	VkDescriptorPool                              mDescriptorPool      = VK_NULL_HANDLE;
-	VkDescriptorSetLayout                         mDescriptorSetLayout = VK_NULL_HANDLE;
-	std::unique_ptr<VkDescriptorSetLayoutBinding> mDescriptorSetLayoutBindings;
-	uint32_t                                      mDescriptorSetLayoutBindingCount;
+	RenderDevice*                                 m_device;
+	VkDescriptorPool                              m_descriptorPool      = VK_NULL_HANDLE;
+	VkDescriptorSetLayout                         m_descriptorSetLayout = VK_NULL_HANDLE;
+	std::unique_ptr<VkDescriptorSetLayoutBinding> m_descriptorSetLayoutBindings;
+	uint32_t                                      m_descriptorSetLayoutBindingCount;
 };

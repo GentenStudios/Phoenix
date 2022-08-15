@@ -13,29 +13,34 @@ class RenderTechnique;
 class ResourcePacketInterface
 {
 public:
-	ResourcePacketInterface(void* ptr) : mPtr(ptr) {}
-	virtual ~ResourcePacketInterface() {};
-	void* GetPtr() { return mPtr; }
+	explicit ResourcePacketInterface(void* ptr) : m_ptr(ptr) {}
+	virtual ~ResourcePacketInterface() = default;
+	void*    GetPtr() const { return m_ptr; }
 
 protected:
-	void* mPtr;
+	void* m_ptr;
 };
 
+// Disable warnings bc this works but compiler no like.
+#pragma warning(push, 0)
 template <typename T>
 class ResourceInstance : virtual public ResourcePacketInterface
 {
 public:
-	ResourceInstance(T* t, bool autoCleanup = true) : ResourcePacketInterface(t), mAutoCleanup(autoCleanup) {}
-	T* Get() { return reinterpret_cast<T*>(mPtr); }
-	virtual ~ResourceInstance()
+	explicit ResourceInstance(T* t, bool autoCleanup = true) : ResourcePacketInterface(t), m_autoCleanup(autoCleanup) {}
+
+	T* Get() { return static_cast<T*>(m_ptr); }
+
+	~ResourceInstance() override
 	{
-		if (mAutoCleanup)
-			delete reinterpret_cast<T*>(mPtr);
+		if (m_autoCleanup)
+			delete static_cast<T*>(m_ptr);
 	}
 
 private:
-	bool mAutoCleanup;
+	bool m_autoCleanup;
 };
+#pragma warning(pop)
 
 template class ResourceInstance<RenderDevice>;
 template class ResourceInstance<RenderTarget>;

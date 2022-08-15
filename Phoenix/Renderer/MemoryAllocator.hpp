@@ -5,15 +5,14 @@
 class Allocator
 {
 public:
-	Allocator();
+	Allocator() = default;
+
+	uint32_t Allocate(uint32_t size, uint32_t alignment);
 
 	void SetMaxAllocationSize(uint32_t size);
-
-	uint32_t Allocate(uint32_t size, uint32_t allignment);
-
 	void ResetAllocation();
 
 private:
-	uint32_t mOffset;
-	uint32_t mSize;
+	uint32_t m_offset = 0;
+	uint32_t m_size = 0;
 };

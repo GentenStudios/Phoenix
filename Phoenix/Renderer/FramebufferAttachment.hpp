@@ -32,18 +32,18 @@ public:
 	                  EFramebufferImageType imageType);
 	~FramebufferPacket();
 
-	VkImageView*          GetImageViews() { return mImageViews.get(); }
-	uint32_t              GetImageViewCount() { return mImageViewCount; }
-	VkFormat              GetFormat() { return mFormat; }
-	VkImageLayout         GetImageLayout() { return mLayout; }
-	EFramebufferImageType GetImageType() { return mImageType; }
+	VkImageView*          GetImageViews() const;
+	uint32_t              GetImageViewCount() const;
+	VkFormat              GetFormat() const;
+	VkImageLayout         GetImageLayout() const;
+	EFramebufferImageType GetImageType() const;
 
 private:
-	std::unique_ptr<VkImageView> mImageViews;
-	uint32_t                     mImageViewCount;
-	VkFormat                     mFormat;
-	VkImageLayout                mLayout;
-	EFramebufferImageType        mImageType;
+	std::unique_ptr<VkImageView> m_imageViews;
+	uint32_t                     m_imageViewCount;
+	VkFormat                     m_format;
+	VkImageLayout                m_layout;
+	EFramebufferImageType        m_imageType;
 };
 
 class FramebufferAttachment
@@ -52,16 +52,16 @@ public:
 	FramebufferAttachment(RenderDevice* device, std::vector<FramebufferPacket*> framebufferPackets);
 	~FramebufferAttachment();
 
-	VkImageView* GetFramebufferAttachments(unsigned int swapchainImageIndex) { return mFramebufferAttachments[swapchainImageIndex]; }
-	uint32_t     GetFramebufferAttachmentCount() { return mFramebufferAttachmentCount; }
+	VkImageView* GetFramebufferAttachments(unsigned int swapchainImageIndex) const;
+	uint32_t     GetFramebufferAttachmentCount() const;
 
-	std::vector<FramebufferPacket*> GetFramebufferPackets() { return mFramebufferPackets; }
+	std::vector<FramebufferPacket*> GetFramebufferPackets() { return m_framebufferPackets; }
 
 private:
-	RenderDevice* mDevice;
-	uint32_t      mFramebufferAttachmentCount;
-	uint32_t      mFramebufferCount;
+	RenderDevice* m_device;
+	uint32_t      m_framebufferAttachmentCount;
+	uint32_t      m_framebufferCount;
 
-	VkImageView**                   mFramebufferAttachments;
-	std::vector<FramebufferPacket*> mFramebufferPackets;
+	VkImageView**                   m_framebufferAttachments;
+	std::vector<FramebufferPacket*> m_framebufferPackets;
 };

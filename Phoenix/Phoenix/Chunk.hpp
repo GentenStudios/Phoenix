@@ -11,7 +11,7 @@ class Buffer;
 namespace phx
 {
 	class World;
-	class VertexPage;
+	struct VertexPage;
 	struct VertexData
 	{
 		glm::vec3 position;
@@ -23,7 +23,7 @@ namespace phx
 	class ModHandler;
 	class Chunk;
 
-	struct ChunkNabours
+	struct ChunkNeighbours
 	{
 		Chunk** neighbouringChunks[6];
 	};
@@ -60,7 +60,7 @@ namespace phx
 
 		unsigned int GetTotalVertexCount();
 
-		void SetNeighbouringChunk(ChunkNabours* neighbouringChunks);
+		void SetNeighbouringChunk(ChunkNeighbours* neighbouringChunks);
 
 		ChunkBlock GetBlock(int x, int y, int z);
 		void     SetBlock(int x, int y, int z, ChunkBlock block);
@@ -69,7 +69,7 @@ namespace phx
 
 		glm::ivec3 GetPosition();
 
-		ChunkNabours* GetNabours();
+		ChunkNeighbours* GetNabours();
 
 
 	private:
@@ -82,7 +82,7 @@ namespace phx
 
 		ModHandler* m_modHandler;
 
-		ChunkNabours* m_neighbouringChunk;
+		ChunkNeighbours* m_neighbouringChunk;
 
 		VertexPage* m_vertexPage;
 

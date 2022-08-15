@@ -1,26 +1,24 @@
 #include <Renderer/MemoryAllocator.hpp>
 
-Allocator::Allocator() : mOffset(0) {}
-
-void Allocator::SetMaxAllocationSize(uint32_t size) { mSize = size; }
-
-uint32_t Allocator::Allocate(uint32_t size, uint32_t allignment)
+uint32_t Allocator::Allocate(uint32_t size, uint32_t alignment)
 {
-	uint32_t mod          = mOffset % allignment;
-	uint32_t modAlignment = allignment - mod;
+	const uint32_t mod          = m_offset % alignment;
+	uint32_t       modAlignment = alignment - mod;
 
 	if (mod == 0)
 		modAlignment = 0;
 
-	if (mOffset + size + modAlignment > mSize)
+	if (m_offset + size + modAlignment > m_size)
 	{
 		return UINT32_MAX;
 	}
 
-	mOffset += modAlignment;
-	uint32_t start = mOffset;
-	mOffset += size;
+	m_offset += modAlignment;
+	const uint32_t start = m_offset;
+	m_offset += size;
 	return start;
 }
 
-void Allocator::ResetAllocation() { mOffset = 0; }
+void Allocator::SetMaxAllocationSize(uint32_t size) { m_size = size; }
+
+void Allocator::ResetAllocation() { m_offset = 0; }

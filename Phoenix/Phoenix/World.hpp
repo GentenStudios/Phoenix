@@ -15,19 +15,20 @@ class ResourceTable;
 namespace phx
 {
 	class Chunk;
-	class ChunkNabours;
+	struct ChunkNeighbours;
 
 	struct VertexPage
 	{
-		uint32_t index;
-		uint32_t offset;
-		uint32_t vertexCount;
+		uint32_t    index;
+		uint32_t    offset;
+		uint32_t    vertexCount;
 		VertexPage* next;
 	};
 
 	class World
 	{
 		friend class Chunk;
+
 	public:
 		World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager);
 
@@ -48,14 +49,13 @@ namespace phx
 		void PlaceBlockFromView();
 
 	private:
-
 		enum RaycastMode
 		{
 			Place,
 			Destroy
 		};
 
-		void RaycastToBlock(float step, int itteration, Chunk*& chunk, int& localX, int& localY, int& localZ, RaycastMode mode);
+		void RaycastToBlock(float step, int iteration, Chunk*& chunk, int& localX, int& localY, int& localZ, RaycastMode mode);
 
 		void UpdateAllIndirectDraws();
 
@@ -83,7 +83,7 @@ namespace phx
 
 		unsigned int mFreeMemoryPoolCount;
 
-		ChunkNabours* mChunkNeighbours;
+		ChunkNeighbours* mChunkNeighbours;
 
 		// All chunks sorted in grid alignment
 		phx::Chunk** mChunksSorted;

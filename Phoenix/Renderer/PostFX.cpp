@@ -7,4 +7,4 @@
 #include <Renderer/ResourceTableLayout.hpp>
 #include <Renderer/StaticMesh.hpp>
 
-PostFX::PostFX(RenderDevice* device) : mDevice(device) {}
+PostFX::PostFX(RenderDevice* device) : m_device(device) {}

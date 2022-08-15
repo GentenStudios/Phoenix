@@ -88,7 +88,7 @@ void Buffer::TransferInstantly(void* ptr, uint32_t size, uint32_t offset) const
 	void* memoryPtr = nullptr;
 	GetDeviceMemory()->Map(size, m_memoryOffset + offset, memoryPtr);
 	memcpy(memoryPtr, ptr, size);
-	GetDeviceMemory()->UnMap();
+	GetDeviceMemory()->Unmap();
 }
 
 VkBuffer Buffer::CreateStaging() const

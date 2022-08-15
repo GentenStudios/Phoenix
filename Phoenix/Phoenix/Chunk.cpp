@@ -226,7 +226,7 @@ void phx::Chunk::Update()
 
 unsigned int phx::Chunk::GetTotalVertexCount() { return m_totalVertexCount; }
 
-void phx::Chunk::SetNeighbouringChunk(ChunkNabours* neighbouringChunk) { m_neighbouringChunk = neighbouringChunk; }
+void phx::Chunk::SetNeighbouringChunk(ChunkNeighbours* neighbouringChunk) { m_neighbouringChunk = neighbouringChunk; }
 
 phx::ChunkBlock phx::Chunk::GetBlock(int x, int y, int z) { return m_blocks[x][y][z]; }
 
@@ -240,7 +240,7 @@ void phx::Chunk::MarkDirty() { m_dirty = true; }
 
 glm::ivec3 phx::Chunk::GetPosition() { return m_position; }
 
-phx::ChunkNabours* phx::Chunk::GetNabours() { return m_neighbouringChunk; }
+phx::ChunkNeighbours* phx::Chunk::GetNabours() { return m_neighbouringChunk; }
 
 void phx::Chunk::GenerateMesh()
 {
@@ -381,7 +381,7 @@ void phx::Chunk::GenerateMesh()
 						{
 							// Move onto a new page
 
-							m_vertexBuffer->GetDeviceMemory()->UnMap();
+							m_vertexBuffer->GetDeviceMemory()->Unmap();
 
 							VertexPage* newPage = m_world->GetFreeVertexPage();
 
@@ -433,7 +433,7 @@ void phx::Chunk::GenerateMesh()
 
 	if (m_vertexPage != nullptr)
 	{
-		m_vertexBuffer->GetDeviceMemory()->UnMap();
+		m_vertexBuffer->GetDeviceMemory()->Unmap();
 	}
 
 	m_world->ProcessVertexPages(m_vertexPage, m_matrix);

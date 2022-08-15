@@ -3,22 +3,21 @@
 #include <Renderer/Vulkan.hpp>
 
 class RenderDevice;
+
 class DeviceMemory
 {
 public:
 	DeviceMemory(RenderDevice* device, uint32_t size, uint32_t memoryProperties);
 	~DeviceMemory();
 
-	VkDeviceMemory GetMemory() { return mMemory; }
+	VkDeviceMemory GetMemory() const;
+	uint32_t       GetSize() const;
 
 	void Map(VkDeviceSize size, VkDeviceSize offset, void*& ptr);
-
-	void UnMap();
-
-	uint32_t GetSize() { return mSize; }
+	void Unmap();
 
 private:
-	RenderDevice*  mDevice;
-	VkDeviceMemory mMemory;
-	uint32_t       mSize;
+	RenderDevice*  m_device;
+	VkDeviceMemory m_memory = VK_NULL_HANDLE;
+	uint32_t       m_size;
 };
