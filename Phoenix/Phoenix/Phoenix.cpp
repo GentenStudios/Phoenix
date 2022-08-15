@@ -448,7 +448,7 @@ void phx::Phoenix::InitDefaultTextures()
 {
 	ResourceTable* defaultSamplerArrayResourceTable = mResourceManager->GetResource<ResourceTable>("SamplerArrayResourceTable");
 
-	const char errorTextureData[] = {0xFF, 0x00, 0xFF, 0xFF};
+	const unsigned char errorTextureData[] = {0xFF, 0x00, 0xFF, 0xFF};
 
 	Texture* errorTexture = new Texture(mDevice.get(), mDeviceLocalMemoryHeap.get(), 1, 1, VK_FORMAT_R8G8B8A8_UNORM,
 	                                    VK_IMAGE_USAGE_SAMPLED_BIT, (char*) (errorTextureData));
