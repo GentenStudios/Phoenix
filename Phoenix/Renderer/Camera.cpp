@@ -4,8 +4,8 @@
 
 Camera::Camera(uint32_t width, uint32_t height)
 {
-	mDirection = glm::vec3(0,0,-1.0f);
-	mPosition  = glm::vec3();
+	mDirection = glm::vec3(0, 0, -1.0f);
+	mPosition  = glm::vec3(0, 0, 0);
 	SetProjection(width, height);
 
 	mOutOfDateFrustrum = true;
@@ -14,12 +14,13 @@ Camera::Camera(uint32_t width, uint32_t height)
 
 void Camera::SetProjection(uint32_t width, uint32_t height)
 {
-	mCamera.projection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 0.10f, 1000.0f);
-	mCamera.projection[1][1] *= -1.0f;
+	mProjection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 0.10f, 1000.0f);
+	mProjection[1][1] *= -1.0f;
+
 	mOutOfDateFrustrum = true;
 }
 
-void Camera::SetWorldPosition(glm::vec3 position)
+void Camera::SetWorldPosition(const glm::vec3& position)
 {
 	mPosition          = position;
 	mOutOfDateFrustrum = true;
@@ -66,20 +67,18 @@ void Camera::RotateYaw(float y)
 void Camera::Update()
 {
 	glm::mat4 scale(1.0f);
-	//scale[3][3]    = 1.0f;
-
-	//printf("Pitch:%f Yaw:%f\n", pitch, yaw);
 
 	mDirection   = glm::normalize(mDirection);
 
 	mView = glm::lookAt(mPosition, mPosition + mDirection, glm::vec3(0, 1, 0));
 
-	mCamera.modelToProjection = (mCamera.projection * mView * scale);
-	mCamera.modelToWorld = (mView * scale);
+	packet.modelToProjection = (mProjection * mView);
+	packet.modelToWorld      = mView * scale;
+	packet.projection        = mProjection;
 
-	//if (mOutOfDateFrustrum)
+	if (mOutOfDateFrustrum)
 	{
-		UpdateFrustrum(mCamera.modelToProjection);
+		UpdateFrustrum(packet.modelToProjection);
 		mOutOfDateFrustrum = false;
 	}
 }
@@ -88,7 +87,7 @@ bool Camera::CheckSphereFrustrum(glm::vec3 pos, float radius)
 {
 	for (auto i = 0; i < 6; i++)
 	{
-		if ((mCamera.planes[i].x * pos.x) + (mCamera.planes[i].y * pos.y) + (mCamera.planes[i].z * pos.z) + mCamera.planes[i].w <= -radius)
+		if ((packet.planes[i].x * pos.x) + (packet.planes[i].y * pos.y) + (packet.planes[i].z * pos.z) + packet.planes[i].w <= -radius)
 		{
 			return false;
 		}
@@ -109,40 +108,40 @@ void Camera::UpdateCameraRotation()
 
 void Camera::UpdateFrustrum(glm::mat4 matrix)
 {
-	mCamera.planes[LEFT].x = matrix[0].w + matrix[0].x;
-	mCamera.planes[LEFT].y = matrix[1].w + matrix[1].x;
-	mCamera.planes[LEFT].z = matrix[2].w + matrix[2].x;
-	mCamera.planes[LEFT].w = matrix[3].w + matrix[3].x;
+	packet.planes[LEFT].x = matrix[0].w + matrix[0].x;
+	packet.planes[LEFT].y = matrix[1].w + matrix[1].x;
+	packet.planes[LEFT].z = matrix[2].w + matrix[2].x;
+	packet.planes[LEFT].w = matrix[3].w + matrix[3].x;
 
-	mCamera.planes[RIGHT].x = matrix[0].w - matrix[0].x;
-	mCamera.planes[RIGHT].y = matrix[1].w - matrix[1].x;
-	mCamera.planes[RIGHT].z = matrix[2].w - matrix[2].x;
-	mCamera.planes[RIGHT].w = matrix[3].w - matrix[3].x;
+	packet.planes[RIGHT].x = matrix[0].w - matrix[0].x;
+	packet.planes[RIGHT].y = matrix[1].w - matrix[1].x;
+	packet.planes[RIGHT].z = matrix[2].w - matrix[2].x;
+	packet.planes[RIGHT].w = matrix[3].w - matrix[3].x;
 
-	mCamera.planes[TOP].x = matrix[0].w - matrix[0].y;
-	mCamera.planes[TOP].y = matrix[1].w - matrix[1].y;
-	mCamera.planes[TOP].z = matrix[2].w - matrix[2].y;
-	mCamera.planes[TOP].w = matrix[3].w - matrix[3].y;
+	packet.planes[TOP].x = matrix[0].w - matrix[0].y;
+	packet.planes[TOP].y = matrix[1].w - matrix[1].y;
+	packet.planes[TOP].z = matrix[2].w - matrix[2].y;
+	packet.planes[TOP].w = matrix[3].w - matrix[3].y;
 
-	mCamera.planes[BOTTOM].x = matrix[0].w + matrix[0].y;
-	mCamera.planes[BOTTOM].y = matrix[1].w + matrix[1].y;
-	mCamera.planes[BOTTOM].z = matrix[2].w + matrix[2].y;
-	mCamera.planes[BOTTOM].w = matrix[3].w + matrix[3].y;
+	packet.planes[BOTTOM].x = matrix[0].w + matrix[0].y;
+	packet.planes[BOTTOM].y = matrix[1].w + matrix[1].y;
+	packet.planes[BOTTOM].z = matrix[2].w + matrix[2].y;
+	packet.planes[BOTTOM].w = matrix[3].w + matrix[3].y;
 
-	mCamera.planes[BACK].x = matrix[0].w + matrix[0].z;
-	mCamera.planes[BACK].y = matrix[1].w + matrix[1].z;
-	mCamera.planes[BACK].z = matrix[2].w + matrix[2].z;
-	mCamera.planes[BACK].w = matrix[3].w + matrix[3].z;
+	packet.planes[BACK].x = matrix[0].w + matrix[0].z;
+	packet.planes[BACK].y = matrix[1].w + matrix[1].z;
+	packet.planes[BACK].z = matrix[2].w + matrix[2].z;
+	packet.planes[BACK].w = matrix[3].w + matrix[3].z;
 
-	mCamera.planes[FRONT].x = matrix[0].w - matrix[0].z;
-	mCamera.planes[FRONT].y = matrix[1].w - matrix[1].z;
-	mCamera.planes[FRONT].z = matrix[2].w - matrix[2].z;
-	mCamera.planes[FRONT].w = matrix[3].w - matrix[3].z;
+	packet.planes[FRONT].x = matrix[0].w - matrix[0].z;
+	packet.planes[FRONT].y = matrix[1].w - matrix[1].z;
+	packet.planes[FRONT].z = matrix[2].w - matrix[2].z;
+	packet.planes[FRONT].w = matrix[3].w - matrix[3].z;
 
 	for (auto i = 0; i < 6; i++)
 	{
-		float length = sqrtf(mCamera.planes[i].x * mCamera.planes[i].x + mCamera.planes[i].y * mCamera.planes[i].y +
-		                     mCamera.planes[i].z * mCamera.planes[i].z);
-		mCamera.planes[i] /= length;
+		float length = sqrtf(packet.planes[i].x * packet.planes[i].x + packet.planes[i].y * packet.planes[i].y +
+		                     packet.planes[i].z * packet.planes[i].z);
+		packet.planes[i] /= length;
 	}
 }

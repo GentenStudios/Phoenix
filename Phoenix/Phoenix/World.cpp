@@ -233,6 +233,18 @@ void phx::World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
 		vkCmdDrawIndirect(commandBuffer[index], mIndirectDrawCommands->GetBuffer(), sizeof(VkDrawIndirectCommand) * i, 1,
 			sizeof(VkDrawIndirectCommand));
 	}
+
+	RenderTechnique* skybox = mResourceManager->GetResource<RenderTechnique>("Skybox");
+
+	skybox->GetPipeline()->Use(commandBuffer, index);
+
+	mResourceManager->GetResource<ResourceTable>("CameraResourceTable")
+	    ->Use(commandBuffer, index, 0, skybox->GetPipelineLayout()->GetPipelineLayout());
+	mResourceManager->GetResource<ResourceTable>("SkyboxResourceTable")
+	    ->Use(commandBuffer, index, 1, skybox->GetPipelineLayout()->GetPipelineLayout());
+
+	// Vertices are hard baked into the shader.
+	vkCmdDraw(commandBuffer[index], 36, 1, 0, 0);
 }
 
 phx::VertexPage* phx::World::GetFreeVertexPage()

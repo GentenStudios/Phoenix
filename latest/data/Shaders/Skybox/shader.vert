@@ -45,11 +45,10 @@ vec3 positions[36] = vec3[](
     vec3( 1.0f,-1.0f, 1.0f)
 );
 
-layout(location = 0) out vec3 eyeDirection;
+layout(location = 0) out vec3 texCoord;
 
 void main()
 {
-    eyeDirection = positions[gl_VertexIndex];
-
+    texCoord = positions[gl_VertexIndex];
 	gl_Position = (camera.projection * mat4(mat3(camera.modelToWorld)) * vec4(positions[gl_VertexIndex], 1.f)).xyww;
 }

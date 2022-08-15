@@ -39,9 +39,14 @@ namespace phx
 		uint16_t GetModCount();
 		Mod*     GetMods();
 
+		const std::vector<std::string>& GetSkyboxTextures() const;
+
 	private:
 		std::unique_ptr<Mod[]> m_mods;
 		uint16_t               m_currentLookupIndex = 0;
+
+		// temporary way of registering skybox textures.
+		std::vector<std::string> m_skyboxTextures;
 
 		// @todo Replace this with something more performant.
 		std::unordered_map<std::string, uint16_t> m_modNameLookup;

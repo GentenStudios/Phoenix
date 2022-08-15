@@ -8,7 +8,7 @@
 class Camera
 {
 public:
-	enum side
+	enum Side
 	{
 		LEFT   = 0,
 		RIGHT  = 1,
@@ -17,28 +17,26 @@ public:
 		BACK   = 4,
 		FRONT  = 5
 	};
+
 	struct CameraPacket
 	{
 		glm::mat4 modelToProjection; // Projection/Position
 		glm::mat4 modelToWorld;      // Position
 		glm::mat4 projection;
 		glm::vec4 planes[6];
-	} mCamera;
+	} packet;
 
+public:
 	Camera(uint32_t width, uint32_t height);
 
 	void SetProjection(uint32_t width, uint32_t height);
-
-	void SetWorldPosition(glm::vec3 position);
+	void SetWorldPosition(const glm::vec3& position);
 
 	void MoveLocalX(float x);
-
 	void MoveWorldY(float y);
-
 	void MoveLocalZ(float z);
 
 	void RotatePitch(float x);
-
 	void RotateYaw(float y);
 
 	void Update();
@@ -46,22 +44,18 @@ public:
 	bool CheckSphereFrustrum(glm::vec3 pos, float radius);
 
 	glm::vec3 GetPosition();
-
 	glm::vec3 GetDirection();
-
-	glm::mat4 GetProjection() { return mCamera.projection; }
+	glm::mat4 GetProjection() { return packet.projection; }
 
 private:
-
 	void UpdateCameraRotation();
+	void UpdateFrustrum(glm::mat4 matrix);
 
-	void      UpdateFrustrum(glm::mat4 matrix);
-
-	
+private:
 	float     mPitch = 0.0f;
 	float     mYaw   = 0.0f;
 
-	//glm::mat4 mProjection;
+	glm::mat4 mProjection;
 	glm::mat4 mView;
 
 	glm::vec3 mPosition;

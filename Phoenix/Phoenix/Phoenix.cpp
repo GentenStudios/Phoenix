@@ -143,15 +143,6 @@ void phx::Phoenix::RebuildCommandBuffers()
 
 			mWorld->Draw(commandBuffers, i);
 
-			RenderTechnique* skybox = mResourceManager->GetResource<RenderTechnique>("Skybox");
-			skybox->GetPipeline()->Use(commandBuffers, i);
-			mResourceManager->GetResource<ResourceTable>("CameraResourceTable")
-			    ->Use(commandBuffers, i, 0, skybox->GetPipelineLayout()->GetPipelineLayout());
-			mResourceManager->GetResource<ResourceTable>("SkyboxResourceTable")
-			    ->Use(commandBuffers, i, 1, skybox->GetPipelineLayout()->GetPipelineLayout());
-
-			vkCmdDraw(commandBuffers[i], 36, 1, 0, 0);
-
 			mDebugUI->Use(commandBuffers, i, true);
 
 			vkCmdEndRenderPass(commandBuffers[i]);
@@ -316,7 +307,7 @@ void phx::Phoenix::UpdateCamera()
 	}
 
 	mCamera->Update();
-	mCameraBuffer->TransferInstantly(&mCamera->mCamera, sizeof(Camera::CameraPacket));
+	mCameraBuffer->TransferInstantly(&mCamera->packet, sizeof(Camera::CameraPacket));
 }
 
 void phx::Phoenix::RebuildRenderPassResources()
@@ -478,31 +469,21 @@ void phx::Phoenix::InitDefaultTextures()
 	}
 
 	// Load skybox textures.
-	const char* skybox[] = {"mods/standard_blocks-0.1/textures/east.png", "mods/standard_blocks-0.1/textures/west.png",
-	                        "mods/standard_blocks-0.1/textures/zenith.png", "mods/standard_blocks-0.1/textures/nadir.png",
-	                        "mods/standard_blocks-0.1/textures/north.png", "mods/standard_blocks-0.1/textures/south.png"};
+	uint32_t                   width, height;
+	std::vector<unsigned char> outputBuffer;
 
-	uint32_t width, height;
-
+	for (auto& tex : mMods->GetSkyboxTextures())
 	{
-		std::vector<unsigned char> imageData;
-		lodepng::decode(imageData, width, height, skybox[0]);
+		lodepng::decode(outputBuffer, width, height, tex);
 	}
 
-	uint32_t bufferSize = width * height * 6 * 4;
-	auto     buffer     = new Buffer(mDevice.get(), bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE);
-
-	uint32_t offset = 0;
-	for (const char* tex : skybox)
+	if (!outputBuffer.empty())
 	{
-		std::vector<unsigned char> imageData;
-		lodepng::decode(imageData, width, height, tex);
+		std::unique_ptr<Buffer> buffer =
+		    std::unique_ptr<Buffer>(new Buffer(mDevice.get(), outputBuffer.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE));
 
-		buffer->TransferInstantly(imageData.data(), imageData.size(), offset);
-		offset += imageData.size();
-	}
+		buffer->TransferInstantly(outputBuffer.data(), outputBuffer.size());
 
-	{
 		VkImageCreateInfo imageCreateInfo = {};
 		imageCreateInfo.sType             = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageCreateInfo.imageType         = VK_IMAGE_TYPE_2D;
@@ -523,7 +504,7 @@ void phx::Phoenix::InitDefaultTextures()
 		mResourceManager->RegisterResource<Texture>(skyboxTexture);
 		mResourceManager->GetResource<ResourceTable>("SkyboxResourceTable")->Bind(0, skyboxTexture);
 
-		VkBufferImageCopy copies[6] = {};
+		VkBufferImageCopy copies[6]               = {};
 		copies[0].imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 		copies[0].imageSubresource.mipLevel       = 0;
 		copies[0].imageSubresource.baseArrayLayer = 0;
@@ -535,13 +516,11 @@ void phx::Phoenix::InitDefaultTextures()
 
 		for (int i = 1; i < 6; ++i)
 		{
-			copies[i] = copies[0];
+			copies[i]                                 = copies[0];
 			copies[i].imageSubresource.baseArrayLayer = i;
 			copies[i].bufferOffset                    = width * height * 4 * i;
 		}
 
-		skyboxTexture->CopyBufferRegionsToImage(buffer, copies, 6);
+		skyboxTexture->CopyBufferRegionsToImage(buffer.get(), copies, 6);
 	}
-
-	delete buffer;
 }

@@ -4,7 +4,7 @@
 		<Block name="dirt"  displayName="Dirt"  texture="textures/dirt.png" />
 		<Block name="stone" displayName="Stone" texture="textures/stone.png" />
 	</Blocks>
-	<Skybox>
+	<Skybox name="Standard">
 		<Texture position="north"  texture="textures/north.png" />
 		<Texture position="east"   texture="textures/east.png" />
 		<Texture position="south"  texture="textures/south.png" />

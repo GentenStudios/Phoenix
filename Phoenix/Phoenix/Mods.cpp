@@ -100,6 +100,69 @@ phx::Mod* phx::ModHandler::AddMod(const std::filesystem::path& modXMLPath)
 		mod.blocks.AddBlock(blockName.as_string(), blockDisplayName.as_string(), fixedTexturePath.string());
 	}
 
+	// Blocks are loaded, now let's see if they want to register a skybox.
+	const auto skybox = data.child("Skybox");
+	if (skybox)
+	{
+		// We currently ignore the "name" attribute, but eventually we want to let people perhaps select a skybox or have different skybox's
+		// for different scenarios.
+		const auto textures = skybox.children("Texture");
+		const auto texCount = std::distance(textures.begin(), textures.end());
+
+		if (texCount == 6)
+		{
+			m_skyboxTextures.resize(6);
+			for (auto& tex : textures)
+			{
+				// Skybox textures need to be in order:
+				// east, west, top, bottom, north, south
+				const auto position = tex.attribute("position");
+
+				// @todo improve logic here.
+				int index = 0;
+				if (std::strcmp(position.as_string(), "east") == 0)
+				{
+					index = 0;
+				}
+				else if (std::strcmp(position.as_string(), "west") == 0)
+				{
+					index = 1;
+				}
+				else if (std::strcmp(position.as_string(), "top") == 0)
+				{
+					index = 2;
+				}
+				else if (std::strcmp(position.as_string(), "bottom") == 0)
+				{
+					index = 3;
+				}
+				else if (std::strcmp(position.as_string(), "north") == 0)
+				{
+					index = 4;
+				}
+				else if (std::strcmp(position.as_string(), "south") == 0)
+				{
+					index = 5;
+				}
+				else
+				{
+					std::cout << "The mod: " << mod.name << " has an invalid skybox entry.\n";
+				}
+
+				const auto localPath = tex.attribute("texture").as_string();
+
+				auto fixedTexturePath = modXMLPath.parent_path();
+				fixedTexturePath /= localPath;
+
+				m_skyboxTextures[index] = fixedTexturePath.string();
+			}
+		}
+		else
+		{
+			std::cout << "The mod: " << mod.name << " has an invalid block entry.\n";
+		}
+	}
+
 	m_modNameLookup[mod.name] = m_currentLookupIndex;
 	m_mods[m_currentLookupIndex] = std::move(mod);
 
@@ -126,3 +189,5 @@ phx::Mod* phx::ModHandler::GetMod(const std::string& modName) const
 uint16_t phx::ModHandler::GetModCount() { return m_currentLookupIndex; }
 
 phx::Mod* phx::ModHandler::GetMods() { return m_mods.get(); }
+
+const std::vector<std::string>& phx::ModHandler::GetSkyboxTextures() const { return m_skyboxTextures; }
