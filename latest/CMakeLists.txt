@@ -48,3 +48,6 @@ foreach(ShaderFile ${ShadersToCompile})
 endforeach()
 
 add_custom_target(${PROJECT_NAME} ALL DEPENDS ${CompiledShaderFiles} SOURCES ${Pipelines} ${Shaders})
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/data/Shaders" PREFIX "Shaders" FILES ${Shaders})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/data/Pipelines" PREFIX "Pipelines" FILES ${Pipelines})
