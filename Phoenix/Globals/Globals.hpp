@@ -37,7 +37,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-
 const unsigned int MAX_SPRITESHEET_SAMPLER_ARRAY = 32;
 
 // How wide the chunk is in blocks

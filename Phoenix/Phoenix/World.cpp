@@ -98,8 +98,8 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 	{
 		mPositionBufferCPU.get()[i] = glm::mat4(1.0f);
 
-		mVertexPages.get()[i].index = i;
-		mVertexPages.get()[i].offset = (VERTEX_PAGE_SIZE * sizeof(VertexData)) * i;
+		mVertexPages.get()[i].index       = i;
+		mVertexPages.get()[i].offset      = (VERTEX_PAGE_SIZE * sizeof(VertexData)) * i;
 		mVertexPages.get()[i].vertexCount = 0;
 		mVertexPages.get()[i].next        = mFreeVertexPages;
 
@@ -197,6 +197,7 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 	{
 		mChunks[i].GenerateWorld();
 	}
+
 	UpdateAllPositionBuffers();
 }
 
@@ -225,17 +226,16 @@ void phx::World::ComputeVisibility(VkCommandBuffer* commandBuffer, uint32_t inde
 
 	frustrumPipeline->GetPipeline()->Use(commandBuffer, index);
 
-cameraResourceTable->Use(commandBuffer, index, 0, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
-	VK_PIPELINE_BIND_POINT_COMPUTE);
+	cameraResourceTable->Use(commandBuffer, index, 0, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
+	                         VK_PIPELINE_BIND_POINT_COMPUTE);
 
-mChunkPositionsResourceTable->Use(commandBuffer, index, 1, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
-	VK_PIPELINE_BIND_POINT_COMPUTE);
+	mChunkPositionsResourceTable->Use(commandBuffer, index, 1, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
+	                                  VK_PIPELINE_BIND_POINT_COMPUTE);
 
-//mIndirectDrawCommands
-mIndexedIndirectResourceTable->Use(commandBuffer, index, 2, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
-	VK_PIPELINE_BIND_POINT_COMPUTE);
+	mIndexedIndirectResourceTable->Use(commandBuffer, index, 2, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
+	                                   VK_PIPELINE_BIND_POINT_COMPUTE);
 
-	//vkCmdDispatch(commandBuffer[index], TOTAL_VERTEX_PAGE_COUNT, 1, 1);
+	vkCmdDispatch(commandBuffer[index], TOTAL_VERTEX_PAGE_COUNT, 1, 1);
 }
 
 void phx::World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
@@ -249,7 +249,6 @@ void phx::World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
 		->Use(commandBuffer, index, 0, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
 	mResourceManager->GetResource<ResourceTable>("SamplerArrayResourceTable")
 		->Use(commandBuffer, index, 1, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
-
 
 	for (int i = 0; i < TOTAL_VERTEX_PAGE_COUNT; i++)
 	{

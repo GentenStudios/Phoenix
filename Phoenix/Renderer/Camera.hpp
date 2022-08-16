@@ -93,4 +93,3 @@ private:
 
 	bool m_outOfDateFrustrum;
 };
-

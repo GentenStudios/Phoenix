@@ -9,30 +9,35 @@
 #include "../_includes/Camera.glsl"
 #include "../_includes/IndirectCommand.glsl"
 
-layout(std430, set=2, binding=0) writeonly buffer VkDrawIndexedIndirectCommandBuffer {
+layout(std430, set=2, binding=0) writeonly buffer VkDrawIndexedIndirectCommandBuffer
+{
 		VkDrawIndirectCommand drawIndexedIndirectCommand[];
 };
 
-bool frustumCheck(vec4 pos, float radius)
+bool IsSphereInFrustum(vec3 pos, float radius)
 {
-	// Check sphere against frustum planes
-	for (int i = 0; i < 6; i++) 
+	for (int i = 0; i < 6; ++i)
 	{
-		if (dot(camera.frustumPlanes[i], pos) + camera.frustumPlanes[i].w <= -radius )
-		{
+		float distance = dot(pos, camera.frustumPlanes[i].xyz) + camera.frustumPlanes[i].w;
+		if (distance < -radius)
 			return false;
-		}
 	}
+
 	return true;
 }
 
 void main()
 {
 	uint idx = gl_GlobalInvocationID.x;
+	float chunkOffset = CHUNK_WIDTH / 2;
 
-	vec4 position = chunkPositions[idx].position[3];
+	vec3 position = chunkPositions[idx].position[3].xyz;
+	position += chunkOffset;
 
-	if (frustumCheck(position, length(vec2(CHUNK_WIDTH*CHUNK_WIDTH,CHUNK_WIDTH*CHUNK_WIDTH))))
+	// Check if centre of chunk is in the frustum.
+	float radius = sqrt(512);
+
+	if (IsSphereInFrustum(position, radius))
 	{
 		drawIndexedIndirectCommand[idx].instanceCount = 1;
 	}

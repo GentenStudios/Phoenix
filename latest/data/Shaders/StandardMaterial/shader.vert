@@ -19,11 +19,9 @@ layout(location = 2) out vec3 outNormal;
 
 void main()
 {
-	gl_Position = CalculateCamera(modelMatrix * vec4(inPosition,1.0f));
-
-	
-	outNormal = (modelMatrix * vec4(inNormal,0.0f)).xyz;
-
 	outUV = inUV;
 	outTextureID = inTextureID;
+	outNormal = (modelMatrix * vec4(inNormal, 0.0f)).xyz;
+
+	gl_Position = CalculateCamera(modelMatrix * vec4(inPosition,1.0f));
 }

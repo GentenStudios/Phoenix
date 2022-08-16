@@ -1,5 +1,6 @@
 
-struct VkDrawIndexedIndirectCommand{
+struct VkDrawIndexedIndirectCommand
+{
 	uint    indexCount;
 	uint    instanceCount;
 	uint    firstIndex;
@@ -7,7 +8,8 @@ struct VkDrawIndexedIndirectCommand{
 	uint    firstInstance;
 };
 
-struct VkDrawIndirectCommand{
+struct VkDrawIndirectCommand
+{
 	uint    vertexCount;
 	uint    instanceCount;
 	uint    firstVertex;

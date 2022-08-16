@@ -2,7 +2,7 @@
 
 #extension GL_EXT_nonuniform_qualifier : enable
 
-layout (set = 1, binding = 0) uniform sampler2D diffuseTex;
+layout(set = 1, binding = 0) uniform sampler2D diffuseTex;
 
 
 layout(location = 0) in vec2 inUV;

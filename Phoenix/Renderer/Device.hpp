@@ -173,7 +173,7 @@ private:
 
 	VkPresentInfoKHR         m_presentInfo      = {};
 	VkSubmitInfo             m_renderSubmitInfo = {};
-	VkDebugReportCallbackEXT m_debugReportCallback;
+	VkDebugReportCallbackEXT m_debugReportCallback = nullptr;
 
 	std::vector<BufferTransferRequest> m_memoryTransferRequests;
 

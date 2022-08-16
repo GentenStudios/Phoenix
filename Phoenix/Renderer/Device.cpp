@@ -156,7 +156,8 @@ RenderDevice::~RenderDevice()
 
 	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 
-	vkDestroyDebugReportCallbackEXT(m_instance, m_debugReportCallback, nullptr);
+	if (m_debugReportCallback != nullptr)
+		vkDestroyDebugReportCallbackEXT(m_instance, m_debugReportCallback, nullptr);
 
 	vkDestroyInstance(m_instance, nullptr);
 }
