@@ -40,3 +40,6 @@ Makefile
 *.a
 *.lib
 *.exe
+
+# Compiled shaders
+*.spv
