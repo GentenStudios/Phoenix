@@ -6,9 +6,6 @@ set(ShaderDir ${CMAKE_CURRENT_LIST_DIR}/data/Shaders)
 file(GLOB_RECURSE Shaders ${ShaderDir}/*.*)
 file(GLOB_RECURSE ShadersToCompile ${ShaderDir}/*.vert ${ShaderDir}/*.frag ${ShaderDir}/*.comp)
 
-# GLSLC will compile our GLSL shaders to SPIR-V.
-find_program(GLSLC glslc)
-
 # This will compile shader.frag -> frag.spv, shader.vert -> vert.spv, etc...
 
 foreach(ShaderFile ${ShadersToCompile})
@@ -22,7 +19,7 @@ foreach(ShaderFile ${ShadersToCompile})
 
 	add_custom_command(
 		OUTPUT ${CurrentOutputPath}
-		COMMAND ${GLSLC} -o ${CurrentOutputPath} ${ShaderFile}
+		COMMAND glslc -o ${CurrentOutputPath} ${ShaderFile}
 		DEPENDS ${ShaderFile}
 		IMPLICIT_DEPENDS CXX ${ShaderFile}
 		VERBATIM
