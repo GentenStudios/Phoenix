@@ -19,6 +19,7 @@ jobs:
     env:
       CC: ${{ matrix.config.cc }}
       CXX: ${{ matrix.config.cxx }}
+      VULKAN_SDK: ${{ github.workspace }}\VulkanSDK
 
     steps:
       - uses: actions/checkout@v2
@@ -33,18 +34,22 @@ jobs:
         uses: egor-tensin/vs-shell@v2
 
       - name: Setup Vulkan (Windows)
-        run: |
-          $ver = (Invoke-WebRequest -Uri "https://vulkan.lunarg.com/sdk/latest.json" | ConvertFrom-Json).windows
-          echo Version $ver
-          $ProgressPreference = 'SilentlyContinue'
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/$ver/windows/VulkanSDK-$ver-Installer.exe" -OutFile VulkanSDK.exe
-          echo Downloaded
-          .\VulkanSDK.exe --root C:\VulkanSDK  --accept-licenses --default-answer --confirm-command install
         if: matrix.config.os == 'windows-latest'
+        uses: actions/checkout@v2
+        with:
+          repository: beeperdeeper089/VulkanContinuousIntegrationTools
+          path: ${{ env.VULKAN_SDK }}
+          ref: Windows
         
       - name: Setup Vulkan (Ubuntu)
-        run: sudo apt-get install glslang-tools
         if: matrix.config.os == 'ubuntu-20.04'
+        uses: actions/checkout@v2
+        with:
+          repository: beeperdeeper089/VulkanContinuousIntegrationTools
+          path: ${{ env.VULKAN_SDK }}
+          ref: Linux
+       
+      - run: echo "${{ env.VULKAN_SDK }}/Bin" >> $GITHUB_PATH
 
       - name: Configure CMake
         run: cmake -S. -BBuild -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
