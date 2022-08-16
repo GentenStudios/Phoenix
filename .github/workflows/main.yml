@@ -32,7 +32,7 @@ jobs:
       - name: Set up Visual Studio shell
         uses: egor-tensin/vs-shell@v2
 
-      - name: Setup Vulkan
+      - name: Setup Vulkan (Windows)
         run: |
           $ver = (Invoke-WebRequest -Uri "https://vulkan.lunarg.com/sdk/latest.json" | ConvertFrom-Json).windows
           echo Version $ver
@@ -42,7 +42,7 @@ jobs:
           .\VulkanSDK.exe --root C:\VulkanSDK  --accept-licenses --default-answer --confirm-command install
         if: matrix.os == 'windows-latest'
         
-      - name: Setup Vulkan
+      - name: Setup Vulkan (Ubuntu)
         run: sudo apt-get install libvulkan
         if: matrix.os == 'ubuntu-20.04'
 
