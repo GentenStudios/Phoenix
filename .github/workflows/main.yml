@@ -43,7 +43,7 @@ jobs:
         if: matrix.config.os == 'windows-latest'
         
       - name: Setup Vulkan (Ubuntu)
-        run: sudo apt-get install libvulkan
+        run: sudo apt-get install spirv-tools
         if: matrix.config.os == 'ubuntu-20.04'
 
       - name: Configure CMake
