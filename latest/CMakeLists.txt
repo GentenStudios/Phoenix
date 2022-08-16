@@ -22,7 +22,7 @@ foreach(ShaderFile ${ShadersToCompile})
 
 	add_custom_command(
 		OUTPUT ${CurrentOutputPath}
-		COMMAND glslc -o ${CurrentOutputPath} ${ShaderFile}
+		COMMAND ${GLSLC} -o ${CurrentOutputPath} ${ShaderFile}
 		DEPENDS ${ShaderFile}
 		IMPLICIT_DEPENDS CXX ${ShaderFile}
 		VERBATIM
