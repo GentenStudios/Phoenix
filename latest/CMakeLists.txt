@@ -6,6 +6,24 @@ set(ShaderDir ${CMAKE_CURRENT_LIST_DIR}/data/Shaders)
 file(GLOB_RECURSE Shaders ${ShaderDir}/*.*)
 file(GLOB_RECURSE ShadersToCompile ${ShaderDir}/*.vert ${ShaderDir}/*.frag ${ShaderDir}/*.comp)
 
+# Find Vulkan SDK
+# From: https://github.com/krOoze/Hello_Triangle/ & their vk_sdk_lite repo.
+if (NOT DEFINED {VULKAN_SDK})
+	if (NOT DEFINED ENV{VULKAN_SDK})
+		message(FATAL_ERROR "VULKAN_SDK not found!")
+	endif()
+
+	if (CYGWIN)
+		execute_process(COMMAND cygpath "$ENV{VULKAN_SDK}" OUTPUT_VARIABLE VULKAN_SDK)
+		string(STRIP ${VULKAN_SDK} VULKAN_SDK)
+	else()
+		set(VULKAN_SDK "$ENV{VULKAN_SDK}")
+	endif()
+endif()
+
+message("Vulkan SDK path: " ${VULKAN_SDK})
+set(GLSL_COMPILER ${VULKAN_SDK}/bin/glslc)
+
 # This will compile shader.frag -> frag.spv, shader.vert -> vert.spv, etc...
 
 foreach(ShaderFile ${ShadersToCompile})
@@ -19,7 +37,7 @@ foreach(ShaderFile ${ShadersToCompile})
 
 	add_custom_command(
 		OUTPUT ${CurrentOutputPath}
-		COMMAND glslc -o ${CurrentOutputPath} ${ShaderFile}
+		COMMAND ${GLSL_COMPILER} -o ${CurrentOutputPath} ${ShaderFile}
 		DEPENDS ${ShaderFile}
 		IMPLICIT_DEPENDS CXX ${ShaderFile}
 		VERBATIM
