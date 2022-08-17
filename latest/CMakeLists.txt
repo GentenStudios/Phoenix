@@ -22,7 +22,7 @@ if (NOT DEFINED {VULKAN_SDK})
 endif()
 
 message("Vulkan SDK path: " ${VULKAN_SDK})
-set(GLSL_COMPILER ${VULKAN_SDK}/bin/glslc)
+set(GLSL_COMPILER ${VULKAN_SDK}/Bin/glslc)
 
 # This will compile shader.frag -> frag.spv, shader.vert -> vert.spv, etc...
 
