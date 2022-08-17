@@ -19,6 +19,7 @@ jobs:
     env:
       CC: ${{ matrix.config.cc }}
       CXX: ${{ matrix.config.cxx }}
+      VULKAN_SDK: ${{ github.workspace }}/VulkanSDK
 
     steps:
       - uses: actions/checkout@v2
@@ -31,6 +32,24 @@ jobs:
 
       - name: Set up Visual Studio shell
         uses: egor-tensin/vs-shell@v2
+
+      - name: Setup Vulkan (Windows)
+        if: matrix.config.os == 'windows-latest'
+        uses: actions/checkout@v2
+        with:
+          repository: beeperdeeper089/VulkanContinuousIntegrationTools
+          path: ${{ env.VULKAN_SDK }}
+          ref: Windows
+        
+      - name: Setup Vulkan (Ubuntu)
+        if: matrix.config.os == 'ubuntu-20.04'
+        uses: actions/checkout@v2
+        with:
+          repository: beeperdeeper089/VulkanContinuousIntegrationTools
+          path: ${{ env.VULKAN_SDK }}
+          ref: Linux
+       
+      - run: echo "${{ env.VULKAN_SDK }}/Bin" >> $GITHUB_PATH
 
       - name: Configure CMake
         run: cmake -S. -BBuild -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
