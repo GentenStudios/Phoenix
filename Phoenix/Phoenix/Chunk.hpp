@@ -58,6 +58,77 @@ namespace phx
 		Chunk** neighbouringChunks[6];
 	};
 
+	struct ChunkRenderData
+	{
+		VertexPage* vertexPage;
+		uint32_t    vertexCount;
+
+		glm::vec3 renderPosition;
+		glm::mat4 renderMatrix;
+
+		Chunk* chunk;
+	};
+
+	class ChunkData
+	{
+	public:
+		struct Neighbours
+		{
+			ChunkData* neighbours[6] = {nullptr};
+		};
+
+		enum Face
+		{
+			NORTH,
+			EAST,
+			SOUTH,
+			WEST,
+			TOP,
+			BOTTOM
+		};
+
+	public:
+		ChunkData();
+		~ChunkData() = default;
+
+		void Reset();
+		bool IsDirty() const;
+
+		void       SetPosition(const glm::ivec3& position);
+		glm::ivec3 GetPosition() const;
+
+		ChunkBlock* GetBlocks();
+
+		void        SetChunkNeighbours(Neighbours* neighbours);
+		Neighbours* GetNeighbours() const;
+
+		ChunkBlock GetBlock(const glm::ivec3& position) const;
+		void       SetBlock(const glm::ivec3& position, ChunkBlock block);
+
+		static constexpr uint32_t GetIndex(const glm::ivec3& position)
+		{
+			return (CHUNK_BLOCK_SIZE * position.z + position.y) * CHUNK_BLOCK_SIZE + position.x;
+		}
+
+		static constexpr glm::ivec3 GetPosition(uint32_t index)
+		{
+			uint32_t x = index % CHUNK_BLOCK_SIZE;
+			uint32_t y = (index / CHUNK_BLOCK_SIZE) % CHUNK_BLOCK_SIZE;
+			uint32_t z = index / (CHUNK_BLOCK_SIZE * CHUNK_BLOCK_SIZE);
+
+			return {x, y, z};
+		}
+
+	private:
+		bool m_dirty = true;
+
+		// We use ivec3 since floats will have precision issues as they get larger.
+		glm::ivec3 m_position;
+		ChunkBlock m_blocks[MAX_BLOCKS_PER_CHUNK];
+
+		Neighbours* m_neighbours;
+	};
+
 	class Chunk
 	{
 

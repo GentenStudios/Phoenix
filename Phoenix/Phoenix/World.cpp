@@ -1,22 +1,22 @@
 // BSD 3-Clause License
-// 
+//
 // Copyright (c) 2022, Genten Studios
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -34,16 +34,290 @@
 #include <Phoenix/Collision.hpp>
 #include <Phoenix/Mods.hpp>
 #include <Renderer/Buffer.hpp>
+#include <Renderer/Camera.hpp>
 #include <Renderer/Device.hpp>
 #include <Renderer/DeviceMemory.hpp>
 #include <Renderer/Pipeline.hpp>
 #include <Renderer/PipelineLayout.hpp>
 #include <Renderer/ResourceTable.hpp>
 #include <Renderer/ResourceTableLayout.hpp>
-#include <Renderer/Camera.hpp>
 
-#include <ResourceManager/ResourceManager.hpp>
 #include <ResourceManager/RenderTechnique.hpp>
+#include <ResourceManager/ResourceManager.hpp>
+
+phx::WorldData::WorldData(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager)
+    : m_renderDevice(device), m_resourceManager(resourceManager), m_memoryHeap(memoryHeap)
+{
+	const uint64_t vertexBufferSize = sizeof(VertexData) * VERTEX_PAGE_SIZE * TOTAL_VERTEX_PAGE_COUNT;
+	m_vertexBuffer =
+	    std::make_unique<Buffer>(m_renderDevice, m_memoryHeap, vertexBufferSize,
+	                             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_SHARING_MODE_EXCLUSIVE);
+
+	const uint64_t indirectBufferSize = sizeof(VkDrawIndirectCommand) * TOTAL_VERTEX_PAGE_COUNT;
+	m_indirectDrawsGPU                = std::make_unique<Buffer>(m_renderDevice, m_memoryHeap, indirectBufferSize,
+                                                  VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                                                      VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                                  VK_SHARING_MODE_EXCLUSIVE);
+
+	const uint64_t positionBufferSize = sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT;
+	m_chunkPositionsGPU               = std::make_unique<Buffer>(m_renderDevice, m_memoryHeap, positionBufferSize,
+                                                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                                                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                                   VK_SHARING_MODE_EXCLUSIVE);
+
+	m_freeVertexPageCount = TOTAL_VERTEX_PAGE_COUNT;
+
+	m_indirectDrawsCPU  = std::make_unique<VkDrawIndirectCommand[]>(TOTAL_VERTEX_PAGE_COUNT);
+	m_chunkPositionsCPU = std::make_unique<glm::mat4[]>(TOTAL_VERTEX_PAGE_COUNT);
+
+	ResetAllIndirectDraws();
+	ResetAllPositions();
+
+	m_indexedIndirectResourceTable =
+	    m_resourceManager->GetResource<ResourceTableLayout>("IndexedIndirectCommandResourceTableLayout")->CreateTable();
+	m_indexedIndirectResourceTable->Bind(0, m_indirectDrawsGPU.get());
+
+	m_chunkPositionsResourceTable = m_resourceManager->GetResource<ResourceTableLayout>("ChunkPositionResourceTableLayout")->CreateTable();
+	m_chunkPositionsResourceTable->Bind(0, m_chunkPositionsGPU.get());
+
+	m_chunksSorted = std::make_unique<ChunkData*[]>(MAX_CHUNKS);
+}
+
+phx::WorldData::~WorldData() {}
+
+void phx::WorldData::Update(const glm::ivec3& playerGridPosition, const glm::vec3& playerBoxLocalPosition)
+{
+	if (m_firstRun)
+	{
+		// Make sure MAX_WORLD_CHUNKS_PER_AXIS is odd.
+		static_assert(MAX_WORLD_CHUNKS_PER_AXIS % 2 == 1);
+
+		const glm::ivec3 currentChunkPos = playerGridPosition / 16;
+
+		// We need to generate the base chunks around the player right now.
+		const int iterInEachDir = (MAX_WORLD_CHUNKS_PER_AXIS - 1) / 2;
+		for (int x = -iterInEachDir; x <= iterInEachDir; ++x)
+		{
+			for (int y = -iterInEachDir; y <= iterInEachDir; ++y)
+			{
+				for (int z = -iterInEachDir; z <= iterInEachDir; ++z)
+				{
+					glm::ivec3 chunkPosition = {x, y, z};
+					chunkPosition *= CHUNK_BLOCK_SIZE;
+					chunkPosition += currentChunkPos;
+
+					ChunkData* chunk = AddChunk(chunkPosition);
+
+					// Hard-coded dirt.
+					constexpr ChunkBlock dirt = {0x00000001};
+
+					// Temporary world generation.
+					ChunkBlock blockToSet = dirt;
+					if (chunkPosition.y >= 0)
+						blockToSet = ModHandler::GetAirBlock();
+
+					auto* blocks = chunk->GetBlocks();
+					std::fill_n(blocks, MAX_BLOCKS_PER_CHUNK, blockToSet);
+				}
+			}
+		}
+
+		m_firstRun = false;
+	}
+
+	// Update View logic
+	if (m_lastPlayerGridPosition != playerGridPosition)
+	{
+		// Do nothing right now.
+	}
+
+	m_lastPlayerGridPosition     = playerGridPosition;
+	m_lastPlayerBoxLocalPosition = playerBoxLocalPosition;
+
+	for (uint32_t i = 0; i < MAX_CHUNKS; ++i)
+	{
+		if (m_chunksSorted[i]->IsDirty())
+		{
+			// Submit for re-mesh.
+		}
+	}
+}
+
+void phx::WorldData::Draw(VkCommandBuffer* commandBuffer, uint32_t index) {}
+
+phx::ChunkData* phx::WorldData::GetChunkIn(const glm::ivec3& position)
+{
+	glm::ivec3 steppedPosition = position / static_cast<int>(CHUNK_BLOCK_SIZE);
+	steppedPosition *= CHUNK_BLOCK_SIZE;
+
+	const auto it = m_chunks.find(steppedPosition);
+	if (it == m_chunks.end())
+		return nullptr;
+
+	return &it->second;
+}
+
+phx::ChunkBlock phx::WorldData::GetBlock(const glm::ivec3& position)
+{
+	glm::ivec3 chunkPos = position / static_cast<int>(CHUNK_BLOCK_SIZE);
+	glm::ivec3 blockPos = position % static_cast<int>(CHUNK_BLOCK_SIZE);
+
+	const glm::ivec3 chunkModifier = glm::lessThan(blockPos, {0, 0, 0});
+	const glm::ivec3 blockModifier = chunkModifier * static_cast<int>(CHUNK_BLOCK_SIZE);
+
+	// Adjust as necessary for negative world space.
+	chunkPos -= chunkModifier;
+	chunkPos *= CHUNK_BLOCK_SIZE;
+	blockPos += blockModifier;
+
+	const auto it = m_chunks.find(chunkPos);
+	if (it == m_chunks.end())
+		return ModHandler::GetAirBlock();
+
+	return it->second.GetBlock(blockPos);
+}
+
+void phx::WorldData::SetBlock(const glm::ivec3& position, ChunkBlock newBlock, Action action)
+{
+	glm::ivec3 chunkPos = position / static_cast<int>(CHUNK_BLOCK_SIZE);
+	glm::ivec3 blockPos = position % static_cast<int>(CHUNK_BLOCK_SIZE);
+
+	const glm::ivec3 chunkModifier = glm::lessThan(blockPos, {0, 0, 0});
+	const glm::ivec3 blockModifier = chunkModifier * static_cast<int>(CHUNK_BLOCK_SIZE);
+
+	// Adjust as necessary for negative world space.
+	chunkPos -= chunkModifier;
+	chunkPos *= CHUNK_BLOCK_SIZE;
+	blockPos += blockModifier;
+
+	const auto it = m_chunks.find(chunkPos);
+	if (it == m_chunks.end())
+		return;
+
+	// Copy of data of old block before setting.
+	// We can use this when calling a callback.
+	auto currentBlock = it->second.GetBlock(blockPos);
+
+	// Set the new block.
+	it->second.SetBlock(blockPos, newBlock);
+
+	switch (action)
+	{
+	case Action::SET:
+		// Nothing.
+		break;
+	case Action::PLACE:
+		printf("Placing block at: %i, %i, %i", blockPos.x, blockPos.y, blockPos.z);
+		break;
+	case Action::BREAK:
+		printf("Breaking block at: %i, %i, %i", blockPos.x, blockPos.y, blockPos.z);
+		break;
+	}
+}
+
+uint32_t phx::WorldData::GetFreeMemoryPoolCount() { return m_freeVertexPageCount; }
+
+phx::ChunkData* phx::WorldData::AddChunk(const glm::ivec3& position)
+{
+	const auto it = m_chunks.try_emplace(position);
+	if (!it.second)
+	{
+		return &it.first->second;
+	}
+
+	ChunkData* chunk = &it.first->second;
+
+	constexpr glm::ivec3 X_MOD = {CHUNK_BLOCK_SIZE, 0, 0};
+	constexpr glm::ivec3 Y_MOD = {0, CHUNK_BLOCK_SIZE, 0};
+	constexpr glm::ivec3 Z_MOD = {0, 0, CHUNK_BLOCK_SIZE};
+
+	// Chunk just got added, let's try set neighbours.
+	// We're also updating the neighbours of these chunks if they exist.
+	// This could potentially end up being quite a slow operation due to the potentially significant indirection.
+	const auto north = m_chunks.find(position - Z_MOD);
+	const auto east  = m_chunks.find(position + X_MOD);
+	const auto south = m_chunks.find(position + Z_MOD);
+	const auto west  = m_chunks.find(position - X_MOD);
+	const auto above = m_chunks.find(position + Y_MOD);
+	const auto below = m_chunks.find(position - Y_MOD);
+
+	ChunkData::Neighbours neighbours;
+	if (north != m_chunks.end())
+	{
+		neighbours.neighbours[ChunkData::NORTH]                     = &north->second;
+		north->second.GetNeighbours()->neighbours[ChunkData::SOUTH] = chunk;
+	}
+
+	if (east != m_chunks.end())
+	{
+		neighbours.neighbours[ChunkData::EAST]                    = &east->second;
+		east->second.GetNeighbours()->neighbours[ChunkData::WEST] = chunk;
+	}
+
+	if (south != m_chunks.end())
+	{
+		neighbours.neighbours[ChunkData::SOUTH]                     = &south->second;
+		south->second.GetNeighbours()->neighbours[ChunkData::NORTH] = chunk;
+	}
+
+	if (west != m_chunks.end())
+	{
+		neighbours.neighbours[ChunkData::WEST]                    = &west->second;
+		west->second.GetNeighbours()->neighbours[ChunkData::EAST] = chunk;
+	}
+
+	if (above != m_chunks.end())
+	{
+		neighbours.neighbours[ChunkData::TOP]                        = &above->second;
+		above->second.GetNeighbours()->neighbours[ChunkData::BOTTOM] = chunk;
+	}
+
+	if (below != m_chunks.end())
+	{
+		neighbours.neighbours[ChunkData::BOTTOM]                  = &below->second;
+		below->second.GetNeighbours()->neighbours[ChunkData::TOP] = chunk;
+	}
+
+	ChunkData::Neighbours& ref = m_chunkNeighbours[position];
+	ref                        = neighbours;
+
+	chunk->SetChunkNeighbours(&ref);
+
+	return chunk;
+}
+
+void phx::WorldData::ComputeVisibility(VkCommandBuffer* commandBuffer, uint32_t index) {}
+
+void phx::WorldData::ResetAllIndirectDraws()
+{
+	constexpr VkDrawIndirectCommand indirectDraw = {0, 0, 0, 0};
+	std::fill_n(m_indirectDrawsCPU.get(), TOTAL_VERTEX_PAGE_COUNT, indirectDraw);
+
+	UpdateAllIndirectDraws();
+}
+
+void phx::WorldData::ResetAllPositions()
+{
+	std::fill_n(m_chunkPositionsCPU.get(), TOTAL_VERTEX_PAGE_COUNT, glm::mat4(1.f));
+
+	UpdateAllPositions();
+}
+
+void phx::WorldData::UpdateAllIndirectDraws()
+{
+	m_indirectDrawsGPU->TransferInstantly(m_indirectDrawsCPU.get(), sizeof(VkDrawIndirectCommand) * TOTAL_VERTEX_PAGE_COUNT);
+}
+
+void phx::WorldData::UpdateAllPositions()
+{
+	m_chunkPositionsGPU->TransferInstantly(m_chunkPositionsGPU.get(), sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT);
+}
+
+phx::VertexPage* phx::WorldData::GetFreeVertexPage() { return nullptr; }
+
+void phx::WorldData::ProcessVertexPages(VertexPage* pages, const glm::mat4& position) {}
+
+void phx::WorldData::FreeVertexPages(VertexPage* page) {}
 
 phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager)
     : mDevice(device), mResourceManager(resourceManager)
@@ -53,13 +327,15 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 	               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	               VK_SHARING_MODE_EXCLUSIVE));
 
-	mIndirectDrawCommands = std::unique_ptr<Buffer>(
-	    new Buffer(mDevice, memoryHeap, sizeof(VkDrawIndirectCommand) * TOTAL_VERTEX_PAGE_COUNT, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	               VK_SHARING_MODE_EXCLUSIVE));
+	mIndirectDrawCommands = std::unique_ptr<Buffer>(new Buffer(mDevice, memoryHeap, sizeof(VkDrawIndirectCommand) * TOTAL_VERTEX_PAGE_COUNT,
+	                                                           VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+	                                                               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                           VK_SHARING_MODE_EXCLUSIVE));
 
-	mPositionBuffer = std::unique_ptr<Buffer>(
-	    new Buffer(mDevice, memoryHeap, sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	               VK_SHARING_MODE_EXCLUSIVE));
+	mPositionBuffer = std::unique_ptr<Buffer>(new Buffer(mDevice, memoryHeap, sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT,
+	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                     VK_SHARING_MODE_EXCLUSIVE));
 
 	mFreeMemoryPoolCount = TOTAL_VERTEX_PAGE_COUNT;
 
@@ -85,14 +361,14 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 
 	UpdateAllIndirectDraws();
 
-	mChunks = new Chunk[MAX_CHUNKS];
-	mChunksSorted = new Chunk*[MAX_CHUNKS];
+	mChunks          = new Chunk[MAX_CHUNKS];
+	mChunksSorted    = new Chunk*[MAX_CHUNKS];
 	mChunkNeighbours = new ChunkNeighbours[MAX_CHUNKS];
 
 	mFreeVertexPages = nullptr;
 
 	mPositionBufferCPU = std::unique_ptr<glm::mat4>(new glm::mat4[TOTAL_VERTEX_PAGE_COUNT]);
-	mVertexPages = std::unique_ptr<VertexPage>(new VertexPage[TOTAL_VERTEX_PAGE_COUNT]);
+	mVertexPages       = std::unique_ptr<VertexPage>(new VertexPage[TOTAL_VERTEX_PAGE_COUNT]);
 
 	for (int i = TOTAL_VERTEX_PAGE_COUNT - 1; i >= 0; --i)
 	{
@@ -105,7 +381,7 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 
 		mFreeVertexPages = &mVertexPages.get()[i];
 	}
-	
+
 	for (int z = 0; z < MAX_WORLD_CHUNKS_PER_AXIS; ++z)
 	{
 		for (int y = 0; y < MAX_WORLD_CHUNKS_PER_AXIS; ++y)
@@ -113,12 +389,10 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 			for (int x = 0; x < MAX_WORLD_CHUNKS_PER_AXIS; ++x)
 			{
 				int index = x + (y * MAX_WORLD_CHUNKS_PER_AXIS) + (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS);
-	
-	
-				
+
 				mChunks[index].SetPosition(glm::ivec3(x, y, z));
 				mChunks[index].SetRenderPosition(glm::vec3(x, y, z));
-	
+
 				// On start up the chunks are already sorted
 				mChunksSorted[index] = &mChunks[index];
 			}
@@ -167,7 +441,6 @@ phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager*
 				                         ((z + 1) * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
 
 				mChunksSorted[index]->SetNeighbouringChunk(chunkNabours);
-
 			}
 		}
 	}
@@ -211,7 +484,6 @@ phx::World::~World()
 
 void phx::World::Update()
 {
-
 	for (int i = 0; i < MAX_CHUNKS; ++i)
 	{
 		mChunks[i].Update();
@@ -246,21 +518,21 @@ void phx::World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
 
 	// todo find a way of auto binding global data for shaders, perhaps a global and local mapping
 	mResourceManager->GetResource<ResourceTable>("CameraResourceTable")
-		->Use(commandBuffer, index, 0, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
+	    ->Use(commandBuffer, index, 0, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
 	mResourceManager->GetResource<ResourceTable>("SamplerArrayResourceTable")
-		->Use(commandBuffer, index, 1, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
+	    ->Use(commandBuffer, index, 1, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
 
 	for (int i = 0; i < TOTAL_VERTEX_PAGE_COUNT; i++)
 	{
-		VkDeviceSize offsets[] = { sizeof(VertexData) * VERTEX_PAGE_SIZE * i };
+		VkDeviceSize offsets[] = {sizeof(VertexData) * VERTEX_PAGE_SIZE * i};
 
 		vkCmdBindVertexBuffers(commandBuffer[index], 0, 1, &mVertexBuffer->GetBuffer(), offsets);
 
-		VkDeviceSize positionOffsets[] = { sizeof(glm::mat4) * i };
+		VkDeviceSize positionOffsets[] = {sizeof(glm::mat4) * i};
 		// Position data
 		vkCmdBindVertexBuffers(commandBuffer[index], 1, 1, &mPositionBuffer->GetBuffer(), positionOffsets);
 		vkCmdDrawIndirect(commandBuffer[index], mIndirectDrawCommands->GetBuffer(), sizeof(VkDrawIndirectCommand) * i, 1,
-			sizeof(VkDrawIndirectCommand));
+		                  sizeof(VkDrawIndirectCommand));
 	}
 
 	RenderTechnique* skybox = mResourceManager->GetResource<RenderTechnique>("Skybox");
@@ -281,8 +553,8 @@ phx::VertexPage* phx::World::GetFreeVertexPage()
 	VertexPage* next = mFreeVertexPages;
 	if (mFreeVertexPages)
 	{
-		mFreeVertexPages = mFreeVertexPages->next;
-		next->next = nullptr;
+		mFreeVertexPages  = mFreeVertexPages->next;
+		next->next        = nullptr;
 		next->vertexCount = 0;
 
 		mFreeMemoryPoolCount--;
@@ -294,14 +566,14 @@ unsigned int phx::World::GetFreeMemoryPoolCount() { return mFreeMemoryPoolCount;
 
 void phx::World::DestroyBlockFromView()
 {
-	const float		   placeRange = 6.0f;
-	const unsigned int stepCount = 20;
-	const float        stepSize = placeRange / stepCount;
+	const float        placeRange = 6.0f;
+	const unsigned int stepCount  = 20;
+	const float        stepSize   = placeRange / stepCount;
 
 	Chunk* chunk;
-	int localX;
-	int localY;
-	int localZ;
+	int    localX;
+	int    localY;
+	int    localZ;
 	RaycastToBlock(stepSize, stepCount, chunk, localX, localY, localZ, RaycastMode::Destroy);
 
 	if (chunk)
@@ -352,14 +624,13 @@ void phx::World::PlaceBlockFromView()
 			(*nabours->neighbouringChunks[j])->MarkDirty();
 		}
 	}
-
 }
 
 void phx::World::RaycastToBlock(float step, int iteration, Chunk*& chunkReturn, int& localX, int& localY, int& localZ, RaycastMode mode)
 {
-	chunkReturn            = nullptr; 
-	localX                 = 0;
-	localX                 = 0;
+	chunkReturn = nullptr;
+	localX      = 0;
+	localX      = 0;
 
 	Camera*   camera       = mResourceManager->GetResource<Camera>("Camera");
 	glm::vec3 viewPosition = camera->GetPosition();
@@ -385,12 +656,12 @@ void phx::World::RaycastToBlock(float step, int iteration, Chunk*& chunkReturn, 
 	{
 		glm::ivec3 lastPos = viewPosition;
 
-		int lastLocalX = 0;
-		int lastLocalY = 0;
-		int lastLocalZ = 0;
-		Chunk* lastChunk = nullptr;
+		int    lastLocalX = 0;
+		int    lastLocalY = 0;
+		int    lastLocalZ = 0;
+		Chunk* lastChunk  = nullptr;
 
-		float currentStep = step;
+		float        currentStep   = step;
 		unsigned int stepHalfCount = 0;
 
 		for (int i = 0; i < iteration; i++)
@@ -436,28 +707,28 @@ void phx::World::RaycastToBlock(float step, int iteration, Chunk*& chunkReturn, 
 						if (!matchingAxies[0])
 						{
 							matchingAxies[0] = true;
-							newPos.x = lastPos.x;
+							newPos.x         = lastPos.x;
 						}
 						else if (!matchingAxies[2])
 						{
 							matchingAxies[2] = true;
-							newPos.z = lastPos.z;
+							newPos.z         = lastPos.z;
 						}
 						else if (!matchingAxies[1])
 						{
 							matchingAxies[1] = true;
-							newPos.y = lastPos.y;
+							newPos.y         = lastPos.y;
 						}
 						matchingAxiesCount++;
 					}
 				}
 				stepHalfCount = 0;
-				currentStep = step;
+				currentStep   = step;
 
 				// make sure after raycasting we are no longer outside the chunk, if we are find the new chunk
 				if (!PointToCube(viewPosition, chunk->GetPosition(), CHUNK_BLOCK_SIZE))
 				{
-					Chunk*             newChunk = nullptr;
+					Chunk*                newChunk = nullptr;
 					phx::ChunkNeighbours* nabours  = chunk->GetNabours();
 					for (int j = 0; j < 6; j++)
 					{
@@ -487,9 +758,9 @@ void phx::World::RaycastToBlock(float step, int iteration, Chunk*& chunkReturn, 
 				blockZ %= CHUNK_BLOCK_SIZE;
 
 				ChunkBlock block = chunk->GetBlock(blockX, blockY, blockZ);
-				
+
 				// If the block is not air
-				if ( block != ModHandler::GetAirBlock())
+				if (block != ModHandler::GetAirBlock())
 				{
 					// If we are destroying a block, respond with the block we are wanting to destroy
 					if (mode == RaycastMode::Destroy)
@@ -502,7 +773,7 @@ void phx::World::RaycastToBlock(float step, int iteration, Chunk*& chunkReturn, 
 					}
 					// If we are in place mode, respond with the expected air block information
 					if (mode == RaycastMode::Place)
-					{							
+					{
 						chunkReturn = lastChunk;
 						localX      = lastLocalX;
 						localY      = lastLocalY;
@@ -516,7 +787,6 @@ void phx::World::RaycastToBlock(float step, int iteration, Chunk*& chunkReturn, 
 					lastLocalY = blockY;
 					lastLocalZ = blockZ;
 					lastChunk  = chunk;
-				
 				}
 
 				lastPos = newPos;
@@ -537,7 +807,7 @@ void phx::World::UpdateAllPositionBuffers()
 
 void phx::World::ProcessVertexPages(VertexPage* pages, glm::mat4 position)
 {
-	while(pages != nullptr)
+	while (pages != nullptr)
 	{
 
 		VkDrawIndirectCommand& indirectCommandInstance = mIndirectBufferCPU.get()[pages->index];
@@ -556,7 +826,7 @@ void phx::World::ProcessVertexPages(VertexPage* pages, glm::mat4 position)
 	UpdateAllPositionBuffers();
 }
 
-void phx::World::FreeVertexPages(VertexPage* pages) 
+void phx::World::FreeVertexPages(VertexPage* pages)
 {
 	VertexPage* next = nullptr;
 	while (pages != nullptr)
@@ -571,13 +841,10 @@ void phx::World::FreeVertexPages(VertexPage* pages)
 		mIndirectDrawCommands->TransferInstantly(&mIndirectBufferCPU.get()[pages->index], sizeof(VkDrawIndirectCommand),
 		                                         pages->index * sizeof(VkDrawIndirectCommand));
 
-
-		pages->next = mFreeVertexPages;
+		pages->next      = mFreeVertexPages;
 		mFreeVertexPages = pages;
 
 		mFreeMemoryPoolCount++;
 		pages = next;
 	}
-
 }
-

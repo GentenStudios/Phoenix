@@ -37,27 +37,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-const unsigned int MAX_SPRITESHEET_SAMPLER_ARRAY = 32;
+constexpr unsigned CalcBitsNeeded(unsigned int n) { return n <= 1 ? 0 : 1 + CalcBitsNeeded((n + 1) / 2); }
 
-// How wide the chunk is in blocks
+constexpr unsigned int MAX_SPRITESHEET_SAMPLER_ARRAY = 32;
+
 // Keep this to a power of 2 (2,4,8, etc)
-const unsigned int CHUNK_BLOCK_SIZE = 16;
+constexpr unsigned int CHUNK_BLOCK_SIZE          = 32;
+constexpr unsigned int CHUNK_BLOCK_BIT_SIZE      = CalcBitsNeeded(CHUNK_BLOCK_SIZE);
+constexpr unsigned int CHUNK_BLOCK_BIT_SIZE_MASK = CHUNK_BLOCK_SIZE - 1;
+constexpr unsigned int MAX_BLOCKS_PER_CHUNK      = CHUNK_BLOCK_SIZE * CHUNK_BLOCK_SIZE * CHUNK_BLOCK_SIZE;
 
-// How many bits make up the chunk block size
-const unsigned int CHUNK_BLOCK_BIT_SIZE = 4;
+constexpr unsigned int MAX_WORLD_CHUNKS_PER_AXIS = 7;
+constexpr unsigned int MAX_CHUNKS                = MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS;
 
-// An AND mask for the size
-const unsigned int CHUNK_BLOCK_BIT_SIZE_MASK = 0b1111;
-
-const unsigned int MAX_BLOCKS_PER_CHUNK = CHUNK_BLOCK_SIZE * CHUNK_BLOCK_SIZE * CHUNK_BLOCK_SIZE;
-
-// How many chunks are visible in x,y,z range around the camera ((n/2) + 1 rad)
-const unsigned int MAX_WORLD_CHUNKS_PER_AXIS = 7;
-
-// Total chunks in memory at once
-const unsigned int MAX_CHUNKS = MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS;
-
-const unsigned int VERTEX_PAGE_SIZE = 24 * 200;
-
-const unsigned int TOTAL_VERTEX_PAGE_COUNT = 1000;
-
+constexpr unsigned int VERTEX_PAGE_SIZE        = 24 * 200;
+constexpr unsigned int TOTAL_VERTEX_PAGE_COUNT = 1000;

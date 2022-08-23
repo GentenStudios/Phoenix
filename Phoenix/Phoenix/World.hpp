@@ -30,11 +30,14 @@
 
 #pragma once
 
-#include <memory>
-
 #include <Globals/Globals.hpp>
-
 #include <Renderer/Vulkan.hpp>
+
+#include <glm/gtx/hash.hpp>
+
+#include <memory>
+#include <unordered_map>
+#include <Phoenix/Chunk.hpp>
 
 class Buffer;
 class RenderDevice;
@@ -44,7 +47,10 @@ class ResourceTable;
 
 namespace phx
 {
+	struct ChunkBlock;
 	class Chunk;
+	class ChunkData;
+	
 	struct ChunkNeighbours;
 
 	struct VertexPage
@@ -55,6 +61,86 @@ namespace phx
 		VertexPage* next;
 	};
 
+	class WorldData
+	{
+
+	public:
+		enum class Action
+		{
+			SET, // This is just a generic "set the block".
+			PLACE,
+			BREAK
+		};
+
+	public:
+		WorldData(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager);
+		~WorldData();
+
+		void Update(const glm::ivec3& playerGridPosition, const glm::vec3& playerBoxLocalPosition);
+		void Draw(VkCommandBuffer* commandBuffer, uint32_t index);
+
+		ChunkData* GetChunkIn(const glm::ivec3& position);
+
+		ChunkBlock GetBlock(const glm::ivec3& position);
+		void       SetBlock(const glm::ivec3& position, ChunkBlock newBlock, Action action = Action::SET);
+
+		uint32_t GetFreeMemoryPoolCount();
+
+	private:
+		struct VertexMemoryPage
+		{
+			
+		};
+
+		// Doesn't do anything if already exists.
+		// Must be an already stepped chunk position.
+		ChunkData* AddChunk(const glm::ivec3& position);
+
+		void ComputeVisibility(VkCommandBuffer* commandBuffer, uint32_t index);
+
+		void ResetAllIndirectDraws();
+		void ResetAllPositions();
+
+		void UpdateAllIndirectDraws();
+		void UpdateAllPositions();
+
+		VertexPage* GetFreeVertexPage();
+
+		void ProcessVertexPages(VertexPage* pages, const glm::mat4& position);
+		void FreeVertexPages(VertexPage* page);
+
+	private:
+		RenderDevice*    m_renderDevice;
+		ResourceManager* m_resourceManager;
+		MemoryHeap*      m_memoryHeap;
+
+		bool       m_firstRun                   = true;
+		glm::ivec3 m_lastPlayerGridPosition     = {0, 0, 0};
+		glm::vec3  m_lastPlayerBoxLocalPosition = {0, 0, 0};
+
+		std::unique_ptr<Buffer>       m_vertexBuffer;
+		std::unique_ptr<VertexPage[]> m_vertexPages;
+		uint32_t                      m_freeVertexPageCount = 0;
+
+		VertexPage* m_freeVertexPages = nullptr;
+
+		ResourceTable*                           m_indexedIndirectResourceTable;
+		std::unique_ptr<VkDrawIndirectCommand[]> m_indirectDrawsCPU;
+		std::unique_ptr<Buffer>                  m_indirectDrawsGPU;
+
+		ResourceTable*               m_chunkPositionsResourceTable;
+		std::unique_ptr<glm::mat4[]> m_chunkPositionsCPU;
+		std::unique_ptr<Buffer>      m_chunkPositionsGPU;
+
+		// This is the "map" of chunks we're using for now - not ideal but this is much easier to deal with for now.
+		// Todo: replace with something else that could potentially perform better on iterations.
+		std::unordered_map<glm::ivec3, ChunkData>             m_chunks;
+		std::unordered_map<glm::ivec3, ChunkData::Neighbours> m_chunkNeighbours;
+
+		// This is the sorted chunks in the current view.
+		std::unique_ptr<ChunkData*[]> m_chunksSorted;
+	};
+	
 	class World
 	{
 		friend class Chunk;
@@ -122,4 +208,3 @@ namespace phx
 		phx::Chunk* mChunks;
 	};
 } // namespace phx
-
