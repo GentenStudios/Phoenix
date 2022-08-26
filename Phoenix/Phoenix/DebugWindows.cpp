@@ -105,7 +105,7 @@ void DebugUIMemoryUsage(void* ref)
 	phx::Phoenix* engine = reinterpret_cast<phx::Phoenix*>(ref);
 	ResourceManager* resourceManager = engine->GetResourceManager();
 
-	phx::World* world = resourceManager->GetResource<phx::World>("World");
+	phx::WorldData* world = resourceManager->GetResource<phx::WorldData>("World");
 
 	ImGui::SetNextWindowPos(ImVec2(20, 20));
 

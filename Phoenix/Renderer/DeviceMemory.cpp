@@ -53,4 +53,3 @@ void DeviceMemory::Map(VkDeviceSize size, VkDeviceSize offset, void*& ptr)
 }
 
 void DeviceMemory::Unmap() { vkUnmapMemory(m_device->GetDevice(), m_memory); }
-

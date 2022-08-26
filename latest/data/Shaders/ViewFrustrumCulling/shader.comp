@@ -35,9 +35,7 @@ void main()
 	position += chunkOffset;
 
 	// Check if centre of chunk is in the frustum.
-	float radius = sqrt(512);
-
-	if (IsSphereInFrustum(position, radius))
+	if (IsSphereInFrustum(position, SPHERICAL_CHUNK_RADIUS))
 	{
 		drawIndexedIndirectCommand[idx].instanceCount = 1;
 	}

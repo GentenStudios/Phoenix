@@ -45,9 +45,62 @@
 #include <ResourceManager/RenderTechnique.hpp>
 #include <ResourceManager/ResourceManager.hpp>
 
-phx::WorldData::WorldData(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager)
-    : m_renderDevice(device), m_resourceManager(resourceManager), m_memoryHeap(memoryHeap)
+const glm::vec3 BLOCK_VERTICES[] = {
+    {0.f, 0.f, 0.f}, // north (front)
+    {1.f, 0.f, 0.f}, {1.f, 1.f, 0.f}, {1.f, 1.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 0.f, 0.f},
+
+	{1.f, 1.f, 1.f}, // east (right)
+    {1.f, 1.f, 0.f}, {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f}, {1.f, 0.f, 1.f}, {1.f, 1.f, 1.f},
+
+	{1.f, 1.f, 1.f}, // south
+    {1.f, 0.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 1.f, 1.f}, {1.f, 1.f, 1.f},
+
+    {0.f, 0.f, 0.f}, // west
+    {0.f, 1.f, 0.f}, {0.f, 1.f, 1.f}, {0.f, 1.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 0.f},
+
+    {0.f, 1.f, 0.f}, // top
+    {1.f, 1.f, 0.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {0.f, 1.f, 1.f}, {0.f, 1.f, 0.f},
+
+	{1.f, 0.f, 1.f}, // bottom
+    {1.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, {0.f, 0.f, 1.f}, {1.f, 0.f, 1.f},
+
+};
+
+const glm::vec3 BLOCK_NORMALS[] = {
+    {0.f, 0.f, 1.f}, // north (front)
+    {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f},
+
+    {1.f, 0.f, 0.f}, // east (right)
+    {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f},
+
+    {1.f, 0.f, 0.f}, // west
+    {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f}, {1.f, 0.f, 0.f},
+
+	{0.f, 0.f, 1.f}, // south
+    {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f},
+
+    {0.f, 1.f, 0.f}, // top
+    {0.f, 1.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 1.f, 0.f},
+
+    {0.f, 1.f, 0.f}, // bottom
+    {0.f, 1.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 1.f, 0.f},
+};
+
+static const glm::vec2 BLOCK_UVS[] = {
+
+    {1.f, 1.f}, {0.f, 1.f}, {0.f, 0.f}, {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f},
+    {1.f, 0.f}, {0.f, 0.f}, {0.f, 1.f}, {0.f, 1.f}, {1.f, 1.f}, {1.f, 0.f},
+    {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f}, {0.f, 1.f}, {0.f, 0.f}, {1.f, 0.f},
+	{0.f, 0.f}, {0.f, 1.f}, {1.f, 1.f}, {1.f, 1.f}, {1.f, 0.f}, {0.f, 0.f},
+    {0.f, 1.f}, {1.f, 1.f}, {1.f, 0.f}, {1.f, 0.f}, {0.f, 0.f}, {0.f, 1.f},
+    {1.f, 1.f}, {1.f, 0.f}, {0.f, 0.f}, {0.f, 0.f}, {0.f, 1.f}, {1.f, 1.f},
+};
+
+phx::WorldData::WorldData(RenderDevice* device, ResourceManager* resourceManager)
+    : m_renderDevice(device), m_resourceManager(resourceManager)
 {
+	m_memoryHeap = m_resourceManager->GetResource<MemoryHeap>("GPUMappableMemoryHeap");
+
 	const uint64_t vertexBufferSize = sizeof(VertexData) * VERTEX_PAGE_SIZE * TOTAL_VERTEX_PAGE_COUNT;
 	m_vertexBuffer =
 	    std::make_unique<Buffer>(m_renderDevice, m_memoryHeap, vertexBufferSize,
@@ -80,7 +133,20 @@ phx::WorldData::WorldData(RenderDevice* device, MemoryHeap* memoryHeap, Resource
 	m_chunkPositionsResourceTable = m_resourceManager->GetResource<ResourceTableLayout>("ChunkPositionResourceTableLayout")->CreateTable();
 	m_chunkPositionsResourceTable->Bind(0, m_chunkPositionsGPU.get());
 
-	m_chunksSorted = std::make_unique<ChunkData*[]>(MAX_CHUNKS);
+	m_chunksSorted = std::make_unique<ChunkRenderData[]>(MAX_CHUNKS);
+
+	// Setup Vertex Pages.
+	m_vertexPages = std::make_unique<VertexMemoryPage[]>(TOTAL_VERTEX_PAGE_COUNT);
+	m_freeVertexPages = nullptr;
+	for (int i = TOTAL_VERTEX_PAGE_COUNT - 1; i >= 0; --i)
+	{
+		m_vertexPages[i].index       = i;
+		m_vertexPages[i].offset      = VERTEX_PAGE_SIZE * sizeof(ChunkVertexData) * i;
+		m_vertexPages[i].vertexCount = 0;
+		m_vertexPages[i].next        = m_freeVertexPages;
+
+		m_freeVertexPages = &m_vertexPages[i];
+	}
 }
 
 phx::WorldData::~WorldData() {}
@@ -96,6 +162,7 @@ void phx::WorldData::Update(const glm::ivec3& playerGridPosition, const glm::vec
 
 		// We need to generate the base chunks around the player right now.
 		const int iterInEachDir = (MAX_WORLD_CHUNKS_PER_AXIS - 1) / 2;
+		uint32_t  index         = 0;
 		for (int x = -iterInEachDir; x <= iterInEachDir; ++x)
 		{
 			for (int y = -iterInEachDir; y <= iterInEachDir; ++y)
@@ -118,6 +185,9 @@ void phx::WorldData::Update(const glm::ivec3& playerGridPosition, const glm::vec
 
 					auto* blocks = chunk->GetBlocks();
 					std::fill_n(blocks, MAX_BLOCKS_PER_CHUNK, blockToSet);
+
+					glm::mat4 renderMat     = glm::translate(glm::mat4 {1.f}, (glm::vec3) chunkPosition);
+					m_chunksSorted[index++] = {nullptr, 0, chunkPosition, renderMat, chunk};
 				}
 			}
 		}
@@ -136,14 +206,52 @@ void phx::WorldData::Update(const glm::ivec3& playerGridPosition, const glm::vec
 
 	for (uint32_t i = 0; i < MAX_CHUNKS; ++i)
 	{
-		if (m_chunksSorted[i]->IsDirty())
+		if (m_chunksSorted[i].chunk->IsDirty())
 		{
 			// Submit for re-mesh.
+			RemeshChunk(&m_chunksSorted[i]);
+			m_chunksSorted[i].chunk->MarkClean();
 		}
 	}
 }
 
-void phx::WorldData::Draw(VkCommandBuffer* commandBuffer, uint32_t index) {}
+void phx::WorldData::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
+{
+	RenderTechnique* standardMaterial = m_resourceManager->GetResource<RenderTechnique>("StandardMaterial");
+
+	standardMaterial->GetPipeline()->Use(commandBuffer, index);
+
+	// todo find a way of auto binding global data for shaders, perhaps a global and local mapping
+	m_resourceManager->GetResource<ResourceTable>("CameraResourceTable")
+	    ->Use(commandBuffer, index, 0, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
+	m_resourceManager->GetResource<ResourceTable>("SamplerArrayResourceTable")
+	    ->Use(commandBuffer, index, 1, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
+
+	for (int i = 0; i < TOTAL_VERTEX_PAGE_COUNT; i++)
+	{
+		VkDeviceSize offsets[] = {sizeof(VertexData) * VERTEX_PAGE_SIZE * i};
+
+		vkCmdBindVertexBuffers(commandBuffer[index], 0, 1, &m_vertexBuffer->GetBuffer(), offsets);
+
+		VkDeviceSize positionOffsets[] = {sizeof(glm::mat4) * i};
+		// Position data
+		vkCmdBindVertexBuffers(commandBuffer[index], 1, 1, &m_chunkPositionsGPU->GetBuffer(), positionOffsets);
+		vkCmdDrawIndirect(commandBuffer[index], m_indirectDrawsGPU->GetBuffer(), sizeof(VkDrawIndirectCommand) * i, 1,
+		                  sizeof(VkDrawIndirectCommand));
+	}
+
+	RenderTechnique* skybox = m_resourceManager->GetResource<RenderTechnique>("Skybox");
+
+	skybox->GetPipeline()->Use(commandBuffer, index);
+
+	m_resourceManager->GetResource<ResourceTable>("CameraResourceTable")
+	    ->Use(commandBuffer, index, 0, skybox->GetPipelineLayout()->GetPipelineLayout());
+	m_resourceManager->GetResource<ResourceTable>("SkyboxResourceTable")
+	    ->Use(commandBuffer, index, 1, skybox->GetPipelineLayout()->GetPipelineLayout());
+
+	// Vertices are hard baked into the shader.
+	vkCmdDraw(commandBuffer[index], 6, 1, 0, 0);
+}
 
 phx::ChunkData* phx::WorldData::GetChunkIn(const glm::ivec3& position)
 {
@@ -196,7 +304,7 @@ void phx::WorldData::SetBlock(const glm::ivec3& position, ChunkBlock newBlock, A
 
 	// Copy of data of old block before setting.
 	// We can use this when calling a callback.
-	auto currentBlock = it->second.GetBlock(blockPos);
+	auto oldBlock = it->second.GetBlock(blockPos);
 
 	// Set the new block.
 	it->second.SetBlock(blockPos, newBlock);
@@ -215,7 +323,7 @@ void phx::WorldData::SetBlock(const glm::ivec3& position, ChunkBlock newBlock, A
 	}
 }
 
-uint32_t phx::WorldData::GetFreeMemoryPoolCount() { return m_freeVertexPageCount; }
+uint32_t phx::WorldData::GetFreeMemoryPoolCount() const { return m_freeVertexPageCount; }
 
 phx::ChunkData* phx::WorldData::AddChunk(const glm::ivec3& position)
 {
@@ -286,7 +394,215 @@ phx::ChunkData* phx::WorldData::AddChunk(const glm::ivec3& position)
 	return chunk;
 }
 
-void phx::WorldData::ComputeVisibility(VkCommandBuffer* commandBuffer, uint32_t index) {}
+void phx::WorldData::RemeshChunk(ChunkRenderData* renderData)
+{
+	renderData->vertexCount = 0;
+
+	void* memoryPtr = nullptr;
+	ChunkVertexData* vertexStream = nullptr;
+
+	FreeVertexPages(renderData->vertexPage);
+
+	auto* chunk      = renderData->chunk;
+	auto* neighbours = chunk->GetNeighbours()->neighbours;
+
+	for (int x = 0; x < CHUNK_BLOCK_SIZE; ++x)
+	{
+		for (int y = 0; y < CHUNK_BLOCK_SIZE; ++y)
+		{
+			for (int z = 0; z < CHUNK_BLOCK_SIZE; ++z)
+			{
+				ChunkBlock blockID = renderData->chunk->GetBlock({x, y, z});
+				if (blockID == ModHandler::GetAirBlock())
+					continue;
+
+				bool visibility[6] = {false};
+
+				const ChunkData* north = neighbours[ChunkData::NORTH];
+				const ChunkData* east  = neighbours[ChunkData::EAST];
+				const ChunkData* south = neighbours[ChunkData::SOUTH];
+				const ChunkData* west  = neighbours[ChunkData::WEST];
+				const ChunkData* above = neighbours[ChunkData::TOP];
+				const ChunkData* below = neighbours[ChunkData::BOTTOM];
+
+				// North
+				if (z == 0)
+				{
+					if (north != nullptr)
+					{
+						visibility[ChunkData::NORTH] = north->GetBlock({x, y, CHUNK_BLOCK_SIZE - 1}) == ModHandler::GetAirBlock();
+					}
+				}
+				else
+				{
+					visibility[ChunkData::NORTH] = chunk->GetBlock({x, y, z - 1}) == ModHandler::GetAirBlock();
+				}
+
+				// East.
+				if (x == CHUNK_BLOCK_SIZE - 1)
+				{
+					if (east != nullptr)
+					{
+						visibility[ChunkData::EAST] = east->GetBlock({0, y, z}) == ModHandler::GetAirBlock();
+					}
+				}
+				else
+				{
+					visibility[ChunkData::EAST] = chunk->GetBlock({x + 1, y, z}) == ModHandler::GetAirBlock();
+				}
+
+				// South
+				if (z == CHUNK_BLOCK_SIZE - 1)
+				{
+					if (south != nullptr)
+					{
+						visibility[ChunkData::SOUTH] = south->GetBlock({x, y, 0}) == ModHandler::GetAirBlock();
+					}
+				}
+				else
+				{
+					visibility[ChunkData::SOUTH] = chunk->GetBlock({x, y, z + 1}) == ModHandler::GetAirBlock();
+				}
+
+				// West
+				if (x == 0)
+				{
+					if (west != nullptr)
+					{
+						visibility[ChunkData::WEST] = west->GetBlock({0, y, z}) == ModHandler::GetAirBlock();
+					}
+				}
+				else
+				{
+					visibility[ChunkData::WEST] = chunk->GetBlock({x - 1, y, z}) == ModHandler::GetAirBlock();
+				}
+
+				// Above
+				if (y == CHUNK_BLOCK_SIZE - 1)
+				{
+					if (above != nullptr)
+						visibility[ChunkData::TOP] = above->GetBlock({x, 0, z}) == ModHandler::GetAirBlock();
+				}
+				else
+				{
+					visibility[ChunkData::TOP] = chunk->GetBlock({x, y + 1, z}) == ModHandler::GetAirBlock();
+				}
+
+				// Below
+				if (y == 0)
+				{
+					if (below != nullptr)
+					{
+						visibility[ChunkData::BOTTOM] = below->GetBlock({x, CHUNK_BLOCK_SIZE - 1, z}) == ModHandler::GetAirBlock();
+					}
+				}
+				else
+				{
+					visibility[ChunkData::BOTTOM] = chunk->GetBlock({x, y - 1, z}) == ModHandler::GetAirBlock();
+				}
+
+				// For cube models.
+				for (int i = 0; i < 6; ++i)
+				{
+					if (!visibility[i])
+						continue;
+
+					if (renderData->vertexPage == nullptr)
+					{
+						renderData->vertexPage = GetFreeVertexPage();
+						if (renderData->vertexPage == nullptr)
+						{
+							printf("Vertex page congestion. Cannot finish.");
+
+							// Don't do anything.
+							continue;
+						}
+
+						m_vertexBuffer->GetDeviceMemory()->Map(VERTEX_PAGE_SIZE * sizeof(VertexData),
+						                                       m_vertexBuffer->GetMemoryOffset() + renderData->vertexPage->offset,
+						                                       memoryPtr);
+
+						vertexStream = static_cast<ChunkVertexData*>(memoryPtr);
+					}
+					else if (VERTEX_PAGE_SIZE - renderData->vertexPage->vertexCount < 36)
+					{
+						// Move onto a new page.
+						m_vertexBuffer->GetDeviceMemory()->Unmap();
+
+						VertexMemoryPage* newPage = GetFreeVertexPage();
+						if (newPage == nullptr)
+						{
+							printf("Vertex page congestion. Cannot finish.");
+
+							// Don't do anything.
+							continue;
+						}
+
+						m_vertexBuffer->GetDeviceMemory()->Map(VERTEX_PAGE_SIZE * sizeof(VertexData),
+						                                       m_vertexBuffer->GetMemoryOffset() + newPage->offset,
+						                                       memoryPtr);
+
+						newPage->next = renderData->vertexPage;
+						renderData->vertexPage = newPage;
+
+						vertexStream = static_cast<ChunkVertexData*>(memoryPtr);
+					}
+
+					// Temporary.
+					auto modHandler = m_resourceManager->GetResource<ModHandler>("ModHandler");
+
+					uint32_t faceTextureID = modHandler->GetBlock(blockID)->textureIndex;
+
+					// Loop through for the face vertices
+					for (int j = 0; j < 6; j++)
+					{
+						const unsigned int lookupIndex = j + (i * 6);
+
+						(*vertexStream).position = BLOCK_VERTICES[lookupIndex];
+						(*vertexStream).position.x += x;
+						(*vertexStream).position.y += y;
+						(*vertexStream).position.z += z;
+
+						(*vertexStream).normal = BLOCK_NORMALS[lookupIndex];
+
+						(*vertexStream).uv = BLOCK_UVS[lookupIndex];
+
+						(*vertexStream).textureID = faceTextureID;
+
+						vertexStream++;
+					}
+
+					renderData->vertexPage->vertexCount += 6;
+					renderData->vertexCount += 6;
+				}
+			}
+		}	
+	}
+
+	if (renderData->vertexPage != nullptr)
+		m_vertexBuffer->GetDeviceMemory()->Unmap();
+
+	ProcessVertexPages(renderData->vertexPage, renderData->renderMatrix);
+}
+
+void phx::WorldData::ComputeVisibility(VkCommandBuffer* commandBuffer, uint32_t index)
+{
+	RenderTechnique* frustrumPipeline    = m_resourceManager->GetResource<RenderTechnique>("ViewFrustrumCulling");
+	ResourceTable*   cameraResourceTable = m_resourceManager->GetResource<ResourceTable>("CameraResourceTable");
+
+	frustrumPipeline->GetPipeline()->Use(commandBuffer, index);
+
+	cameraResourceTable->Use(commandBuffer, index, 0, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
+	                         VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	m_chunkPositionsResourceTable->Use(commandBuffer, index, 1, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
+	                                   VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	m_indexedIndirectResourceTable->Use(commandBuffer, index, 2, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
+	                                   VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	vkCmdDispatch(commandBuffer[index], TOTAL_VERTEX_PAGE_COUNT, 1, 1);
+}
 
 void phx::WorldData::ResetAllIndirectDraws()
 {
@@ -298,7 +614,7 @@ void phx::WorldData::ResetAllIndirectDraws()
 
 void phx::WorldData::ResetAllPositions()
 {
-	std::fill_n(m_chunkPositionsCPU.get(), TOTAL_VERTEX_PAGE_COUNT, glm::mat4(1.f));
+	std::fill_n(m_chunkPositionsCPU.get(), TOTAL_VERTEX_PAGE_COUNT, glm::mat4(0.f));
 
 	UpdateAllPositions();
 }
@@ -310,541 +626,66 @@ void phx::WorldData::UpdateAllIndirectDraws()
 
 void phx::WorldData::UpdateAllPositions()
 {
-	m_chunkPositionsGPU->TransferInstantly(m_chunkPositionsGPU.get(), sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT);
+	m_chunkPositionsGPU->TransferInstantly(m_chunkPositionsCPU.get(), sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT);
 }
 
-phx::VertexPage* phx::WorldData::GetFreeVertexPage() { return nullptr; }
-
-void phx::WorldData::ProcessVertexPages(VertexPage* pages, const glm::mat4& position) {}
-
-void phx::WorldData::FreeVertexPages(VertexPage* page) {}
-
-phx::World::World(RenderDevice* device, MemoryHeap* memoryHeap, ResourceManager* resourceManager)
-    : mDevice(device), mResourceManager(resourceManager)
+phx::VertexMemoryPage* phx::WorldData::GetFreeVertexPage()
 {
-	mVertexBuffer = std::unique_ptr<Buffer>(
-	    new Buffer(mDevice, memoryHeap, VERTEX_PAGE_SIZE * sizeof(VertexData) * TOTAL_VERTEX_PAGE_COUNT,
-	               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	               VK_SHARING_MODE_EXCLUSIVE));
-
-	mIndirectDrawCommands = std::unique_ptr<Buffer>(new Buffer(mDevice, memoryHeap, sizeof(VkDrawIndirectCommand) * TOTAL_VERTEX_PAGE_COUNT,
-	                                                           VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-	                                                               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                           VK_SHARING_MODE_EXCLUSIVE));
-
-	mPositionBuffer = std::unique_ptr<Buffer>(new Buffer(mDevice, memoryHeap, sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT,
-	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                     VK_SHARING_MODE_EXCLUSIVE));
-
-	mFreeMemoryPoolCount = TOTAL_VERTEX_PAGE_COUNT;
-
-	mIndirectBufferCPU = std::unique_ptr<VkDrawIndirectCommand>(new VkDrawIndirectCommand[TOTAL_VERTEX_PAGE_COUNT]);
-
-	VkDrawIndirectCommand indirectCommandInstance {};
-	indirectCommandInstance.vertexCount   = 0;
-	indirectCommandInstance.instanceCount = 0;
-	indirectCommandInstance.firstInstance = 0;
-	indirectCommandInstance.firstVertex   = 0;
-
-	for (uint32_t i = 0; i < TOTAL_VERTEX_PAGE_COUNT; i++)
+	VertexMemoryPage* next = m_freeVertexPages;
+	if (m_freeVertexPages)
 	{
-		mIndirectBufferCPU.get()[i] = indirectCommandInstance;
-	}
-
-	mIndexedIndirectResourceTable =
-	    mResourceManager->GetResource<ResourceTableLayout>("IndexedIndirectCommandResourceTableLayout")->CreateTable();
-	mIndexedIndirectResourceTable->Bind(0, mIndirectDrawCommands.get());
-
-	mChunkPositionsResourceTable = mResourceManager->GetResource<ResourceTableLayout>("ChunkPositionResourceTableLayout")->CreateTable();
-	mChunkPositionsResourceTable->Bind(0, mPositionBuffer.get());
-
-	UpdateAllIndirectDraws();
-
-	mChunks          = new Chunk[MAX_CHUNKS];
-	mChunksSorted    = new Chunk*[MAX_CHUNKS];
-	mChunkNeighbours = new ChunkNeighbours[MAX_CHUNKS];
-
-	mFreeVertexPages = nullptr;
-
-	mPositionBufferCPU = std::unique_ptr<glm::mat4>(new glm::mat4[TOTAL_VERTEX_PAGE_COUNT]);
-	mVertexPages       = std::unique_ptr<VertexPage>(new VertexPage[TOTAL_VERTEX_PAGE_COUNT]);
-
-	for (int i = TOTAL_VERTEX_PAGE_COUNT - 1; i >= 0; --i)
-	{
-		mPositionBufferCPU.get()[i] = glm::mat4(1.0f);
-
-		mVertexPages.get()[i].index       = i;
-		mVertexPages.get()[i].offset      = (VERTEX_PAGE_SIZE * sizeof(VertexData)) * i;
-		mVertexPages.get()[i].vertexCount = 0;
-		mVertexPages.get()[i].next        = mFreeVertexPages;
-
-		mFreeVertexPages = &mVertexPages.get()[i];
-	}
-
-	for (int z = 0; z < MAX_WORLD_CHUNKS_PER_AXIS; ++z)
-	{
-		for (int y = 0; y < MAX_WORLD_CHUNKS_PER_AXIS; ++y)
-		{
-			for (int x = 0; x < MAX_WORLD_CHUNKS_PER_AXIS; ++x)
-			{
-				int index = x + (y * MAX_WORLD_CHUNKS_PER_AXIS) + (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS);
-
-				mChunks[index].SetPosition(glm::ivec3(x, y, z));
-				mChunks[index].SetRenderPosition(glm::vec3(x, y, z));
-
-				// On start up the chunks are already sorted
-				mChunksSorted[index] = &mChunks[index];
-			}
-		}
-	}
-
-	for (int z = 0; z < MAX_WORLD_CHUNKS_PER_AXIS; ++z)
-	{
-		for (int y = 0; y < MAX_WORLD_CHUNKS_PER_AXIS; ++y)
-		{
-			for (int x = 0; x < MAX_WORLD_CHUNKS_PER_AXIS; ++x)
-			{
-				int index = x + (y * MAX_WORLD_CHUNKS_PER_AXIS) + (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS);
-
-				ChunkNeighbours* chunkNabours = &mChunkNeighbours[index];
-
-				chunkNabours->neighbouringChunks[Chunk::East] =
-				    (x - 1) < 0 ? nullptr
-				                : &mChunksSorted[(x - 1) + (y * MAX_WORLD_CHUNKS_PER_AXIS) +
-				                                 (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
-
-				chunkNabours->neighbouringChunks[Chunk::West] =
-				    (x + 1) >= MAX_WORLD_CHUNKS_PER_AXIS ? nullptr
-				                                         : &mChunksSorted[(x + 1) + (y * MAX_WORLD_CHUNKS_PER_AXIS) +
-				                                                          (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
-
-				chunkNabours->neighbouringChunks[Chunk::Top] =
-				    (y + 1) >= MAX_WORLD_CHUNKS_PER_AXIS ? nullptr
-				                                         : &mChunksSorted[x + ((y + 1) * MAX_WORLD_CHUNKS_PER_AXIS) +
-				                                                          (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
-
-				chunkNabours->neighbouringChunks[Chunk::Bottom] =
-				    (y - 1) < 0 ? nullptr
-				                : &mChunksSorted[x + ((y - 1) * MAX_WORLD_CHUNKS_PER_AXIS) +
-				                                 (z * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
-
-				chunkNabours->neighbouringChunks[Chunk::South] =
-				    (z - 1) < 0 ? nullptr
-				                : &mChunksSorted[x + (y * MAX_WORLD_CHUNKS_PER_AXIS) +
-				                                 ((z - 1) * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
-
-				chunkNabours->neighbouringChunks[Chunk::North] =
-				    (z + 1) >= MAX_WORLD_CHUNKS_PER_AXIS
-				        ? nullptr
-				        : &mChunksSorted[x + (y * MAX_WORLD_CHUNKS_PER_AXIS) +
-				                         ((z + 1) * MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS)];
-
-				mChunksSorted[index]->SetNeighbouringChunk(chunkNabours);
-			}
-		}
-	}
-
-	ModHandler* modHandler = resourceManager->GetResource<ModHandler>("ModHandler");
-	for (int i = 0; i < MAX_CHUNKS; ++i)
-	{
-		mChunks[i].Initialize(this, mVertexBuffer.get(), modHandler);
-
-		int x = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
-		int y = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
-		int z = (MAX_WORLD_CHUNKS_PER_AXIS / 2);
-
-		x -= i % MAX_WORLD_CHUNKS_PER_AXIS;
-		y -= (i / MAX_WORLD_CHUNKS_PER_AXIS) % MAX_WORLD_CHUNKS_PER_AXIS;
-		z -= i / (MAX_WORLD_CHUNKS_PER_AXIS * MAX_WORLD_CHUNKS_PER_AXIS);
-
-		x *= CHUNK_BLOCK_SIZE;
-		y *= CHUNK_BLOCK_SIZE;
-		z *= CHUNK_BLOCK_SIZE;
-
-		mChunks[i].SetPosition(glm::ivec3(x, y, z));
-		mChunks[i].SetRenderPosition(glm::vec3(x, y, z));
-	}
-
-	for (int i = 0; i < MAX_CHUNKS; ++i)
-	{
-		mChunks[i].GenerateWorld();
-	}
-
-	UpdateAllPositionBuffers();
-}
-
-phx::World::~World()
-{
-	mVertexBuffer.reset();
-
-	delete[] mChunks;
-	delete[] mChunksSorted;
-}
-
-void phx::World::Update()
-{
-	for (int i = 0; i < MAX_CHUNKS; ++i)
-	{
-		mChunks[i].Update();
-	}
-}
-
-void phx::World::ComputeVisibility(VkCommandBuffer* commandBuffer, uint32_t index)
-{
-
-	RenderTechnique* frustrumPipeline    = mResourceManager->GetResource<RenderTechnique>("ViewFrustrumCulling");
-	ResourceTable*   cameraResourceTable = mResourceManager->GetResource<ResourceTable>("CameraResourceTable");
-
-	frustrumPipeline->GetPipeline()->Use(commandBuffer, index);
-
-	cameraResourceTable->Use(commandBuffer, index, 0, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
-	                         VK_PIPELINE_BIND_POINT_COMPUTE);
-
-	mChunkPositionsResourceTable->Use(commandBuffer, index, 1, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
-	                                  VK_PIPELINE_BIND_POINT_COMPUTE);
-
-	mIndexedIndirectResourceTable->Use(commandBuffer, index, 2, frustrumPipeline->GetPipelineLayout()->GetPipelineLayout(),
-	                                   VK_PIPELINE_BIND_POINT_COMPUTE);
-
-	vkCmdDispatch(commandBuffer[index], TOTAL_VERTEX_PAGE_COUNT, 1, 1);
-}
-
-void phx::World::Draw(VkCommandBuffer* commandBuffer, uint32_t index)
-{
-	RenderTechnique* standardMaterial = mResourceManager->GetResource<RenderTechnique>("StandardMaterial");
-
-	standardMaterial->GetPipeline()->Use(commandBuffer, index);
-
-	// todo find a way of auto binding global data for shaders, perhaps a global and local mapping
-	mResourceManager->GetResource<ResourceTable>("CameraResourceTable")
-	    ->Use(commandBuffer, index, 0, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
-	mResourceManager->GetResource<ResourceTable>("SamplerArrayResourceTable")
-	    ->Use(commandBuffer, index, 1, standardMaterial->GetPipelineLayout()->GetPipelineLayout());
-
-	for (int i = 0; i < TOTAL_VERTEX_PAGE_COUNT; i++)
-	{
-		VkDeviceSize offsets[] = {sizeof(VertexData) * VERTEX_PAGE_SIZE * i};
-
-		vkCmdBindVertexBuffers(commandBuffer[index], 0, 1, &mVertexBuffer->GetBuffer(), offsets);
-
-		VkDeviceSize positionOffsets[] = {sizeof(glm::mat4) * i};
-		// Position data
-		vkCmdBindVertexBuffers(commandBuffer[index], 1, 1, &mPositionBuffer->GetBuffer(), positionOffsets);
-		vkCmdDrawIndirect(commandBuffer[index], mIndirectDrawCommands->GetBuffer(), sizeof(VkDrawIndirectCommand) * i, 1,
-		                  sizeof(VkDrawIndirectCommand));
-	}
-
-	RenderTechnique* skybox = mResourceManager->GetResource<RenderTechnique>("Skybox");
-
-	skybox->GetPipeline()->Use(commandBuffer, index);
-
-	mResourceManager->GetResource<ResourceTable>("CameraResourceTable")
-	    ->Use(commandBuffer, index, 0, skybox->GetPipelineLayout()->GetPipelineLayout());
-	mResourceManager->GetResource<ResourceTable>("SkyboxResourceTable")
-	    ->Use(commandBuffer, index, 1, skybox->GetPipelineLayout()->GetPipelineLayout());
-
-	// Vertices are hard baked into the shader.
-	vkCmdDraw(commandBuffer[index], 6, 1, 0, 0);
-}
-
-phx::VertexPage* phx::World::GetFreeVertexPage()
-{
-	VertexPage* next = mFreeVertexPages;
-	if (mFreeVertexPages)
-	{
-		mFreeVertexPages  = mFreeVertexPages->next;
+		m_freeVertexPages = m_freeVertexPages->next;
 		next->next        = nullptr;
 		next->vertexCount = 0;
 
-		mFreeMemoryPoolCount--;
+		m_freeVertexPageCount--;
 	}
+
 	return next;
 }
 
-unsigned int phx::World::GetFreeMemoryPoolCount() { return mFreeMemoryPoolCount; }
-
-void phx::World::DestroyBlockFromView()
-{
-	const float        placeRange = 6.0f;
-	const unsigned int stepCount  = 20;
-	const float        stepSize   = placeRange / stepCount;
-
-	Chunk* chunk;
-	int    localX;
-	int    localY;
-	int    localZ;
-	RaycastToBlock(stepSize, stepCount, chunk, localX, localY, localZ, RaycastMode::Destroy);
-
-	if (chunk)
-	{
-		chunk->SetBlock(localX, localY, localZ, 0);
-
-		chunk->MarkDirty();
-
-		phx::ChunkNeighbours* nabours = chunk->GetNabours();
-
-		for (int j = 0; j < 6; j++)
-		{
-			if (nabours->neighbouringChunks[j] == nullptr)
-				continue;
-
-			(*nabours->neighbouringChunks[j])->MarkDirty();
-		}
-	}
-}
-
-void phx::World::PlaceBlockFromView()
-{
-	constexpr ChunkBlock stone = {0x00010001};
-
-	const float        placeRange = 6.0f;
-	const unsigned int stepCount  = 20;
-	const float        stepSize   = placeRange / stepCount;
-
-	Chunk* chunk;
-	int    localX;
-	int    localY;
-	int    localZ;
-	RaycastToBlock(stepSize, stepCount, chunk, localX, localY, localZ, RaycastMode::Place);
-
-	if (chunk)
-	{
-		chunk->SetBlock(localX, localY, localZ, stone);
-
-		chunk->MarkDirty();
-
-		phx::ChunkNeighbours* nabours = chunk->GetNabours();
-
-		for (int j = 0; j < 6; j++)
-		{
-			if (nabours->neighbouringChunks[j] == nullptr)
-				continue;
-
-			(*nabours->neighbouringChunks[j])->MarkDirty();
-		}
-	}
-}
-
-void phx::World::RaycastToBlock(float step, int iteration, Chunk*& chunkReturn, int& localX, int& localY, int& localZ, RaycastMode mode)
-{
-	chunkReturn = nullptr;
-	localX      = 0;
-	localX      = 0;
-
-	Camera*   camera       = mResourceManager->GetResource<Camera>("Camera");
-	glm::vec3 viewPosition = camera->GetPosition();
-
-	// Todo in the future we know we will only ever be around the middle chunk, so no need to loop through them all
-
-	Chunk* chunk = nullptr;
-
-	// Find the starting chunk
-	for (int i = 0; i < MAX_CHUNKS; i++)
-	{
-		Chunk* next = &mChunks[i];
-
-		if (PointToCube(viewPosition, next->GetPosition(), CHUNK_BLOCK_SIZE))
-		{
-			chunk = next;
-			break;
-		}
-	}
-
-	// Check we found a chunk we are starting in
-	if (chunk != nullptr)
-	{
-		glm::ivec3 lastPos = viewPosition;
-
-		int    lastLocalX = 0;
-		int    lastLocalY = 0;
-		int    lastLocalZ = 0;
-		Chunk* lastChunk  = nullptr;
-
-		float        currentStep   = step;
-		unsigned int stepHalfCount = 0;
-
-		for (int i = 0; i < iteration; i++)
-		{
-			viewPosition += camera->GetDirection() * currentStep;
-			glm::ivec3 newPos = viewPosition;
-
-			if (viewPosition.x < 0)
-				newPos.x -= 1;
-			if (viewPosition.y < 0)
-				newPos.y -= 1;
-			if (viewPosition.z < 0)
-				newPos.z -= 1;
-
-			if (newPos != lastPos)
-			{
-				bool matchingAxies[3] = {newPos.x == lastPos.x, newPos.y == lastPos.y, newPos.z == lastPos.z};
-
-				int matchingAxiesCount = 0;
-				for (int j = 0; j < 3; j++)
-				{
-					if (matchingAxies[j])
-					{
-						matchingAxiesCount++;
-					}
-				}
-
-				// If we have managed to get a block on a diaganal, 1 or axies of the cube will be touching the other one
-				if (matchingAxiesCount < 2)
-				{
-					// Half the current step size to try and catch the mixxing blocks
-					currentStep *= 0.5f;
-					// Since we are splitting a single step into two, we must add two back to the intteration count
-					i -= 2;
-					if (stepHalfCount < 2)
-					{
-						stepHalfCount++;
-						continue;
-					}
-
-					for (int j = matchingAxiesCount; j < 2; j++)
-					{
-						if (!matchingAxies[0])
-						{
-							matchingAxies[0] = true;
-							newPos.x         = lastPos.x;
-						}
-						else if (!matchingAxies[2])
-						{
-							matchingAxies[2] = true;
-							newPos.z         = lastPos.z;
-						}
-						else if (!matchingAxies[1])
-						{
-							matchingAxies[1] = true;
-							newPos.y         = lastPos.y;
-						}
-						matchingAxiesCount++;
-					}
-				}
-				stepHalfCount = 0;
-				currentStep   = step;
-
-				// make sure after raycasting we are no longer outside the chunk, if we are find the new chunk
-				if (!PointToCube(viewPosition, chunk->GetPosition(), CHUNK_BLOCK_SIZE))
-				{
-					Chunk*                newChunk = nullptr;
-					phx::ChunkNeighbours* nabours  = chunk->GetNabours();
-					for (int j = 0; j < 6; j++)
-					{
-						if (nabours->neighbouringChunks[j] == nullptr)
-							continue;
-
-						if (PointToCube(viewPosition, (*nabours->neighbouringChunks[j])->GetPosition(), CHUNK_BLOCK_SIZE))
-						{
-							newChunk = *nabours->neighbouringChunks[j];
-							break;
-						}
-					}
-					// If we did not find a new chunk, we are off the edge of the map, break
-					if (newChunk == nullptr)
-						return;
-
-					chunk = newChunk;
-				}
-
-				unsigned int blockX = newPos.x;
-				unsigned int blockY = newPos.y;
-				unsigned int blockZ = newPos.z;
-
-				// Get local block index
-				blockX %= CHUNK_BLOCK_SIZE;
-				blockY %= CHUNK_BLOCK_SIZE;
-				blockZ %= CHUNK_BLOCK_SIZE;
-
-				ChunkBlock block = chunk->GetBlock(blockX, blockY, blockZ);
-
-				// If the block is not air
-				if (block != ModHandler::GetAirBlock())
-				{
-					// If we are destroying a block, respond with the block we are wanting to destroy
-					if (mode == RaycastMode::Destroy)
-					{
-						chunkReturn = chunk;
-						localX      = blockX;
-						localY      = blockY;
-						localZ      = blockZ;
-						return;
-					}
-					// If we are in place mode, respond with the expected air block information
-					if (mode == RaycastMode::Place)
-					{
-						chunkReturn = lastChunk;
-						localX      = lastLocalX;
-						localY      = lastLocalY;
-						localZ      = lastLocalZ;
-						return;
-					}
-				}
-				else
-				{
-					lastLocalX = blockX;
-					lastLocalY = blockY;
-					lastLocalZ = blockZ;
-					lastChunk  = chunk;
-				}
-
-				lastPos = newPos;
-			}
-		}
-	}
-}
-
-void phx::World::UpdateAllIndirectDraws()
-{
-	mIndirectDrawCommands->TransferInstantly(mIndirectBufferCPU.get(), sizeof(VkDrawIndirectCommand) * TOTAL_VERTEX_PAGE_COUNT);
-}
-
-void phx::World::UpdateAllPositionBuffers()
-{
-	mPositionBuffer->TransferInstantly(mPositionBufferCPU.get(), sizeof(glm::mat4) * TOTAL_VERTEX_PAGE_COUNT);
-}
-
-void phx::World::ProcessVertexPages(VertexPage* pages, glm::mat4 position)
+void phx::WorldData::ProcessVertexPages(VertexMemoryPage* pages, const glm::mat4& position)
 {
 	while (pages != nullptr)
 	{
-
-		VkDrawIndirectCommand& indirectCommandInstance = mIndirectBufferCPU.get()[pages->index];
+		VkDrawIndirectCommand& indirectCommandInstance = m_indirectDrawsCPU[pages->index];
 		indirectCommandInstance.vertexCount            = pages->vertexCount;
 		indirectCommandInstance.instanceCount          = 1;
 
 		// Transfer the indirect draw request
-		mIndirectDrawCommands->TransferInstantly(&indirectCommandInstance, sizeof(VkDrawIndirectCommand),
+		m_indirectDrawsGPU->TransferInstantly(&indirectCommandInstance, sizeof(VkDrawIndirectCommand),
 		                                         pages->index * sizeof(VkDrawIndirectCommand));
 
-		mPositionBufferCPU.get()[pages->index] = position;
-		mPositionBuffer->TransferInstantly(&mPositionBufferCPU.get()[pages->index], sizeof(glm::mat4), sizeof(glm::mat4) * pages->index);
+		m_chunkPositionsCPU[pages->index] = position;
+		m_chunkPositionsGPU->TransferInstantly(&m_chunkPositionsCPU[pages->index], sizeof(glm::mat4),
+		                                       sizeof(glm::mat4) * pages->index);
 
 		pages = pages->next;
 	}
-	UpdateAllPositionBuffers();
+
+	UpdateAllPositions();
 }
 
-void phx::World::FreeVertexPages(VertexPage* pages)
+void phx::WorldData::FreeVertexPages(VertexMemoryPage* pages)
 {
-	VertexPage* next = nullptr;
+	VertexMemoryPage* next = nullptr;
 	while (pages != nullptr)
 	{
 		next = pages->next;
 
-		VkDrawIndirectCommand& indirectCommandInstance = mIndirectBufferCPU.get()[pages->index];
+		VkDrawIndirectCommand& indirectCommandInstance = m_indirectDrawsCPU.get()[pages->index];
 		indirectCommandInstance.vertexCount            = 0;
 		indirectCommandInstance.instanceCount          = 0;
 
 		// Transfer the indirect draw request
-		mIndirectDrawCommands->TransferInstantly(&mIndirectBufferCPU.get()[pages->index], sizeof(VkDrawIndirectCommand),
+		m_indirectDrawsGPU->TransferInstantly(&m_indirectDrawsCPU.get()[pages->index], sizeof(VkDrawIndirectCommand),
 		                                         pages->index * sizeof(VkDrawIndirectCommand));
 
-		pages->next      = mFreeVertexPages;
-		mFreeVertexPages = pages;
+		pages->next      = m_freeVertexPages;
+		m_freeVertexPages = pages;
 
-		mFreeMemoryPoolCount++;
+		m_freeVertexPageCount++;
+
 		pages = next;
 	}
 }

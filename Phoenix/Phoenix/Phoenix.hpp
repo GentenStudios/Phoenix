@@ -60,7 +60,7 @@ class DebugUI;
 
 namespace phx
 {
-	class World;
+	class WorldData;
 	class InputHandler;
 	class ModHandler;
 
@@ -121,7 +121,7 @@ namespace phx
 		std::unique_ptr<RenderDevice>    mDevice;
 		std::unique_ptr<ResourceManager> mResourceManager;
 
-		std::unique_ptr<World> mWorld;
+		std::unique_ptr<WorldData> mWorld;
 		std::unique_ptr<ModHandler> mMods;
 
 		std::unique_ptr<DebugUI> mDebugUI;

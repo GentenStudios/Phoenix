@@ -157,7 +157,6 @@ void phx::Phoenix::RebuildCommandBuffers()
 	VkCommandBuffer* commandBuffers = mDevice->GetPrimaryCommandBuffers();
 	for (uint32_t i = 0; i < mDevice->GetSwapchainImageCount(); i++)
 	{
-
 		mDevice->Validate(vkResetCommandBuffer(commandBuffers[i], 0));
 
 		mDevice->BeginCommand(commandBuffers[i], VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
@@ -208,7 +207,7 @@ void phx::Phoenix::RebuildCommandBuffers()
 void phx::Phoenix::Update()
 {
 	UpdateCamera();
-	mWorld->Update();
+	mWorld->Update({0, 0, 0}, {0, 0, 0});
 
 	mStatisticManager.StartStatistic("ImGui");
 	// Temp delta time
@@ -309,7 +308,6 @@ void phx::Phoenix::UpdateCamera()
 			{
 				if (!wasPressed)
 				{
-					mWorld->DestroyBlockFromView();
 				}
 				wasPressed = true;
 			}
@@ -325,7 +323,6 @@ void phx::Phoenix::UpdateCamera()
 			{
 				if (!wasPressed)
 				{
-					mWorld->PlaceBlockFromView();
 				}
 				wasPressed = true;
 			}
@@ -395,7 +392,7 @@ void phx::Phoenix::InitCamera()
 
 void phx::Phoenix::InitWorld()
 {
-	mWorld = std::unique_ptr<World>(new World(mDevice.get(), mGPUMappableMemoryHeap.get(), mResourceManager.get()));
+	mWorld = std::unique_ptr<WorldData>(new WorldData(mDevice.get(), mResourceManager.get()));
 	mResourceManager->RegisterResource("World", mWorld.get(), false);
 }
 
