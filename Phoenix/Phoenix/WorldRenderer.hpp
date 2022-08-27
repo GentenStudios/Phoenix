@@ -30,105 +30,58 @@
 
 #pragma once
 
-#include <Globals/Globals.hpp>
-
-#include <Phoenix/Blocks.hpp>
-
-#include <memory>
-
-class Buffer;
+class RenderDevice;
+class ResourceManager;
 
 namespace phx
 {
-	struct VertexMemoryPage;
-
-	struct VertexData
+	struct VertexPage
 	{
-		glm::vec3 position;
-		glm::vec3 normal;
-		glm::vec2 uv;
-		uint32_t  textureID;
-	};
-
-	class ModHandler;
-	class Chunk;
-	class Chunk;
-
-	struct ChunkNeighbours
-	{
-		Chunk** neighbouringChunks[6];
+		uint32_t          index;
+		uint32_t          offset;
+		uint32_t          vertexCount;
+		VertexPage*       next = nullptr;
 	};
 
 	struct ChunkRenderData
 	{
-		VertexMemoryPage* vertexPage;
-		uint32_t          vertexCount;
+		glm::ivec3 worldPosition;
 
-		glm::vec3 renderPosition;
-		glm::mat4 renderMatrix;
+		VertexMemoryPage* vertexPage;
+		glm::vec3         renderPosition;
+		glm::mat4         renderMatrix;
 
 		Chunk* chunk;
 	};
 
-	class Chunk
+	class WorldRenderer
 	{
 	public:
-		struct Neighbours
-		{
-			Chunk* neighbours[6] = {nullptr};
-		};
+		WorldRenderer(RenderDevice* renderDevice, ResourceManager* resourceManager);
+		~WorldRenderer();
 
-		enum Face
-		{
-			NORTH,
-			EAST,
-			SOUTH,
-			WEST,
-			TOP,
-			BOTTOM
-		};
+		void     SetViewRadius(uint32_t radius);
+		void     GetViewRadius() const;
+		uint32_t GetViewSize() const;
+		Chunk**  GetView() const;
 
-	public:
-		Chunk();
-		~Chunk() = default;
-
-		void Reset();
-
-		bool IsDirty() const;
-		void MarkClean();
-
-		void       SetPosition(const glm::ivec3& position);
-		glm::ivec3 GetPosition() const;
-
-		ChunkBlock* GetBlocks();
-
-		void        SetChunkNeighbours(Neighbours* neighbours);
-		Neighbours* GetNeighbours() const;
-
-		ChunkBlock GetBlock(const glm::ivec3& position) const;
-		void       SetBlock(const glm::ivec3& position, ChunkBlock block);
-
-		static constexpr uint32_t GetIndex(const glm::ivec3& position)
-		{
-			return (CHUNK_BLOCK_SIZE * position.z + position.y) * CHUNK_BLOCK_SIZE + position.x;
-		}
-
-		static constexpr glm::ivec3 GetPosition(uint32_t index)
-		{
-			uint32_t x = index % CHUNK_BLOCK_SIZE;
-			uint32_t y = (index / CHUNK_BLOCK_SIZE) % CHUNK_BLOCK_SIZE;
-			uint32_t z = index / (CHUNK_BLOCK_SIZE * CHUNK_BLOCK_SIZE);
-
-			return {x, y, z};
-		}
+		void Update(const glm::ivec3& position);
+		void Draw();
 
 	private:
-		bool m_dirty = true;
+		void FrustumCull();
+		void OrderDraws();
 
-		// We use ivec3 since floats will have precision issues as they get larger.
-		glm::ivec3 m_position;
-		ChunkBlock m_blocks[MAX_BLOCKS_PER_CHUNK];
+	private:
+		RenderDevice*    m_renderDevice;
+		ResourceManager* m_resourceManager;
 
-		Neighbours* m_neighbours;
+		glm::ivec3                m_centralPosition;
+		uint32_t                  m_viewRadius = 0;
+		uint32_t                  m_viewSize   = 0;
+		std::unique_ptr<Chunk*[]> m_activeView;
+
+
+		glm::ivec3 m_lastSteppedPosition;
 	};
 } // namespace phx

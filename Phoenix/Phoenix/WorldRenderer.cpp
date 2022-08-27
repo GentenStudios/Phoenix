@@ -28,70 +28,20 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pragma once
+#include <Phoenix/World.hpp>
 
 #include <Phoenix/Chunk.hpp>
+#include <Phoenix/Collision.hpp>
+#include <Phoenix/Mods.hpp>
+#include <Renderer/Buffer.hpp>
+#include <Renderer/Camera.hpp>
+#include <Renderer/Device.hpp>
+#include <Renderer/DeviceMemory.hpp>
+#include <Renderer/Pipeline.hpp>
+#include <Renderer/PipelineLayout.hpp>
+#include <Renderer/ResourceTable.hpp>
+#include <Renderer/ResourceTableLayout.hpp>
 
-#include <glm/gtx/hash.hpp>
+#include <ResourceManager/RenderTechnique.hpp>
+#include <ResourceManager/ResourceManager.hpp>
 
-#include <memory>
-#include <unordered_map>
-#include <mutex>
-#include <shared_mutex>
-#include <queue>
-
-class RenderDevice;
-class ResourceManager;
-
-namespace phx
-{
-	class WorldRenderer;
-	class World
-	{
-	public:
-		enum class Action
-		{
-			SET,
-			PLACE,
-			BREAK
-		};
-
-	public:
-		World(RenderDevice* renderDevice, ResourceManager* resourceManager);
-		~World();
-
-		void Update(const glm::ivec3& position);
-		void Draw();
-
-		Chunk**  GetView() const;
-		uint32_t GetViewSize() const;
-
-		uint32_t GetViewRadius() const;
-		void     SetViewRadius(uint32_t radius);
-
-		Chunk* GetChunk(const glm::ivec3& position) const;
-		Chunk* AddChunk(const glm::ivec3& position);
-
-		ChunkBlock GetBlock(const glm::ivec3& position) const;
-		void       SetBlock(const glm::ivec3& position, ChunkBlock block, Action action = Action::SET);
-
-	private:
-		RenderDevice*    m_renderDevice;
-		ResourceManager* m_resourceManager;
-
-		std::shared_mutex                     m_mapMutex;
-		std::unordered_map<glm::ivec3, Chunk> m_chunkMap;
-
-		glm::ivec3                m_lastViewPosition = {0, 0, 0};
-		uint32_t                  m_viewRadius       = 0;
-		uint32_t                  m_viewSize         = 0;
-		std::unique_ptr<Chunk*[]> m_activeView;
-
-		WorldRenderer* m_worldRenderer;
-
-		std::mutex             m_generationMutex;
-		std::queue<glm::ivec3> m_generationQueue;
-
-		std::thread m_generationWorker;
-	};
-} // namespace phx

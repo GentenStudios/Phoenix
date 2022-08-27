@@ -39,9 +39,9 @@
 #include <Globals/Globals.hpp>
 #include <ResourceManager/ResourceManager.hpp>
 
-phx::ChunkData::ChunkData() { Reset(); }
+phx::Chunk::Chunk() { Reset(); }
 
-void phx::ChunkData::Reset()
+void phx::Chunk::Reset()
 {
 	for (uint32_t i = 0; i < MAX_BLOCKS_PER_CHUNK; ++i)
 	{
@@ -49,27 +49,27 @@ void phx::ChunkData::Reset()
 	}
 }
 
-bool phx::ChunkData::IsDirty() const { return m_dirty; }
+bool phx::Chunk::IsDirty() const { return m_dirty; }
 
-void phx::ChunkData::MarkClean() { m_dirty = false; }
+void phx::Chunk::MarkClean() { m_dirty = false; }
 
-void phx::ChunkData::SetPosition(const glm::ivec3& position) { m_position = position; }
+void phx::Chunk::SetPosition(const glm::ivec3& position) { m_position = position; }
 
-glm::ivec3 phx::ChunkData::GetPosition() const { return m_position; }
+glm::ivec3 phx::Chunk::GetPosition() const { return m_position; }
 
-phx::ChunkBlock* phx::ChunkData::GetBlocks() { return m_blocks; }
+phx::ChunkBlock* phx::Chunk::GetBlocks() { return m_blocks; }
 
-void phx::ChunkData::SetChunkNeighbours(Neighbours* neighbours) { m_neighbours = neighbours; }
+void phx::Chunk::SetChunkNeighbours(Neighbours* neighbours) { m_neighbours = neighbours; }
 
-phx::ChunkBlock phx::ChunkData::GetBlock(const glm::ivec3& position) const { return m_blocks[GetIndex(position)]; }
+phx::ChunkBlock phx::Chunk::GetBlock(const glm::ivec3& position) const { return m_blocks[GetIndex(position)]; }
 
-void phx::ChunkData::SetBlock(const glm::ivec3& position, ChunkBlock block)
+void phx::Chunk::SetBlock(const glm::ivec3& position, ChunkBlock block)
 {
 	m_blocks[GetIndex(position)] = block;
 	m_dirty                     = true;
 }
 
-phx::ChunkData::Neighbours* phx::ChunkData::GetNeighbours() const { return m_neighbours; }
+phx::Chunk::Neighbours* phx::Chunk::GetNeighbours() const { return m_neighbours; }
 
 // Temp mesh
 // clang-format off
