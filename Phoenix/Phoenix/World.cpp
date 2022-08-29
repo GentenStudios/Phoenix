@@ -32,8 +32,6 @@
 #include <Phoenix/World.hpp>
 #include <Phoenix/WorldRenderer.hpp>
 
-static uint32_t GetIndex3D(uint32_t x, uint32_t y, uint32_t z, uint32_t axisLength) { return (z * axisLength + y) * axisLength + x; }
-
 phx::Chunk** phx::World::GetView() const { return m_activeView.get(); }
 
 uint32_t phx::World::GetViewSize() const { return m_viewSize; }

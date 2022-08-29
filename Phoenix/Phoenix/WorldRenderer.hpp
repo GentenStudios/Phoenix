@@ -30,40 +30,49 @@
 
 #pragma once
 
+#include <Renderer/Vulkan.hpp>
+
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+
+#include <memory>
+
 class RenderDevice;
 class ResourceManager;
+class Buffer;
 
 namespace phx
 {
+	class World;
+	class Chunk;
+
 	struct VertexPage
 	{
-		uint32_t          index;
-		uint32_t          offset;
-		uint32_t          vertexCount;
-		VertexPage*       next = nullptr;
+		uint32_t    index;
+		uint32_t    offset;
+		uint32_t    vertexCount;
+		VertexPage* next = nullptr;
 	};
 
-	struct ChunkRenderData
+	struct RenderData
 	{
-		glm::ivec3 worldPosition;
+		VertexPage* vertexPage;
+		Chunk*      chunk;
 
-		VertexMemoryPage* vertexPage;
-		glm::vec3         renderPosition;
-		glm::mat4         renderMatrix;
-
-		Chunk* chunk;
+		glm::vec3 renderPosition;
+		glm::mat4 renderMatrix;
 	};
 
 	class WorldRenderer
 	{
 	public:
-		WorldRenderer(RenderDevice* renderDevice, ResourceManager* resourceManager);
-		~WorldRenderer();
+		WorldRenderer(RenderDevice* renderDevice, ResourceManager* resourceManager, World* world);
+		~WorldRenderer() = default;
 
-		void     SetViewRadius(uint32_t radius);
-		void     GetViewRadius() const;
-		uint32_t GetViewSize() const;
-		Chunk**  GetView() const;
+		void        SetViewRadius(uint32_t radius);
+		uint32_t    GetViewRadius() const;
+		uint32_t    GetViewSize() const;
+		RenderData* GetView() const;
 
 		void Update(const glm::ivec3& position);
 		void Draw();
@@ -75,13 +84,22 @@ namespace phx
 	private:
 		RenderDevice*    m_renderDevice;
 		ResourceManager* m_resourceManager;
+		World*           m_world;
 
-		glm::ivec3                m_centralPosition;
-		uint32_t                  m_viewRadius = 0;
-		uint32_t                  m_viewSize   = 0;
-		std::unique_ptr<Chunk*[]> m_activeView;
+		glm::ivec3                    m_centralPosition;
+		uint32_t                      m_viewRadius = 0;
+		uint32_t                      m_viewSize   = 0;
+		std::unique_ptr<RenderData[]> m_activeView;
 
+		std::unique_ptr<VertexPage[]> m_vertexPages;
+		VertexPage*                   m_freeVertexPage = nullptr;
 
-		glm::ivec3 m_lastSteppedPosition;
+		std::unique_ptr<glm::mat4>                      m_renderPositions;
+		std::unique_ptr<VkDrawIndexedIndirectCommand[]> m_indirectCommands;
+
+		std::unique_ptr<Buffer> m_indirectBuffer;
+		std::unique_ptr<Buffer> m_positionBuffer;
+
+		glm::ivec3 m_lastSteppedPosition = {0, 0, 0};
 	};
 } // namespace phx

@@ -45,7 +45,6 @@ class ResourceManager;
 
 namespace phx
 {
-	class WorldRenderer;
 	class World
 	{
 	public:
